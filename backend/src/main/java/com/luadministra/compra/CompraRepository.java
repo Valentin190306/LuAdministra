@@ -1,0 +1,9 @@
+package com.luadministra.compra;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface CompraRepository extends JpaRepository<Compra, Long> {
+    List<Compra> findByMateriaPrimaIdOrderByFechaDesc(Long materiaPrimaId);
+}

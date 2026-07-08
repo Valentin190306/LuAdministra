@@ -1,0 +1,31 @@
+# Java / Maven
+backend/target/
+*.class
+*.jar
+*.war
+
+# SQLite database
+backend/data/*.db
+backend/data/*.db-journal
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Env (contiene URL base, no secrets en este caso, pero se excluye igual)
+frontend/.env
+
+# Logs
+*.log
