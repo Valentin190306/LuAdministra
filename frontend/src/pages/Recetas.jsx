@@ -1,3 +1,202 @@
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../api/client';
+import { useApi } from '../hooks/useApi';
+import Table from '../components/ui/Table';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import FormField from '../components/ui/FormField';
+import Loading from '../components/ui/Loading';
+import styles from './Recetas.module.css';
+
 export default function Recetas() {
-  return <h1>Recetas</h1>;
+  const { data: ptList, loading: ptLoading } = useApi('/productos-terminados');
+  const { data: mpList } = useApi('/materias-primas');
+
+  const [recipeMap, setRecipeMap] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPt, setSelectedPt] = useState(null);
+  const [detalles, setDetalles] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+
+  const loadRecipe = useCallback(async (ptId) => {
+    try {
+      const recipe = await api.get(`/recetas/producto/${ptId}`);
+      setRecipeMap((prev) => ({ ...prev, [ptId]: recipe }));
+      return recipe;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  function openModal(pt) {
+    setSelectedPt(pt);
+    loadRecipe(pt.id).then((recipe) => {
+      if (recipe) {
+        setDetalles(recipe.detalles.map((d) => ({ materiaPrimaId: d.materiaPrimaId, cantidad: d.cantidad })));
+      } else {
+        setDetalles([{ materiaPrimaId: '', cantidad: '' }]);
+      }
+      setModalOpen(true);
+    });
+  }
+
+  function addDetalle() {
+    setDetalles((prev) => [...prev, { materiaPrimaId: '', cantidad: '' }]);
+  }
+
+  function updateDetalle(index, field, value) {
+    setDetalles((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  }
+
+  function removeDetalle(index) {
+    setDetalles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    const valid = detalles.filter((d) => d.materiaPrimaId && d.cantidad);
+    if (valid.length === 0) return;
+
+    setSaving(true);
+    try {
+      const body = {
+        productoTerminadoId: selectedPt.id,
+        detalles: valid.map((d) => ({
+          materiaPrimaId: Number(d.materiaPrimaId),
+          cantidad: Number(d.cantidad),
+        })),
+      };
+
+      const existing = recipeMap[selectedPt.id];
+      if (existing) {
+        await api.put(`/recetas/${existing.id}`, body);
+      } else {
+        await api.post('/recetas', body);
+      }
+
+      setModalOpen(false);
+      await loadRecipe(selectedPt.id);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleting) return;
+    try {
+      const recipe = recipeMap[deleting.id];
+      if (recipe) {
+        await api.delete(`/recetas/${recipe.id}`);
+        setRecipeMap((prev) => {
+          const next = { ...prev };
+          delete next[deleting.id];
+          return next;
+        });
+      }
+      setDeleting(null);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  const columns = [
+    { key: 'nombre', label: 'Producto Terminado' },
+    {
+      key: 'receta',
+      label: 'Receta',
+      render: (row) => {
+        const recipe = recipeMap[row.id];
+        if (!recipe) return <span className={styles.noRecipe}>Sin receta</span>;
+        return <span className={styles.hasRecipe}>{recipe.detalles.length} ingredientes</span>;
+      },
+    },
+    {
+      key: 'acciones',
+      label: '',
+      render: (row) => (
+        <div className={styles.actions}>
+          <Button variant="ghost" onClick={() => openModal(row)}>
+            {recipeMap[row.id] ? 'Editar Receta' : 'Configurar'}
+          </Button>
+          {recipeMap[row.id] && (
+            <Button variant="ghost" onClick={() => setDeleting(row)}>Eliminar</Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  if (ptLoading) return <Loading />;
+
+  return (
+    <div>
+      <div className={styles.header}>
+        <h1 className={styles.pageTitle}>Recetas</h1>
+      </div>
+
+      <p className={styles.hint}>Seleccioná un producto terminado para definir su receta (materias primas y cantidades necesarias).</p>
+
+      <Table
+        columns={columns}
+        data={ptList}
+        emptyMessage="No hay productos terminados. Creá uno primero."
+      />
+
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={selectedPt?.nombre ?? 'Receta'}>
+        <form onSubmit={handleSave} className={styles.form}>
+          <div className={styles.detalles}>
+            {detalles.map((d, i) => (
+              <div key={i} className={styles.detalleRow}>
+                <FormField label={i === 0 ? 'Materia Prima' : undefined}>
+                  <select value={d.materiaPrimaId} onChange={(e) => updateDetalle(i, 'materiaPrimaId', e.target.value)} required>
+                    <option value="">Seleccionar...</option>
+                    {mpList?.map((mp) => (
+                      <option key={mp.id} value={mp.id}>{mp.nombre} ({mp.unidadMedida})</option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label={i === 0 ? 'Cantidad' : undefined}>
+                  <div className={styles.cantidadRow}>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={d.cantidad}
+                      onChange={(e) => updateDetalle(i, 'cantidad', e.target.value)}
+                      required
+                    />
+                    {detalles.length > 1 && (
+                      <button type="button" className={styles.removeBtn} onClick={() => removeDetalle(i)} aria-label="Eliminar">&times;</button>
+                    )}
+                  </div>
+                </FormField>
+              </div>
+            ))}
+          </div>
+
+          <Button variant="ghost" type="button" onClick={addDetalle}>+ Agregar ingrediente</Button>
+
+          <div className={styles.formActions}>
+            <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar Receta'}</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={!!deleting} onClose={() => setDeleting(null)} title="Eliminar Receta">
+        <p className={styles.confirmText}>¿Eliminar la receta de "{deleting?.nombre}"?</p>
+        <div className={styles.formActions}>
+          <Button variant="ghost" onClick={() => setDeleting(null)}>Cancelar</Button>
+          <Button variant="danger" onClick={handleDelete}>Eliminar</Button>
+        </div>
+      </Modal>
+    </div>
+  );
 }

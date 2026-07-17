@@ -1,0 +1,6 @@
+.loading {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 1.4rem;
+}

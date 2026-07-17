@@ -1,0 +1,101 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+}
+
+.pageTitle {
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.filters {
+  margin-bottom: var(--spacing-md);
+}
+
+.filterLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.3rem;
+  color: var(--color-text-secondary);
+}
+
+.filterSelect {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 1.4rem;
+  background: var(--color-surface);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.row > * {
+  flex: 1;
+}
+
+.formActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-sm);
+}
+
+.priceHistory {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.historyTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+}
+
+.historyGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-width: 40rem;
+}
+
+.historyItem {
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 1.4rem;
+}
+
+.historyDate {
+  color: var(--color-text-secondary);
+  min-width: 10rem;
+}
+
+.historyPrice {
+  font-weight: 600;
+  min-width: 8rem;
+}
+
+.historyQty {
+  color: var(--color-text-secondary);
+}
+
+.errorMsg {
+  color: var(--color-danger);
+  font-size: 1.4rem;
+  padding: var(--spacing-xl);
+  text-align: center;
+}

@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import styles from './Sidebar.module.css';
 
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -12,20 +13,18 @@ const links = [
 
 export default function Sidebar() {
   return (
-    <nav style={{ width: 220, minHeight: '100vh', borderRight: '1px solid #ccc', padding: '1rem' }}>
-      <h2>LuAdministra</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {links.map((l) => (
-          <li key={l.to} style={{ marginBottom: '0.5rem' }}>
-            <NavLink
-              to={l.to}
-              style={({ isActive }) => ({ fontWeight: isActive ? 'bold' : 'normal' })}
-            >
-              {l.label}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
+    <nav className={styles.sidebar}>
+      <h1 className={styles.title}>LuAdministra</h1>
+      {links.map((l) => (
+        <NavLink
+          key={l.to}
+          to={l.to}
+          end={l.to === '/dashboard'}
+          className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+        >
+          {l.label}
+        </NavLink>
+      ))}
     </nav>
   );
 }

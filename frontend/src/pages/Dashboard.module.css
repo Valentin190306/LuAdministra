@@ -1,0 +1,118 @@
+.pageTitle {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-lg);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.cardAlert {
+  border-color: var(--color-danger);
+  background: var(--color-alert-bg);
+}
+
+.cardValue {
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cardLabel {
+  font-size: 1.3rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.alerts {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius);
+  background: var(--color-alert-bg);
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0.4rem 0;
+  font-size: 1.4rem;
+}
+
+.alertType {
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 3px;
+  background: var(--color-danger);
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.alertStock {
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.alertMin {
+  color: var(--color-text-secondary);
+  font-size: 1.3rem;
+}
+
+.lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+}
+
+.miniTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.3rem;
+}
+
+.miniTable th {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.miniTable td {
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lowStockRow {
+  background: var(--color-alert-bg);
+}
+
+.errorMsg {
+  color: var(--color-danger);
+  font-size: 1.4rem;
+  padding: var(--spacing-xl);
+  text-align: center;
+}
