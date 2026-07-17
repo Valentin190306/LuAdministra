@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
 import styles from './ProductosTerminados.module.css';
 
 const emptyForm = { nombre: '', precioVenta: '', stockMinimo: '' };
@@ -102,7 +103,15 @@ export default function ProductosTerminados() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Productos Terminados</h1>
-        <Button onClick={openCreate}>Nuevo Producto</Button>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'nombre', label: 'Nombre' },
+            { key: 'precioVenta', label: 'Precio de Venta' },
+            { key: 'stockActual', label: 'Stock Actual' },
+            { key: 'stockMinimo', label: 'Stock Mínimo' },
+          ], 'productos-terminados.csv')}>Exportar CSV</Button>
+          <Button onClick={openCreate}>Nuevo Producto</Button>
+        </div>
       </div>
 
       <Table columns={columns} data={data} />

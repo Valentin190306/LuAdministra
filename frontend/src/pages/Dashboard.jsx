@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import Loading from '../components/ui/Loading';
+import Button from '../components/ui/Button';
+import { downloadCSV } from '../utils/csv';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
@@ -20,7 +22,23 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className={styles.pageTitle}>Dashboard</h1>
+      <div className={styles.header}>
+        <h1 className={styles.pageTitle}>Resumen</h1>
+        <div className={styles.exportBtns}>
+          <Button variant="ghost" onClick={() => downloadCSV(materiasPrimas, [
+            { key: 'nombre', label: 'Nombre' },
+            { key: 'unidadMedida', label: 'Unidad' },
+            { key: 'stockActual', label: 'Stock Actual' },
+            { key: 'stockMinimo', label: 'Stock Mínimo' },
+          ], 'materias-primas.csv')}>Exportar MP</Button>
+          <Button variant="ghost" onClick={() => downloadCSV(productosTerminados, [
+            { key: 'nombre', label: 'Nombre' },
+            { key: 'precioVenta', label: 'Precio Venta' },
+            { key: 'stockActual', label: 'Stock Actual' },
+            { key: 'stockMinimo', label: 'Stock Mínimo' },
+          ], 'productos-terminados.csv')}>Exportar PT</Button>
+        </div>
+      </div>
 
       <div className={styles.cards}>
         <div className={styles.card}>

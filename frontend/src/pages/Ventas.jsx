@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
 import styles from './Ventas.module.css';
 
 function todayStr() {
@@ -83,7 +84,14 @@ export default function Ventas() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Ventas</h1>
-        <Button onClick={openCreate}>Registrar Venta</Button>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'productoTerminadoNombre', label: 'Producto Terminado' },
+            { key: 'fecha', label: 'Fecha' },
+            { key: 'cantidad', label: 'Cantidad Vendida' },
+          ], 'ventas.csv')}>Exportar CSV</Button>
+          <Button onClick={openCreate}>Registrar Venta</Button>
+        </div>
       </div>
 
       <p className={styles.hint}>Al registrar una venta se descuenta automáticamente el stock del producto terminado.</p>

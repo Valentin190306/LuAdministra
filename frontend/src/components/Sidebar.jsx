@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
 const links = [
-  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Resumen' },
   { to: '/materias-primas', label: 'Materias Primas' },
   { to: '/compras', label: 'Compras' },
   { to: '/productos-terminados', label: 'Productos Terminados' },

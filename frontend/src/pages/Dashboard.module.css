@@ -1,7 +1,20 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
 .pageTitle {
   font-size: 2.2rem;
   font-weight: 700;
-  margin-bottom: var(--spacing-lg);
+}
+
+.exportBtns {
+  display: flex;
+  gap: var(--spacing-sm);
 }
 
 .cards {
@@ -85,6 +98,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-xl);
+}
+
+.lists section {
+  max-height: 40rem;
+  overflow-y: auto;
+}
+
+.lists section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lists section::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
 }
 
 .miniTable {

@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
 import styles from './Produccion.module.css';
 
 function todayStr() {
@@ -83,7 +84,14 @@ export default function Produccion() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Producción</h1>
-        <Button onClick={openCreate}>Registrar Producción</Button>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'productoTerminadoNombre', label: 'Producto Terminado' },
+            { key: 'fecha', label: 'Fecha' },
+            { key: 'cantidadFabricada', label: 'Cantidad Fabricada' },
+          ], 'produccion.csv')}>Exportar CSV</Button>
+          <Button onClick={openCreate}>Registrar Producción</Button>
+        </div>
       </div>
 
       <p className={styles.hint}>Al registrar una producción se descuenta automáticamente el stock de materias primas según la receta y se incrementa el stock del producto terminado.</p>

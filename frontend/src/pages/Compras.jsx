@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
 import styles from './Compras.module.css';
 
 function todayStr() {
@@ -99,7 +100,16 @@ export default function Compras() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Compras</h1>
-        <Button onClick={openCreate}>Nueva Compra</Button>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'materiaPrimaNombre', label: 'Materia Prima' },
+            { key: 'fecha', label: 'Fecha' },
+            { key: 'cantidad', label: 'Cantidad' },
+            { key: 'precio', label: 'Precio' },
+            { key: 'lugar', label: 'Lugar' },
+          ], 'compras.csv')}>Exportar CSV</Button>
+          <Button onClick={openCreate}>Nueva Compra</Button>
+        </div>
       </div>
 
       <div className={styles.filters}>

@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
 import styles from './MateriasPrimas.module.css';
 
 const emptyForm = { nombre: '', unidadMedida: '', stockMinimo: '' };
@@ -98,7 +99,15 @@ export default function MateriasPrimas() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Materias Primas</h1>
-        <Button onClick={openCreate}>Nueva Materia Prima</Button>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'nombre', label: 'Nombre' },
+            { key: 'unidadMedida', label: 'Unidad de Medida' },
+            { key: 'stockActual', label: 'Stock Actual' },
+            { key: 'stockMinimo', label: 'Stock Mínimo' },
+          ], 'materias-primas.csv')}>Exportar CSV</Button>
+          <Button onClick={openCreate}>Nueva Materia Prima</Button>
+        </div>
       </div>
 
       <Table columns={columns} data={data} />
@@ -109,7 +118,18 @@ export default function MateriasPrimas() {
             <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required autoFocus />
           </FormField>
           <FormField label="Unidad de Medida">
-            <input value={form.unidadMedida} onChange={(e) => setForm({ ...form, unidadMedida: e.target.value })} required placeholder="ej. gramos, ml, unidades" />
+            <select value={form.unidadMedida} onChange={(e) => setForm({ ...form, unidadMedida: e.target.value })} required>
+              <option value="">Seleccionar...</option>
+              <option value="gramos">gramos</option>
+              <option value="kg">kg</option>
+              <option value="ml">ml</option>
+              <option value="litros">litros</option>
+              <option value="mg">mg</option>
+              <option value="unidades">unidades</option>
+              <option value="unidad">unidad</option>
+              <option value="cucharadas">cucharadas</option>
+              <option value="gotas">gotas</option>
+            </select>
           </FormField>
           <FormField label="Stock Mínimo (opcional)">
             <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => setForm({ ...form, stockMinimo: e.target.value })} />

@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
 import styles from './Recetas.module.css';
 
 export default function Recetas() {
@@ -139,6 +140,19 @@ export default function Recetas() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Recetas</h1>
+        <Button variant="ghost" onClick={() => {
+          const flat = (ptList ?? []).map((pt) => {
+            const r = recipeMap[pt.id];
+            return {
+              producto: pt.nombre,
+              ingredientes: r ? r.detalles.map((d) => `${d.materiaPrimaNombre} (${d.cantidad})`).join('; ') : 'Sin receta',
+            };
+          });
+          downloadCSV(flat, [
+            { key: 'producto', label: 'Producto Terminado' },
+            { key: 'ingredientes', label: 'Ingredientes' },
+          ], 'recetas.csv');
+        }}>Exportar CSV</Button>
       </div>
 
       <p className={styles.hint}>Seleccioná un producto terminado para definir su receta (materias primas y cantidades necesarias).</p>
