@@ -23,7 +23,7 @@ export default function Table({ columns, data, onRowClick, emptyMessage = 'Sin d
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((col) => (
-                <td key={col.key} className={styles.td}>
+                <td key={col.key} className={styles.td} data-label={col.label}>
                   {col.render ? col.render(row) : row[col.key]}
                 </td>
               ))}

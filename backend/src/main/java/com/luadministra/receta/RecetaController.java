@@ -26,7 +26,7 @@ public class RecetaController {
 
     @PutMapping("/{id}")
     public RecetaResponse actualizar(@PathVariable Long id, @Valid @RequestBody RecetaRequest request) {
-        return service.guardar(request);
+        return service.actualizar(id, request);
     }
 
     @DeleteMapping("/{id}")

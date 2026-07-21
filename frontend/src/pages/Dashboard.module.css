@@ -100,6 +100,10 @@
   gap: var(--spacing-xl);
 }
 
+.miniTableWrapper {
+  overflow-x: auto;
+}
+
 .lists section {
   max-height: 40rem;
   overflow-y: auto;
@@ -142,4 +146,10 @@
   font-size: 1.4rem;
   padding: var(--spacing-xl);
   text-align: center;
+}
+
+@media (max-width: 768px) {
+  .lists {
+    grid-template-columns: 1fr;
+  }
 }

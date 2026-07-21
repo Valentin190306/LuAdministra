@@ -3,6 +3,7 @@ package com.luadministra.compra;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +20,18 @@ public class CompraService {
         this.materiaPrimaRepository = materiaPrimaRepository;
     }
 
-    public List<CompraResponse> listar() {
-        return compraRepository.findAll().stream()
+    public List<CompraResponse> listar(String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy != null ? sortBy : "fecha");
+        return compraRepository.findAll(sort).stream()
                 .map(CompraResponse::fromEntity)
                 .toList();
     }
 
-    public List<CompraResponse> listarPorMateriaPrima(Long materiaPrimaId) {
-        return compraRepository.findByMateriaPrimaIdOrderByFechaDesc(materiaPrimaId).stream()
+    public List<CompraResponse> listarPorMateriaPrima(Long materiaPrimaId, String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy != null ? sortBy : "fecha");
+        return compraRepository.findByMateriaPrimaId(materiaPrimaId, sort).stream()
                 .map(CompraResponse::fromEntity)
                 .toList();
     }

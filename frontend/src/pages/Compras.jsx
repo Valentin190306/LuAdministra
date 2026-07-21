@@ -19,8 +19,11 @@ const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio:
 export default function Compras() {
   const { data: materiasPrimas } = useApi('/materias-primas');
   const [filterMpId, setFilterMpId] = useState('');
+  const [sortBy, setSortBy] = useState('fecha');
+  const [sortDir, setSortDir] = useState('desc');
+  const sortParams = { sortBy, sortDir };
   const filterPath = filterMpId ? `/compras/materia-prima/${filterMpId}` : '/compras';
-  const { data, loading, error, refetch } = useApi(filterPath);
+  const { data, loading, error, refetch } = useApi(filterPath, sortParams);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -121,6 +124,14 @@ export default function Compras() {
             ))}
           </select>
         </label>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="fecha">Ordenar por fecha</option>
+          <option value="precio">Ordenar por precio</option>
+          <option value="cantidad">Ordenar por cantidad</option>
+        </select>
+        <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
+          {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+        </Button>
       </div>
 
       <Table columns={columns} data={data} emptyMessage="No hay compras registradas." />

@@ -3,6 +3,9 @@ package com.luadministra.exception;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,6 +42,20 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.CONFLICT, res.getStatusCode());
         assertNotNull(res.getBody());
         assertEquals("STOCK_INSUFICIENTE", res.getBody().tipo());
+    }
+
+    @Test
+    void handleValidacion_retorna400() {
+        BindException bindException = new BindException(new Object(), "test");
+        bindException.addError(new FieldError("test", "nombre", "no debe estar vacío"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindException);
+
+        ResponseEntity<ErrorResponse> res = handler.handleValidacion(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, res.getStatusCode());
+        assertNotNull(res.getBody());
+        assertEquals("VALIDACION", res.getBody().tipo());
+        assertEquals(400, res.getBody().codigo());
     }
 
     @Test

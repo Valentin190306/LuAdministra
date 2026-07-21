@@ -7,10 +7,11 @@ public record VentaResponse(
         Long productoTerminadoId,
         String productoTerminadoNombre,
         LocalDate fecha,
-        Double cantidad
+        Double cantidad,
+        Double precioUnitario
 ) {
     public static VentaResponse fromEntity(Venta v) {
         return new VentaResponse(v.getId(), v.getProductoTerminado().getId(),
-                v.getProductoTerminado().getNombre(), v.getFecha(), v.getCantidad());
+                v.getProductoTerminado().getNombre(), v.getFecha(), v.getCantidad(), v.getPrecioUnitario());
     }
 }

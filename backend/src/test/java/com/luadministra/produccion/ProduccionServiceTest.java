@@ -162,4 +162,28 @@ class ProduccionServiceTest {
         assertEquals(60.0, mp1.getStockActual());  // 100 - (20*2)
         assertEquals(180.0, mp2.getStockActual()); // 200 - (10*2)
     }
+
+    @Test
+    void eliminar_revierteStockMP() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+        pt.setStockActual(10.0);
+
+        MateriaPrima mp = crearMP(10L, "Manteca de Karite", 100.0);
+        Receta receta = crearReceta(pt, mp, 30.0);
+
+        Produccion produccion = new Produccion();
+        produccion.setId(1L);
+        produccion.setProductoTerminado(pt);
+        produccion.setCantidadFabricada(2.0);
+
+        when(produccionRepository.findById(1L)).thenReturn(Optional.of(produccion));
+        when(recetaRepository.findByProductoTerminadoId(1L)).thenReturn(Optional.of(receta));
+
+        service.eliminar(1L);
+
+        assertEquals(160.0, mp.getStockActual()); // 100 + (30*2)
+        assertEquals(8.0, pt.getStockActual());   // 10 - 2
+        verify(produccionRepository).delete(produccion);
+    }
 }

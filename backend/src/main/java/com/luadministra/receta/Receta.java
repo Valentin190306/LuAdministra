@@ -3,6 +3,7 @@ package com.luadministra.receta;
 import com.luadministra.productoterminado.ProductoTerminado;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,8 @@ public class Receta {
     @OneToMany(mappedBy = "receta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecetaDetalle> detalles = new ArrayList<>();
 
+    private @Nullable String notas;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -29,4 +32,7 @@ public class Receta {
 
     public List<RecetaDetalle> getDetalles() { return detalles; }
     public void setDetalles(List<RecetaDetalle> detalles) { this.detalles = detalles; }
+
+    public @Nullable String getNotas() { return notas; }
+    public void setNotas(@Nullable String notas) { this.notas = notas; }
 }

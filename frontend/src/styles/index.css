@@ -34,6 +34,18 @@ input, select, textarea, button {
   color: inherit;
 }
 
+input, select, textarea {
+  min-height: 44px;
+}
+
+select {
+  padding: 0 0.5rem;
+}
+
+textarea {
+  padding: 0.5rem;
+}
+
 button {
   cursor: pointer;
 }
@@ -46,4 +58,16 @@ table {
 img {
   max-width: 100%;
   display: block;
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 56.25%;
+  }
+}
+
+@media (min-width: 1400px) {
+  html {
+    font-size: 68.75%;
+  }
 }

@@ -19,8 +19,10 @@ public class VentaController {
     }
 
     @GetMapping
-    public List<VentaResponse> listar() {
-        return service.listar();
+    public List<VentaResponse> listar(
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listar(sortBy, sortDir);
     }
 
     @GetMapping("/periodo")

@@ -51,7 +51,7 @@ class RecetaServiceTest {
         saved.setProductoTerminado(pt);
         when(repository.save(any())).thenReturn(saved);
 
-        RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(10L, 50.0)));
+        RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(10L, 50.0)), null);
         RecetaResponse result = service.guardar(request);
 
         assertNotNull(result);
@@ -67,13 +67,75 @@ class RecetaServiceTest {
         when(repository.findByProductoTerminadoId(1L)).thenReturn(Optional.empty());
         when(materiaPrimaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(99L, 50.0)));
+        RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(99L, 50.0)), null);
         assertThrows(RecursoNoEncontradoException.class, () -> service.guardar(request));
+    }
+
+    @Test
+    void obtenerPorProducto_cuandoExiste_retorna() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+
+        Receta receta = new Receta();
+        receta.setId(1L);
+        receta.setProductoTerminado(pt);
+        receta.setNotas("Nota de prueba");
+
+        when(repository.findByProductoTerminadoId(1L)).thenReturn(Optional.of(receta));
+
+        RecetaResponse result = service.obtenerPorProducto(1L);
+        assertNotNull(result);
     }
 
     @Test
     void obtenerPorProducto_cuandoNoExiste_lanzaExcepcion() {
         when(repository.findByProductoTerminadoId(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class, () -> service.obtenerPorProducto(99L));
+    }
+
+    @Test
+    void actualizar_modificaNotasYDetalles() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+
+        MateriaPrima mp = new MateriaPrima();
+        mp.setId(10L);
+        mp.setNombre("Manteca de Karite");
+
+        Receta existente = new Receta();
+        existente.setId(1L);
+        existente.setProductoTerminado(pt);
+        existente.setNotas("Vieja nota");
+
+        when(repository.findById(1L)).thenReturn(Optional.of(existente));
+        when(materiaPrimaRepository.findById(10L)).thenReturn(Optional.of(mp));
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(10L, 50.0)), "Nueva nota");
+        RecetaResponse result = service.actualizar(1L, request);
+
+        verify(repository).save(any());
+    }
+
+    @Test
+    void actualizar_cuandoProductoNoCoincide_lanzaExcepcion() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+
+        Receta existente = new Receta();
+        existente.setId(1L);
+        existente.setProductoTerminado(pt);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(existente));
+
+        RecetaRequest request = new RecetaRequest(99L, List.of(), null);
+        assertThrows(com.luadministra.exception.SolicitudInvalidaException.class,
+                () -> service.actualizar(1L, request));
+    }
+
+    @Test
+    void eliminar_borraPorId() {
+        service.eliminar(1L);
+        verify(repository).deleteById(1L);
     }
 }

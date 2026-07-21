@@ -4,6 +4,7 @@
   justify-content: center;
   gap: var(--spacing-xs);
   padding: 0.6rem 1.4rem;
+  min-height: 44px;
   border: 1px solid transparent;
   border-radius: var(--radius);
   font-size: 1.4rem;

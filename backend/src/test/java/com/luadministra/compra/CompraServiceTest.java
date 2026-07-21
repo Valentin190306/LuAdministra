@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -76,5 +77,43 @@ class CompraServiceTest {
         assertEquals(15.0, mp.getStockActual());
         verify(materiaPrimaRepository).save(mp);
         verify(compraRepository).delete(compra);
+    }
+
+    @Test
+    void listar_devuelveTodas() {
+        MateriaPrima mp = new MateriaPrima();
+        mp.setId(1L);
+        mp.setNombre("Aceite");
+
+        Compra compra = new Compra();
+        compra.setMateriaPrima(mp);
+
+        when(compraRepository.findAll(any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(List.of(compra));
+
+        assertEquals(1, service.listar(null, null).size());
+    }
+
+    @Test
+    void obtener_cuandoExiste_retorna() {
+        MateriaPrima mp = new MateriaPrima();
+        mp.setNombre("Aceite de Coco");
+
+        Compra compra = new Compra();
+        compra.setId(1L);
+        compra.setMateriaPrima(mp);
+        compra.setCantidad(5.0);
+        compra.setPrecio(100.0);
+
+        when(compraRepository.findById(1L)).thenReturn(Optional.of(compra));
+
+        CompraResponse result = service.obtener(1L);
+        assertEquals("Aceite de Coco", result.materiaPrimaNombre());
+    }
+
+    @Test
+    void obtener_cuandoNoExiste_lanzaExcepcion() {
+        when(compraRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () -> service.obtener(99L));
     }
 }

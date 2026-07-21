@@ -4,6 +4,7 @@ import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.StockInsuficienteException;
 import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +22,10 @@ public class VentaService {
         this.productoTerminadoRepository = productoTerminadoRepository;
     }
 
-    public List<VentaResponse> listar() {
-        return ventaRepository.findAll().stream()
+    public List<VentaResponse> listar(String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy != null ? sortBy : "fecha");
+        return ventaRepository.findAll(sort).stream()
                 .map(VentaResponse::fromEntity)
                 .toList();
     }
@@ -56,11 +59,18 @@ public class VentaService {
         venta.setProductoTerminado(pt);
         venta.setFecha(request.fecha());
         venta.setCantidad(request.cantidad());
+        venta.setPrecioUnitario(pt.getPrecioVenta());
 
         return VentaResponse.fromEntity(ventaRepository.save(venta));
     }
 
+    @Transactional
     public void eliminar(Long id) {
-        ventaRepository.deleteById(id);
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
+        ProductoTerminado pt = venta.getProductoTerminado();
+        pt.setStockActual(pt.getStockActual() + venta.getCantidad());
+        productoTerminadoRepository.save(pt);
+        ventaRepository.delete(venta);
     }
 }

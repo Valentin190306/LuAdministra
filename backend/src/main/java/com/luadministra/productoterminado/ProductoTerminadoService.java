@@ -1,6 +1,8 @@
 package com.luadministra.productoterminado;
 
+import com.luadministra.categoriaproductoterminado.CategoriaProductoTerminadoRepository;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,15 +11,24 @@ import java.util.List;
 public class ProductoTerminadoService {
 
     private final ProductoTerminadoRepository repository;
+    private final CategoriaProductoTerminadoRepository categoriaRepository;
 
-    public ProductoTerminadoService(ProductoTerminadoRepository repository) {
+    public ProductoTerminadoService(ProductoTerminadoRepository repository, CategoriaProductoTerminadoRepository categoriaRepository) {
         this.repository = repository;
+        this.categoriaRepository = categoriaRepository;
     }
 
-    public List<ProductoTerminadoResponse> listar() {
-        return repository.findAll().stream()
-                .map(ProductoTerminadoResponse::fromEntity)
-                .toList();
+    public List<ProductoTerminadoResponse> listar(String nombre, Long categoriaId, String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy != null ? sortBy : "nombre");
+        var stream = repository.findAll(sort).stream();
+        if (nombre != null && !nombre.isBlank()) {
+            stream = stream.filter(pt -> pt.getNombre().toLowerCase().contains(nombre.toLowerCase()));
+        }
+        if (categoriaId != null) {
+            stream = stream.filter(pt -> pt.getCategoria() != null && pt.getCategoria().getId().equals(categoriaId));
+        }
+        return stream.map(ProductoTerminadoResponse::fromEntity).toList();
     }
 
     public ProductoTerminadoResponse obtener(Long id) {
@@ -32,6 +43,10 @@ public class ProductoTerminadoService {
         pt.setPrecioVenta(request.precioVenta());
         pt.setStockMinimo(request.stockMinimo());
         pt.setStockActual(0.0);
+        if (request.categoriaId() != null) {
+            pt.setCategoria(categoriaRepository.findById(request.categoriaId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Categoria no encontrada")));
+        }
         return ProductoTerminadoResponse.fromEntity(repository.save(pt));
     }
 
@@ -41,6 +56,12 @@ public class ProductoTerminadoService {
         existente.setNombre(request.nombre());
         existente.setPrecioVenta(request.precioVenta());
         existente.setStockMinimo(request.stockMinimo());
+        if (request.categoriaId() != null) {
+            existente.setCategoria(categoriaRepository.findById(request.categoriaId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Categoria no encontrada")));
+        } else {
+            existente.setCategoria(null);
+        }
         return ProductoTerminadoResponse.fromEntity(repository.save(existente));
     }
 

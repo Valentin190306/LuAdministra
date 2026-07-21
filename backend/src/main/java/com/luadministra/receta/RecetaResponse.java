@@ -6,11 +6,13 @@ public record RecetaResponse(
         Long id,
         Long productoTerminadoId,
         String productoTerminadoNombre,
-        List<RecetaDetalleResponse> detalles
+        List<RecetaDetalleResponse> detalles,
+        String notas
 ) {
     public static RecetaResponse fromEntity(Receta r) {
         return new RecetaResponse(r.getId(), r.getProductoTerminado().getId(),
                 r.getProductoTerminado().getNombre(),
-                r.getDetalles().stream().map(RecetaDetalleResponse::fromEntity).toList());
+                r.getDetalles().stream().map(RecetaDetalleResponse::fromEntity).toList(),
+                r.getNotas());
     }
 }

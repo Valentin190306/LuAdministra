@@ -24,6 +24,10 @@ public class Venta {
     @Column(nullable = false)
     private Double cantidad;
 
+    @NotNull
+    @Column(nullable = false)
+    private Double precioUnitario;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -35,4 +39,7 @@ public class Venta {
 
     public Double getCantidad() { return cantidad; }
     public void setCantidad(Double cantidad) { this.cantidad = cantidad; }
+
+    public Double getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(Double precioUnitario) { this.precioUnitario = precioUnitario; }
 }

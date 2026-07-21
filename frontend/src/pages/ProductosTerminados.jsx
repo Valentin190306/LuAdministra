@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import Table from '../components/ui/Table';
@@ -10,10 +10,39 @@ import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
 import styles from './ProductosTerminados.module.css';
 
-const emptyForm = { nombre: '', precioVenta: '', stockMinimo: '' };
+const emptyForm = { nombre: '', precioVenta: '', stockMinimo: '', categoriaId: '' };
 
 export default function ProductosTerminados() {
-  const { data, loading, error, refetch } = useApi('/productos-terminados');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [sortBy, setSortBy] = useState('nombre');
+  const [sortDir, setSortDir] = useState('asc');
+  const { data: categorias } = useApi('/categorias-productos-terminados');
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (busqueda) params.set('nombre', busqueda);
+      if (filtroCategoria) params.set('categoriaId', filtroCategoria);
+      params.set('sortBy', sortBy);
+      params.set('sortDir', sortDir);
+      const result = await api.get(`/productos-terminados?${params}`);
+      setData(result);
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [busqueda, filtroCategoria, sortBy, sortDir]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -28,7 +57,7 @@ export default function ProductosTerminados() {
 
   function openEdit(pt) {
     setEditing(pt);
-    setForm({ nombre: pt.nombre, precioVenta: String(pt.precioVenta), stockMinimo: pt.stockMinimo ?? '' });
+    setForm({ nombre: pt.nombre, precioVenta: String(pt.precioVenta), stockMinimo: pt.stockMinimo ?? '', categoriaId: pt.categoriaId ?? '' });
     setModalOpen(true);
   }
 
@@ -41,6 +70,7 @@ export default function ProductosTerminados() {
         nombre: form.nombre.trim(),
         precioVenta: Number(form.precioVenta),
         stockMinimo: form.stockMinimo === '' ? null : Number(form.stockMinimo),
+        categoriaId: form.categoriaId === '' ? null : Number(form.categoriaId),
       };
       if (editing) {
         await api.put(`/productos-terminados/${editing.id}`, body);
@@ -48,7 +78,7 @@ export default function ProductosTerminados() {
         await api.post('/productos-terminados', body);
       }
       setModalOpen(false);
-      refetch();
+      fetchData();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -61,7 +91,7 @@ export default function ProductosTerminados() {
     try {
       await api.delete(`/productos-terminados/${deleteTarget.id}`);
       setDeleteTarget(null);
-      refetch();
+      fetchData();
     } catch (err) {
       alert(err.message);
     }
@@ -106,12 +136,37 @@ export default function ProductosTerminados() {
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => downloadCSV(data, [
             { key: 'nombre', label: 'Nombre' },
+            { key: 'categoriaNombre', label: 'Categoría' },
             { key: 'precioVenta', label: 'Precio de Venta' },
             { key: 'stockActual', label: 'Stock Actual' },
             { key: 'stockMinimo', label: 'Stock Mínimo' },
           ], 'productos-terminados.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nuevo Producto</Button>
         </div>
+      </div>
+
+      <div className={styles.filters}>
+        <input
+          type="text"
+          placeholder="Buscar por nombre..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className={styles.searchInput}
+        />
+        <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
+          <option value="">Todas las categorías</option>
+          {categorias?.map((c) => (
+            <option key={c.id} value={c.id}>{c.nombre}</option>
+          ))}
+        </select>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="nombre">Ordenar por nombre</option>
+          <option value="precioVenta">Ordenar por precio</option>
+          <option value="stockActual">Ordenar por stock</option>
+        </select>
+        <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
+          {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+        </Button>
       </div>
 
       <Table columns={columns} data={data} />
@@ -123,6 +178,14 @@ export default function ProductosTerminados() {
           </FormField>
           <FormField label="Precio de Venta ($)">
             <input type="number" step="any" min="0" value={form.precioVenta} onChange={(e) => setForm({ ...form, precioVenta: e.target.value })} required />
+          </FormField>
+          <FormField label="Categoría (opcional)">
+            <select value={form.categoriaId} onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}>
+              <option value="">Sin categoría</option>
+              {categorias?.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
           </FormField>
           <FormField label="Stock Mínimo (opcional)">
             <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => setForm({ ...form, stockMinimo: e.target.value })} />

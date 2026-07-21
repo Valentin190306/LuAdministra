@@ -17,8 +17,12 @@ public class ProductoTerminadoController {
     }
 
     @GetMapping
-    public List<ProductoTerminadoResponse> listar() {
-        return service.listar();
+    public List<ProductoTerminadoResponse> listar(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listar(nombre, categoriaId, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")

@@ -71,4 +71,48 @@ class VentaServiceTest {
         assertThrows(RecursoNoEncontradoException.class,
                 () -> service.crear(new VentaRequest(99L, LocalDate.now(), 1.0)));
     }
+
+    @Test
+    void crear_capturaPrecioUnitario() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+        pt.setNombre("Shampoo");
+        pt.setStockActual(10.0);
+        pt.setPrecioVenta(2500.0);
+
+        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
+
+        Venta saved = new Venta();
+        saved.setId(1L);
+        saved.setProductoTerminado(pt);
+        saved.setCantidad(3.0);
+        saved.setPrecioUnitario(2500.0);
+        when(ventaRepository.save(any())).thenReturn(saved);
+
+        VentaRequest request = new VentaRequest(1L, LocalDate.now(), 3.0);
+        VentaResponse result = service.crear(request);
+
+        assertEquals(2500.0, result.precioUnitario());
+    }
+
+    @Test
+    void eliminar_revierteStockPT() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+        pt.setNombre("Shampoo");
+        pt.setStockActual(7.0);
+
+        Venta venta = new Venta();
+        venta.setId(1L);
+        venta.setProductoTerminado(pt);
+        venta.setCantidad(3.0);
+
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
+
+        service.eliminar(1L);
+
+        assertEquals(10.0, pt.getStockActual());
+        verify(productoTerminadoRepository).save(pt);
+        verify(ventaRepository).delete(venta);
+    }
 }

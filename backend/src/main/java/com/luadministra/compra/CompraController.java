@@ -17,13 +17,18 @@ public class CompraController {
     }
 
     @GetMapping
-    public List<CompraResponse> listar() {
-        return service.listar();
+    public List<CompraResponse> listar(
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listar(sortBy, sortDir);
     }
 
     @GetMapping("/materia-prima/{materiaPrimaId}")
-    public List<CompraResponse> listarPorMateriaPrima(@PathVariable Long materiaPrimaId) {
-        return service.listarPorMateriaPrima(materiaPrimaId);
+    public List<CompraResponse> listarPorMateriaPrima(
+            @PathVariable Long materiaPrimaId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listarPorMateriaPrima(materiaPrimaId, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")

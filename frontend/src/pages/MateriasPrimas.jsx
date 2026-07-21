@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import Table from '../components/ui/Table';
@@ -10,10 +10,39 @@ import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
 import styles from './MateriasPrimas.module.css';
 
-const emptyForm = { nombre: '', unidadMedida: '', stockMinimo: '' };
+const emptyForm = { nombre: '', unidadMedida: '', stockMinimo: '', categoriaId: '' };
 
 export default function MateriasPrimas() {
-  const { data, loading, error, refetch } = useApi('/materias-primas');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [sortBy, setSortBy] = useState('nombre');
+  const [sortDir, setSortDir] = useState('asc');
+  const { data: categorias } = useApi('/categorias-materias-primas');
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (busqueda) params.set('nombre', busqueda);
+      if (filtroCategoria) params.set('categoriaId', filtroCategoria);
+      params.set('sortBy', sortBy);
+      params.set('sortDir', sortDir);
+      const result = await api.get(`/materias-primas?${params}`);
+      setData(result);
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [busqueda, filtroCategoria, sortBy, sortDir]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -28,7 +57,7 @@ export default function MateriasPrimas() {
 
   function openEdit(mp) {
     setEditing(mp);
-    setForm({ nombre: mp.nombre, unidadMedida: mp.unidadMedida, stockMinimo: mp.stockMinimo ?? '' });
+    setForm({ nombre: mp.nombre, unidadMedida: mp.unidadMedida, stockMinimo: mp.stockMinimo ?? '', categoriaId: mp.categoriaId ?? '' });
     setModalOpen(true);
   }
 
@@ -41,6 +70,7 @@ export default function MateriasPrimas() {
         nombre: form.nombre.trim(),
         unidadMedida: form.unidadMedida.trim(),
         stockMinimo: form.stockMinimo === '' ? null : Number(form.stockMinimo),
+        categoriaId: form.categoriaId === '' ? null : Number(form.categoriaId),
       };
       if (editing) {
         await api.put(`/materias-primas/${editing.id}`, body);
@@ -48,7 +78,7 @@ export default function MateriasPrimas() {
         await api.post('/materias-primas', body);
       }
       setModalOpen(false);
-      refetch();
+      fetchData();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -61,7 +91,7 @@ export default function MateriasPrimas() {
     try {
       await api.delete(`/materias-primas/${deleteTarget.id}`);
       setDeleteTarget(null);
-      refetch();
+      fetchData();
     } catch (err) {
       alert(err.message);
     }
@@ -102,12 +132,37 @@ export default function MateriasPrimas() {
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => downloadCSV(data, [
             { key: 'nombre', label: 'Nombre' },
+            { key: 'categoriaNombre', label: 'Categoría' },
             { key: 'unidadMedida', label: 'Unidad de Medida' },
             { key: 'stockActual', label: 'Stock Actual' },
             { key: 'stockMinimo', label: 'Stock Mínimo' },
           ], 'materias-primas.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nueva Materia Prima</Button>
         </div>
+      </div>
+
+      <div className={styles.filters}>
+        <input
+          type="text"
+          placeholder="Buscar por nombre..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className={styles.searchInput}
+        />
+        <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
+          <option value="">Todas las categorías</option>
+          {categorias?.map((c) => (
+            <option key={c.id} value={c.id}>{c.nombre}</option>
+          ))}
+        </select>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="nombre">Ordenar por nombre</option>
+          <option value="stockActual">Ordenar por stock</option>
+          <option value="unidadMedida">Ordenar por unidad</option>
+        </select>
+        <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
+          {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+        </Button>
       </div>
 
       <Table columns={columns} data={data} />
@@ -129,6 +184,14 @@ export default function MateriasPrimas() {
               <option value="unidad">unidad</option>
               <option value="cucharadas">cucharadas</option>
               <option value="gotas">gotas</option>
+            </select>
+          </FormField>
+          <FormField label="Categoría (opcional)">
+            <select value={form.categoriaId} onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}>
+              <option value="">Sin categoría</option>
+              {categorias?.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
             </select>
           </FormField>
           <FormField label="Stock Mínimo (opcional)">

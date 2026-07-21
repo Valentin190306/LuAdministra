@@ -19,8 +19,10 @@ public class ProduccionController {
     }
 
     @GetMapping
-    public List<ProduccionResponse> listar() {
-        return service.listar();
+    public List<ProduccionResponse> listar(
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listar(sortBy, sortDir);
     }
 
     @GetMapping("/periodo")

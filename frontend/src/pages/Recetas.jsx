@@ -17,6 +17,7 @@ export default function Recetas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPt, setSelectedPt] = useState(null);
   const [detalles, setDetalles] = useState([]);
+  const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
 
@@ -35,8 +36,10 @@ export default function Recetas() {
     loadRecipe(pt.id).then((recipe) => {
       if (recipe) {
         setDetalles(recipe.detalles.map((d) => ({ materiaPrimaId: d.materiaPrimaId, cantidad: d.cantidad })));
+        setNotas(recipe.notas ?? '');
       } else {
         setDetalles([{ materiaPrimaId: '', cantidad: '' }]);
+        setNotas('');
       }
       setModalOpen(true);
     });
@@ -71,6 +74,7 @@ export default function Recetas() {
           materiaPrimaId: Number(d.materiaPrimaId),
           cantidad: Number(d.cantidad),
         })),
+        notas: notas.trim() || null,
       };
 
       const existing = recipeMap[selectedPt.id];
@@ -196,6 +200,16 @@ export default function Recetas() {
           </div>
 
           <Button variant="ghost" type="button" onClick={addDetalle}>+ Agregar ingrediente</Button>
+
+          <FormField label="Notas (opcional)">
+            <textarea
+              className={styles.notasInput}
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              rows={3}
+              placeholder="Observaciones, procedimiento de fabricación, etc."
+            />
+          </FormField>
 
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>

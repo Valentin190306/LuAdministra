@@ -46,3 +46,20 @@
   padding: var(--spacing-xl);
   text-align: center;
 }
+
+.filters {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  flex: 1;
+  min-width: 180px;
+}
+

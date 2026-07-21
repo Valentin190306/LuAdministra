@@ -9,6 +9,7 @@ import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
 import com.luadministra.receta.Receta;
 import com.luadministra.receta.RecetaRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +34,10 @@ public class ProduccionService {
         this.materiaPrimaRepository = materiaPrimaRepository;
     }
 
-    public List<ProduccionResponse> listar() {
-        return produccionRepository.findAll().stream()
+    public List<ProduccionResponse> listar(String sortBy, String sortDir) {
+        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy != null ? sortBy : "fecha");
+        return produccionRepository.findAll(sort).stream()
                 .map(ProduccionResponse::fromEntity)
                 .toList();
     }
@@ -81,7 +84,25 @@ public class ProduccionService {
         return ProduccionResponse.fromEntity(produccionRepository.save(produccion));
     }
 
+    @Transactional
     public void eliminar(Long id) {
-        produccionRepository.deleteById(id);
+        Produccion produccion = produccionRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Produccion no encontrada"));
+
+        ProductoTerminado pt = produccion.getProductoTerminado();
+        Receta receta = recetaRepository.findByProductoTerminadoId(pt.getId())
+                .orElseThrow(() -> new SolicitudInvalidaException("La receta del producto ya no existe"));
+
+        receta.getDetalles().forEach(d -> {
+            MateriaPrima mp = d.getMateriaPrima();
+            double cantidadADevolver = d.getCantidad() * produccion.getCantidadFabricada();
+            mp.setStockActual(mp.getStockActual() + cantidadADevolver);
+            materiaPrimaRepository.save(mp);
+        });
+
+        pt.setStockActual(pt.getStockActual() - produccion.getCantidadFabricada());
+        productoTerminadoRepository.save(pt);
+
+        produccionRepository.delete(produccion);
     }
 }

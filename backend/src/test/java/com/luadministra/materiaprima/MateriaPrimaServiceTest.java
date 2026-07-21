@@ -25,14 +25,37 @@ class MateriaPrimaServiceTest {
 
     @Test
     void listar_devuelveTodas() {
-        when(repository.findAll()).thenReturn(List.of(new MateriaPrima()));
-        List<MateriaPrimaResponse> result = service.listar();
+        when(repository.findAll(any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(List.of(new MateriaPrima()));
+        List<MateriaPrimaResponse> result = service.listar(null, null, null, null);
         assertEquals(1, result.size());
     }
 
     @Test
+    void listar_cuandoVacia_retornaListaVacia() {
+        when(repository.findAll(any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(List.of());
+        assertTrue(service.listar(null, null, null, null).isEmpty());
+    }
+
+    @Test
+    void listar_filtraPorNombre() {
+        MateriaPrima aceite = new MateriaPrima();
+        aceite.setNombre("Aceite de Coco");
+        MateriaPrima manteca = new MateriaPrima();
+        manteca.setNombre("Manteca de Karite");
+
+        when(repository.findAll(any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(List.of(aceite, manteca));
+
+        List<MateriaPrimaResponse> result = service.listar("Aceite", null, null, null);
+        assertEquals(1, result.size());
+        assertEquals("Aceite de Coco", result.get(0).nombre());
+    }
+
+    @Test
     void crear_asignaStockCero() {
-        MateriaPrimaRequest request = new MateriaPrimaRequest("Manteca de Karite", "gramos", 100.0);
+        MateriaPrimaRequest request = new MateriaPrimaRequest("Manteca de Karite", "gramos", 100.0, null);
         MateriaPrima saved = new MateriaPrima();
         saved.setId(1L);
         saved.setNombre("Manteca de Karite");
@@ -82,11 +105,18 @@ class MateriaPrimaServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.of(existente));
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        MateriaPrimaResponse result = service.actualizar(1L, new MateriaPrimaRequest("Nuevo", "gramos", 50.0));
+        MateriaPrimaResponse result = service.actualizar(1L, new MateriaPrimaRequest("Nuevo", "gramos", 50.0, null));
 
         assertEquals("Nuevo", result.nombre());
         assertEquals("gramos", result.unidadMedida());
         assertEquals(50.0, result.stockMinimo());
+    }
+
+    @Test
+    void actualizar_cuandoNoExiste_lanzaExcepcion() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> service.actualizar(99L, new MateriaPrimaRequest("Nada", "gramos", null, null)));
     }
 
     @Test

@@ -80,6 +80,7 @@ export default function Dashboard() {
       <div className={styles.lists}>
         <section>
           <h2 className={styles.sectionTitle}>Materias Primas</h2>
+          <div className={styles.miniTableWrapper}>
           <table className={styles.miniTable}>
             <thead>
               <tr>
@@ -100,10 +101,12 @@ export default function Dashboard() {
               ))}
             </tbody>
           </table>
+          </div>
         </section>
 
         <section>
           <h2 className={styles.sectionTitle}>Productos Terminados</h2>
+          <div className={styles.miniTableWrapper}>
           <table className={styles.miniTable}>
             <thead>
               <tr>
@@ -124,6 +127,7 @@ export default function Dashboard() {
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       </div>
     </div>

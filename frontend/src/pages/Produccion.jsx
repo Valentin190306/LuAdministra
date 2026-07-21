@@ -16,8 +16,22 @@ function todayStr() {
 
 const emptyForm = { productoTerminadoId: '', fecha: todayStr(), cantidadFabricada: '' };
 
+function monthAgo() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function Produccion() {
-  const { data, loading, error, refetch } = useApi('/producciones');
+  const [sortBy, setSortBy] = useState('fecha');
+  const [sortDir, setSortDir] = useState('desc');
+  const [desde, setDesde] = useState(monthAgo());
+  const [hasta, setHasta] = useState(todayStr());
+  const [usarPeriodo, setUsarPeriodo] = useState(false);
+  const apiPath = usarPeriodo
+    ? `/producciones/periodo?desde=${desde}&hasta=${hasta}`
+    : `/producciones?sortBy=${sortBy}&sortDir=${sortDir}`;
+  const { data, loading, error, refetch } = useApi(apiPath);
   const { data: ptList } = useApi('/productos-terminados');
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -95,6 +109,36 @@ export default function Produccion() {
       </div>
 
       <p className={styles.hint}>Al registrar una producción se descuenta automáticamente el stock de materias primas según la receta y se incrementa el stock del producto terminado.</p>
+
+      <div className={styles.filters}>
+        <label className={styles.filterLabel}>
+          <input type="checkbox" checked={usarPeriodo} onChange={(e) => setUsarPeriodo(e.target.checked)} />
+          Filtrar por período
+        </label>
+        {usarPeriodo && (
+          <>
+            <label className={styles.filterLabel}>
+              Desde:
+              <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className={styles.filterSelect} />
+            </label>
+            <label className={styles.filterLabel}>
+              Hasta:
+              <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className={styles.filterSelect} />
+            </label>
+          </>
+        )}
+        {!usarPeriodo && (
+          <>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="fecha">Ordenar por fecha</option>
+              <option value="cantidadFabricada">Ordenar por cantidad</option>
+            </select>
+            <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
+              {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+            </Button>
+          </>
+        )}
+      </div>
 
       <Table columns={columns} data={data} emptyMessage="No hay producciones registradas." />
 

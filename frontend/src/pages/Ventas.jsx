@@ -14,10 +14,24 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function monthAgo() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 const emptyForm = { productoTerminadoId: '', fecha: todayStr(), cantidad: '' };
 
 export default function Ventas() {
-  const { data, loading, error, refetch } = useApi('/ventas');
+  const [sortBy, setSortBy] = useState('fecha');
+  const [sortDir, setSortDir] = useState('desc');
+  const [desde, setDesde] = useState(monthAgo());
+  const [hasta, setHasta] = useState(todayStr());
+  const [usarPeriodo, setUsarPeriodo] = useState(false);
+  const apiPath = usarPeriodo
+    ? `/ventas/periodo?desde=${desde}&hasta=${hasta}`
+    : `/ventas?sortBy=${sortBy}&sortDir=${sortDir}`;
+  const { data, loading, error, refetch } = useApi(apiPath);
   const { data: ptList } = useApi('/productos-terminados');
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -69,6 +83,16 @@ export default function Ventas() {
       render: (r) => `${r.cantidad} u`,
     },
     {
+      key: 'precioUnitario',
+      label: 'Precio Unit.',
+      render: (r) => `$${r.precioUnitario.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
+    },
+    {
+      key: 'total',
+      label: 'Total',
+      render: (r) => `$${(r.cantidad * r.precioUnitario).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
+    },
+    {
       key: 'acciones',
       label: '',
       render: (row) => (
@@ -89,12 +113,43 @@ export default function Ventas() {
             { key: 'productoTerminadoNombre', label: 'Producto Terminado' },
             { key: 'fecha', label: 'Fecha' },
             { key: 'cantidad', label: 'Cantidad Vendida' },
+            { key: 'precioUnitario', label: 'Precio Unitario' },
           ], 'ventas.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Registrar Venta</Button>
         </div>
       </div>
 
       <p className={styles.hint}>Al registrar una venta se descuenta automáticamente el stock del producto terminado.</p>
+
+      <div className={styles.filters}>
+        <label className={styles.filterLabel}>
+          <input type="checkbox" checked={usarPeriodo} onChange={(e) => setUsarPeriodo(e.target.checked)} />
+          Filtrar por período
+        </label>
+        {usarPeriodo && (
+          <>
+            <label className={styles.filterLabel}>
+              Desde:
+              <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className={styles.filterSelect} />
+            </label>
+            <label className={styles.filterLabel}>
+              Hasta:
+              <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className={styles.filterSelect} />
+            </label>
+          </>
+        )}
+        {!usarPeriodo && (
+          <>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="fecha">Ordenar por fecha</option>
+              <option value="cantidad">Ordenar por cantidad</option>
+            </select>
+            <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
+              {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+            </Button>
+          </>
+        )}
+      </div>
 
       <Table columns={columns} data={data} emptyMessage="No hay ventas registradas." />
 

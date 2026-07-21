@@ -1,6 +1,7 @@
 package com.luadministra.receta;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
 import com.luadministra.productoterminado.ProductoTerminado;
@@ -37,6 +38,31 @@ public class RecetaService {
 
         Receta receta = repository.findByProductoTerminadoId(pt.getId()).orElse(new Receta());
         receta.setProductoTerminado(pt);
+        receta.setNotas(request.notas());
+
+        receta.getDetalles().clear();
+        request.detalles().forEach(d -> {
+            MateriaPrima mp = materiaPrimaRepository.findById(d.materiaPrimaId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Materia prima no encontrada"));
+            RecetaDetalle detalle = new RecetaDetalle();
+            detalle.setReceta(receta);
+            detalle.setMateriaPrima(mp);
+            detalle.setCantidad(d.cantidad());
+            receta.getDetalles().add(detalle);
+        });
+
+        return RecetaResponse.fromEntity(repository.save(receta));
+    }
+
+    @Transactional
+    public RecetaResponse actualizar(Long id, RecetaRequest request) {
+        Receta receta = repository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Receta no encontrada"));
+
+        if (!receta.getProductoTerminado().getId().equals(request.productoTerminadoId())) {
+            throw new SolicitudInvalidaException("El producto terminado no coincide con la receta");
+        }
+        receta.setNotas(request.notas());
 
         receta.getDetalles().clear();
         request.detalles().forEach(d -> {

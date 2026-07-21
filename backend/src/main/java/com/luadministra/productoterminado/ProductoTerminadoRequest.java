@@ -7,5 +7,6 @@ import org.eclipse.jdt.annotation.Nullable;
 public record ProductoTerminadoRequest(
         @NotBlank String nombre,
         @NotNull Double precioVenta,
-        @Nullable Double stockMinimo
+        @Nullable Double stockMinimo,
+        @Nullable Long categoriaId
 ) {}

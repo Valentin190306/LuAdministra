@@ -18,7 +18,11 @@
 }
 
 .filters {
+  display: flex;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .filterLabel {
@@ -50,6 +54,12 @@
 
 .row > * {
   flex: 1;
+}
+
+@media (max-width: 480px) {
+  .row {
+    flex-direction: column;
+  }
 }
 
 .formActions {

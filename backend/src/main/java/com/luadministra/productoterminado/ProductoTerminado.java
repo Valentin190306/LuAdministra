@@ -1,5 +1,6 @@
 package com.luadministra.productoterminado;
 
+import com.luadministra.categoriaproductoterminado.CategoriaProductoTerminado;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,6 +27,9 @@ public class ProductoTerminado {
 
     private @Nullable Double stockMinimo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    private @Nullable CategoriaProductoTerminado categoria;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -40,4 +44,7 @@ public class ProductoTerminado {
 
     public @Nullable Double getStockMinimo() { return stockMinimo; }
     public void setStockMinimo(@Nullable Double stockMinimo) { this.stockMinimo = stockMinimo; }
+
+    public @Nullable CategoriaProductoTerminado getCategoria() { return categoria; }
+    public void setCategoria(@Nullable CategoriaProductoTerminado categoria) { this.categoria = categoria; }
 }
