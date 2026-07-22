@@ -108,12 +108,20 @@ export default function ProductosTerminados() {
     },
     {
       key: 'stockActual',
-      label: 'Stock Actual',
-      render: (row) => (
-        <span className={row.stockMinimo != null && row.stockActual < row.stockMinimo ? styles.lowStock : undefined}>
-          {row.stockActual}
-        </span>
-      ),
+      label: 'En Depósito',
+      render: (row) => {
+        const enDeposito = row.stockActual - (row.stockDespachado ?? 0);
+        return (
+          <span className={row.stockMinimo != null && enDeposito < row.stockMinimo ? styles.lowStock : undefined}>
+            {enDeposito}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'stockDespachado',
+      label: 'Despachado',
+      render: (r) => r.stockDespachado ?? 0,
     },
     { key: 'stockMinimo', label: 'Stock Mínimo', render: (r) => r.stockMinimo ?? '—' },
     {
@@ -140,7 +148,8 @@ export default function ProductosTerminados() {
             { key: 'nombre', label: 'Nombre' },
             { key: 'categoriaNombre', label: 'Categoría' },
             { key: 'precioVenta', label: 'Precio de Venta' },
-            { key: 'stockActual', label: 'Stock Actual' },
+            { key: 'stockActual', label: 'En Depósito' },
+            { key: 'stockDespachado', label: 'Despachado' },
             { key: 'stockMinimo', label: 'Stock Mínimo' },
           ], 'productos-terminados.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nuevo Producto</Button>

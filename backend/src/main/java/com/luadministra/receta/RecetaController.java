@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/recetas")
 public class RecetaController {
@@ -12,6 +14,11 @@ public class RecetaController {
 
     public RecetaController(RecetaService service) {
         this.service = service;
+    }
+
+    @GetMapping
+    public List<RecetaResponse> listarTodas() {
+        return service.obtenerTodas();
     }
 
     @GetMapping("/producto/{productoTerminadoId}")

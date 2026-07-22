@@ -60,6 +60,7 @@ public class CompraService {
         compra.setPrecio(request.precio());
         compra.setLugar(request.lugar());
         compra.setUrl(request.url());
+        compra.setMlId(request.mlId());
 
         mp.setStockActual(mp.getStockActual() + request.cantidad());
         materiaPrimaRepository.save(mp);

@@ -1,9 +1,11 @@
 package com.luadministra.dashboard;
 
+import com.luadministra.despacho.DespachoService;
 import com.luadministra.materiaprima.MateriaPrimaResponse;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
-import com.luadministra.productoterminado.ProductoTerminadoResponse;
+import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.productoterminado.ProductoTerminadoResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,11 +19,14 @@ public class DashboardController {
 
     private final MateriaPrimaRepository materiaPrimaRepository;
     private final ProductoTerminadoRepository productoTerminadoRepository;
+    private final DespachoService despachoService;
 
     public DashboardController(MateriaPrimaRepository materiaPrimaRepository,
-                               ProductoTerminadoRepository productoTerminadoRepository) {
+                               ProductoTerminadoRepository productoTerminadoRepository,
+                               DespachoService despachoService) {
         this.materiaPrimaRepository = materiaPrimaRepository;
         this.productoTerminadoRepository = productoTerminadoRepository;
+        this.despachoService = despachoService;
     }
 
     @GetMapping("/stock")
@@ -29,8 +34,10 @@ public class DashboardController {
         List<MateriaPrimaResponse> materiasPrimas = materiaPrimaRepository.findAll().stream()
                 .map(MateriaPrimaResponse::fromEntity)
                 .toList();
-        List<ProductoTerminadoResponse> productosTerminados = productoTerminadoRepository.findAll().stream()
-                .map(ProductoTerminadoResponse::fromEntity)
+        List<ProductoTerminado> pts = productoTerminadoRepository.findAll();
+        List<ProductoTerminadoResponse> productosTerminados = pts.stream()
+                .map(pt -> ProductoTerminadoResponse.fromEntity(pt,
+                        despachoService.calcularStockDespachado(pt.getId())))
                 .toList();
 
         List<MateriaPrimaResponse> alertasMP = materiasPrimas.stream()

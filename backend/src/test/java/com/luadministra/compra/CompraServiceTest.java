@@ -65,7 +65,7 @@ class CompraServiceTest {
         when(materiaPrimaRepository.findById(1L)).thenReturn(Optional.of(mp));
         when(compraRepository.save(any())).thenReturn(saved);
 
-        CompraRequest request = new CompraRequest(1L, LocalDate.now(), 5.0, 100.0, null, null);
+        CompraRequest request = new CompraRequest(1L, LocalDate.now(), 5.0, 100.0, null, null, null);
         service.crear(request);
 
         assertEquals(15.0, mp.getStockActual());
@@ -76,7 +76,7 @@ class CompraServiceTest {
     void crear_cuandoMPNoExiste_lanzaExcepcion() {
         when(materiaPrimaRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
-                () -> service.crear(new CompraRequest(99L, LocalDate.now(), 5.0, 100.0, null, null)));
+                () -> service.crear(new CompraRequest(99L, LocalDate.now(), 5.0, 100.0, null, null, null)));
     }
 
     @Test

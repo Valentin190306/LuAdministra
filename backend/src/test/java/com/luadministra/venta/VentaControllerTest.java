@@ -86,7 +86,7 @@ class VentaControllerTest {
 
         String body = mapper.writeValueAsString(new VentaRequest(
                 LocalDate.of(2025, 6, 1),
-                List.of(new LineaVentaRequest(1L, 5.0))));
+                List.of(new LineaVentaRequest(1L, 5.0, null))));
 
         mockMvc.perform(post("/api/ventas")
                         .contentType(MediaType.APPLICATION_JSON)

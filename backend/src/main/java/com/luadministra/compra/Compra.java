@@ -31,6 +31,7 @@ public class Compra {
 
     private @Nullable String lugar;
     private @Nullable String url;
+    private @Nullable String mlId;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -52,4 +53,7 @@ public class Compra {
 
     public @Nullable String getUrl() { return url; }
     public void setUrl(@Nullable String url) { this.url = url; }
+
+    public @Nullable String getMlId() { return mlId; }
+    public void setMlId(@Nullable String mlId) { this.mlId = mlId; }
 }

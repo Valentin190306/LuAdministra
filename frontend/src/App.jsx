@@ -9,6 +9,9 @@ import CategoriasPT from './pages/CategoriasPT';
 import Recetas from './pages/Recetas';
 import Produccion from './pages/Produccion';
 import Ventas from './pages/Ventas';
+import Colaboradoras from './pages/Colaboradoras';
+import Despachos from './pages/Despachos';
+import PreciosML from './pages/PreciosML';
 
 export default function App() {
   return (
@@ -24,6 +27,9 @@ export default function App() {
         <Route path="/recetas" element={<Recetas />} />
         <Route path="/produccion" element={<Produccion />} />
         <Route path="/ventas" element={<Ventas />} />
+        <Route path="/colaboradoras" element={<Colaboradoras />} />
+        <Route path="/despachos" element={<Despachos />} />
+        <Route path="/precios-ml" element={<PreciosML />} />
       </Route>
     </Routes>
   );

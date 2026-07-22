@@ -135,6 +135,7 @@ class RecetaServiceTest {
 
     @Test
     void eliminar_borraPorId() {
+        when(repository.existsById(1L)).thenReturn(true);
         service.eliminar(1L);
         verify(repository).deleteById(1L);
     }

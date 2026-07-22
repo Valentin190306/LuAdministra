@@ -12,6 +12,7 @@ import styles from './Recetas.module.css';
 export default function Recetas() {
   const { data: ptList, loading: ptLoading } = useApi('/productos-terminados');
   const { data: mpList } = useApi('/materias-primas');
+  const { data: allRecipes } = useApi('/recetas');
 
   const [recipeMap, setRecipeMap] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
@@ -32,6 +33,14 @@ export default function Recetas() {
       return null;
     }
   }, []);
+
+  useEffect(() => {
+    if (!allRecipes) return;
+    setRecipeMap((prev) => {
+      const map = Object.fromEntries(allRecipes.map((r) => [r.productoTerminadoId, r]));
+      return { ...prev, ...map };
+    });
+  }, [allRecipes]);
 
   function openModal(pt) {
     setCreatingNew(false);

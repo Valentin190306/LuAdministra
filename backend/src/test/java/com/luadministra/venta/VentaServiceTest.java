@@ -71,7 +71,7 @@ class VentaServiceTest {
 
         when(ventaRepository.save(any())).thenReturn(saved);
 
-        VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 3.0)));
+        VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 3.0, null)));
         VentaResponse result = service.crear(request);
 
         assertEquals(7.0, pt.getStockActual());
@@ -88,7 +88,7 @@ class VentaServiceTest {
 
         when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
 
-        VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 5.0)));
+        VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 5.0, null)));
         assertThrows(StockInsuficienteException.class, () -> service.crear(request));
         verify(ventaRepository, never()).save(any());
     }
@@ -97,7 +97,7 @@ class VentaServiceTest {
     void crear_cuandoProductoNoExiste_lanzaExcepcion() {
         when(productoTerminadoRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
-                () -> service.crear(new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(99L, 1.0)))));
+                () -> service.crear(new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(99L, 1.0, null)))));
     }
 
     @Test
@@ -123,7 +123,7 @@ class VentaServiceTest {
 
         when(ventaRepository.save(any())).thenReturn(saved);
 
-        VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 3.0)));
+        VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 3.0, null)));
         VentaResponse result = service.crear(request);
 
         assertEquals(2500.0, result.lineas().get(0).precioUnitario());
@@ -158,8 +158,8 @@ class VentaServiceTest {
         when(ventaRepository.save(any())).thenReturn(saved);
 
         VentaRequest request = new VentaRequest(LocalDate.now(), List.of(
-                new LineaVentaRequest(1L, 3.0),
-                new LineaVentaRequest(2L, 2.0)
+                new LineaVentaRequest(1L, 3.0, null),
+                new LineaVentaRequest(2L, 2.0, null)
         ));
         VentaResponse result = service.crear(request);
 

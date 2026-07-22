@@ -35,7 +35,7 @@ class ProductoTerminadoControllerTest {
     void listar_retorna200() throws Exception {
         when(service.listar(eq("Jabón"), eq(1L), eq("nombre"), eq("asc")))
                 .thenReturn(List.of(new ProductoTerminadoResponse(
-                        1L, "Jabón de Lavanda", 2000.0, 0.0, null, null, null)));
+                        1L, "Jabón de Lavanda", 2000.0, 0.0, 0.0, null, null, null)));
 
         mockMvc.perform(get("/api/productos-terminados")
                         .param("nombre", "Jabón")
@@ -49,7 +49,7 @@ class ProductoTerminadoControllerTest {
     @Test
     void obtener_retorna200() throws Exception {
         when(service.obtener(1L)).thenReturn(new ProductoTerminadoResponse(
-                1L, "Jabón de Lavanda", 2000.0, 0.0, null, null, null));
+                1L, "Jabón de Lavanda", 2000.0, 0.0, 0.0, null, null, null));
 
         mockMvc.perform(get("/api/productos-terminados/1"))
                 .andExpect(status().isOk())
@@ -79,7 +79,7 @@ class ProductoTerminadoControllerTest {
     @Test
     void crear_retorna200() throws Exception {
         when(service.crear(any())).thenReturn(new ProductoTerminadoResponse(
-                1L, "Jabón de Lavanda", 2000.0, 0.0, null, null, null));
+                1L, "Jabón de Lavanda", 2000.0, 0.0, 0.0, null, null, null));
 
         String body = mapper.writeValueAsString(new ProductoTerminadoRequest("Jabón de Lavanda", 2000.0, null, null, null));
 

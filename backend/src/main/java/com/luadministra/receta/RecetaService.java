@@ -9,6 +9,8 @@ import com.luadministra.productoterminado.ProductoTerminadoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 
 @Service
 public class RecetaService {
@@ -78,7 +80,17 @@ public class RecetaService {
         return RecetaResponse.fromEntity(repository.save(receta));
     }
 
+    public List<RecetaResponse> obtenerTodas() {
+        return repository.findAll().stream()
+                .map(RecetaResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional
     public void eliminar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RecursoNoEncontradoException("Receta no encontrada");
+        }
         repository.deleteById(id);
     }
 }

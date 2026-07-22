@@ -48,7 +48,6 @@ export default function MateriasPrimas() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
@@ -161,6 +160,8 @@ export default function MateriasPrimas() {
           <option value="nombre">Ordenar por nombre</option>
           <option value="stockActual">Ordenar por stock</option>
           <option value="unidadMedida">Ordenar por unidad</option>
+          <option value="ultimaCompraFecha">Ordenar por última compra (fecha)</option>
+          <option value="ultimaCompraPrecio">Ordenar por última compra (precio)</option>
         </select>
         <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
           {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}

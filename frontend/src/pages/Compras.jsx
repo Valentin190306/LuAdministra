@@ -15,7 +15,12 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '' };
+function extractMlId(input) {
+  const match = input.match(/M[A-Z]{2,}\d+/);
+  return match ? match[0] : input;
+}
+
+const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '', mlId: '' };
 
 export default function Compras() {
   const { data: materiasPrimas } = useApi('/materias-primas');
@@ -34,6 +39,9 @@ export default function Compras() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [consultandoML, setConsultandoML] = useState(null);
+  const [mlHistory, setMlHistory] = useState(null);
+  const [historialModalOpen, setHistorialModalOpen] = useState(false);
 
   const mpOptions = useMemo(() => {
     if (!materiasPrimas) return [];
@@ -57,6 +65,7 @@ export default function Compras() {
         precio: Number(form.precio),
         lugar: form.lugar.trim() || null,
         url: form.url.trim() || null,
+        mlId: form.mlId.trim() || null,
       };
       await api.post('/compras', body);
       setModalOpen(false);
@@ -76,6 +85,19 @@ export default function Compras() {
       refetch();
     } catch (err) {
       alert(err.message);
+    }
+  }
+
+  async function consultarML(row) {
+    setConsultandoML(row.id);
+    try {
+      const result = await api.post(`/compras/${row.id}/consultar-precio-ml`);
+      alert(`Precio de referencia ML: $${result.precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })} (${new Date(result.fechaHora).toLocaleString()})`);
+      refetch();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setConsultandoML(null);
     }
   }
 
@@ -99,11 +121,30 @@ export default function Compras() {
       label: 'Link',
       render: (r) => r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer">🔗 Abrir</a> : '—',
     },
+    { key: 'mlId', label: 'ML ID', render: (r) => r.mlId ?? '—' },
     {
       key: 'acciones',
       label: '',
       render: (row) => (
-        <Button variant="ghost" onClick={() => setDeleteTarget(row)}>Eliminar</Button>
+        <div className={styles.actions}>
+          {row.mlId && (
+            <>
+              <Button variant="ghost" onClick={() => consultarML(row)} disabled={consultandoML === row.id}>
+                {consultandoML === row.id ? 'Consultando...' : 'Consultar ML'}
+              </Button>
+              <Button variant="ghost" onClick={async () => {
+                try {
+                  const result = await api.get(`/compras/${row.id}/consultas-ml`);
+                  setMlHistory({ compra: row, consultas: result });
+                  setHistorialModalOpen(true);
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}>Historial ML</Button>
+            </>
+          )}
+          <Button variant="ghost" onClick={() => setDeleteTarget(row)}>Eliminar</Button>
+        </div>
       ),
     },
   ];
@@ -124,6 +165,7 @@ export default function Compras() {
             { key: 'precio', label: 'Precio' },
             { key: 'lugar', label: 'Lugar' },
             { key: 'url', label: 'Link' },
+            { key: 'mlId', label: 'ML ID' },
           ], 'compras.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nueva Compra</Button>
         </div>
@@ -196,11 +238,29 @@ export default function Compras() {
           <FormField label="Link a la página del producto (opcional)">
             <input type="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://ejemplo.com/producto" />
           </FormField>
+          <FormField label="URL / ID de Mercado Libre (opcional)">
+            <input value={form.mlId} onChange={(e) => setForm({ ...form, mlId: extractMlId(e.target.value) })} placeholder="Pegá la URL del producto o el ID (ej. MLA123456789)" />
+          </FormField>
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={historialModalOpen} onClose={() => setHistorialModalOpen(false)} title={`Historial ML - ${mlHistory?.compra?.materiaPrimaNombre ?? ''}`}>
+        {mlHistory?.consultas?.length > 0 ? (
+          <div className={styles.historyGrid}>
+            {mlHistory.consultas.map((c) => (
+              <div key={c.id} className={styles.historyItem}>
+                <span className={styles.historyDate}>{new Date(c.fechaHora).toLocaleString()}</span>
+                <span className={styles.historyPrice}>${c.precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No hay consultas previas para esta compra.</p>
+        )}
       </Modal>
 
       <ConfirmDialog

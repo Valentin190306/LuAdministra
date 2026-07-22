@@ -5,6 +5,7 @@ public record ProductoTerminadoResponse(
         String nombre,
         Double precioVenta,
         Double stockActual,
+        Double stockDespachado,
         Double stockMinimo,
         Long categoriaId,
         String categoriaNombre
@@ -12,7 +13,16 @@ public record ProductoTerminadoResponse(
     public static ProductoTerminadoResponse fromEntity(ProductoTerminado pt) {
         return new ProductoTerminadoResponse(
                 pt.getId(), pt.getNombre(), pt.getPrecioVenta(),
-                pt.getStockActual(), pt.getStockMinimo(),
+                pt.getStockActual(), 0.0, pt.getStockMinimo(),
+                pt.getCategoria() != null ? pt.getCategoria().getId() : null,
+                pt.getCategoria() != null ? pt.getCategoria().getNombre() : null
+        );
+    }
+
+    public static ProductoTerminadoResponse fromEntity(ProductoTerminado pt, Double stockDespachado) {
+        return new ProductoTerminadoResponse(
+                pt.getId(), pt.getNombre(), pt.getPrecioVenta(),
+                pt.getStockActual(), stockDespachado, pt.getStockMinimo(),
                 pt.getCategoria() != null ? pt.getCategoria().getId() : null,
                 pt.getCategoria() != null ? pt.getCategoria().getNombre() : null
         );

@@ -69,6 +69,11 @@
   margin-top: var(--spacing-sm);
 }
 
+.actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
 .priceHistory {
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);

@@ -1,5 +1,7 @@
 package com.luadministra.productoterminado;
 
+import com.luadministra.categoriaproductoterminado.CategoriaProductoTerminadoRepository;
+import com.luadministra.despacho.DespachoService;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,10 +13,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,13 +24,22 @@ class ProductoTerminadoServiceTest {
     @Mock
     private ProductoTerminadoRepository repository;
 
+    @Mock
+    private DespachoService despachoService;
+
+    @Mock
+    private CategoriaProductoTerminadoRepository categoriaRepository;
+
     @InjectMocks
     private ProductoTerminadoService service;
 
     @Test
     void listar_devuelveTodos() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
         when(repository.findAll(any(org.springframework.data.domain.Sort.class)))
-                .thenReturn(List.of(new ProductoTerminado()));
+                .thenReturn(List.of(pt));
+        when(despachoService.calcularStockDespachado(1L)).thenReturn(0.0);
         assertEquals(1, service.listar(null, null, null, null).size());
     }
 
@@ -44,11 +54,14 @@ class ProductoTerminadoServiceTest {
     void listar_filtraPorNombre() {
         ProductoTerminado jabon = new ProductoTerminado();
         jabon.setNombre("Jabón de Lavanda");
+        jabon.setId(1L);
         ProductoTerminado shampoo = new ProductoTerminado();
         shampoo.setNombre("Shampoo");
+        shampoo.setId(2L);
 
         when(repository.findAll(any(org.springframework.data.domain.Sort.class)))
                 .thenReturn(List.of(jabon, shampoo));
+        when(despachoService.calcularStockDespachado(anyLong())).thenReturn(0.0);
 
         List<ProductoTerminadoResponse> result = service.listar("Jabón", null, null, null);
         assertEquals(1, result.size());
@@ -83,6 +96,7 @@ class ProductoTerminadoServiceTest {
         pt.setPrecioVenta(2000.0);
 
         when(repository.findById(1L)).thenReturn(Optional.of(pt));
+        when(despachoService.calcularStockDespachado(1L)).thenReturn(0.0);
 
         ProductoTerminadoResponse result = service.obtener(1L);
         assertEquals("Jabón de Lavanda", result.nombre());

@@ -33,7 +33,7 @@ class CompraControllerTest {
         when(service.listar(anyInt(), anyInt(), eq("fecha"), eq("desc")))
                 .thenReturn(new PaginatedResponse<>(List.of(new CompraResponse(
                         1L, 1L, "Aceite de Coco",
-                        LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan", null)), 0, 50, 1, 1));
+                        LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan", null, null)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/compras")
                         .param("sortBy", "fecha")
@@ -46,7 +46,7 @@ class CompraControllerTest {
     void obtener_retorna200() throws Exception {
         when(service.obtener(1L)).thenReturn(new CompraResponse(
                 1L, 1L, "Aceite de Coco",
-                LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan", null));
+                LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan", null, null));
 
         mockMvc.perform(get("/api/compras/1"))
                 .andExpect(status().isOk())
@@ -66,7 +66,7 @@ class CompraControllerTest {
         when(service.listarPorMateriaPrima(eq(1L), anyInt(), anyInt(), eq("fecha"), eq("desc")))
                 .thenReturn(new PaginatedResponse<>(List.of(new CompraResponse(
                         1L, 1L, "Aceite de Coco",
-                        LocalDate.of(2025, 6, 15), 500.0, 2500.0, "Juan", null)), 0, 50, 1, 1));
+                        LocalDate.of(2025, 6, 15), 500.0, 2500.0, "Juan", null, null)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/compras/materia-prima/1")
                         .param("sortBy", "fecha")

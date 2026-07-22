@@ -34,7 +34,8 @@ export default function Dashboard() {
           <Button variant="ghost" onClick={() => downloadCSV(productosTerminados, [
             { key: 'nombre', label: 'Nombre' },
             { key: 'precioVenta', label: 'Precio Venta' },
-            { key: 'stockActual', label: 'Stock Actual' },
+            { key: 'stockActual', label: 'En Depósito' },
+            { key: 'stockDespachado', label: 'Despachado' },
             { key: 'stockMinimo', label: 'Stock Mínimo' },
           ], 'productos-terminados.csv')}>Exportar PT</Button>
         </div>
@@ -70,7 +71,7 @@ export default function Dashboard() {
             <div key={pt.id} className={styles.alert}>
               <span className={styles.alertType}>PT</span>
               <span>{pt.nombre}</span>
-              <span className={styles.alertStock}>{pt.stockActual} u</span>
+              <span className={styles.alertStock}>{pt.stockActual - (pt.stockDespachado ?? 0)} u (depósito)</span>
               <span className={styles.alertMin}>(mín: {pt.stockMinimo})</span>
             </div>
           ))}
@@ -111,20 +112,25 @@ export default function Dashboard() {
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th>Stock</th>
+                <th>En Depósito</th>
+                <th>Despachado</th>
                 <th>Precio</th>
                 <th>Mínimo</th>
               </tr>
             </thead>
             <tbody>
-              {productosTerminados.map((pt) => (
-                <tr key={pt.id} className={pt.stockMinimo != null && pt.stockActual < pt.stockMinimo ? styles.lowStockRow : undefined}>
+              {productosTerminados.map((pt) => {
+                const enDeposito = pt.stockActual - (pt.stockDespachado ?? 0);
+                return (
+                <tr key={pt.id} className={pt.stockMinimo != null && enDeposito < pt.stockMinimo ? styles.lowStockRow : undefined}>
                   <td>{pt.nombre}</td>
-                  <td>{pt.stockActual}</td>
+                  <td>{enDeposito}</td>
+                  <td>{pt.stockDespachado ?? 0}</td>
                   <td>${pt.precioVenta.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                   <td>{pt.stockMinimo ?? '—'}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           </div>

@@ -1,0 +1,13 @@
+package com.luadministra.rendicion;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface RendicionRepository extends JpaRepository<Rendicion, Long> {
+
+    List<Rendicion> findByDespachoId(Long despachoId);
+    Page<Rendicion> findByDespachoId(Long despachoId, Pageable pageable);
+}

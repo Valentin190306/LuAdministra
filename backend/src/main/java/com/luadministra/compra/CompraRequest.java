@@ -10,5 +10,6 @@ public record CompraRequest(
         @NotNull Double cantidad,
         @NotNull Double precio,
         @Nullable String lugar,
-        @Nullable String url
+        @Nullable String url,
+        @Nullable String mlId
 ) {}

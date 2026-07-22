@@ -1,6 +1,7 @@
 package com.luadministra.productoterminado;
 
 import com.luadministra.categoriaproductoterminado.CategoriaProductoTerminadoRepository;
+import com.luadministra.despacho.DespachoService;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -12,10 +13,14 @@ public class ProductoTerminadoService {
 
     private final ProductoTerminadoRepository repository;
     private final CategoriaProductoTerminadoRepository categoriaRepository;
+    private final DespachoService despachoService;
 
-    public ProductoTerminadoService(ProductoTerminadoRepository repository, CategoriaProductoTerminadoRepository categoriaRepository) {
+    public ProductoTerminadoService(ProductoTerminadoRepository repository,
+                                    CategoriaProductoTerminadoRepository categoriaRepository,
+                                    DespachoService despachoService) {
         this.repository = repository;
         this.categoriaRepository = categoriaRepository;
+        this.despachoService = despachoService;
     }
 
     public List<ProductoTerminadoResponse> listar(String nombre, Long categoriaId, String sortBy, String sortDir) {
@@ -28,13 +33,15 @@ public class ProductoTerminadoService {
         if (categoriaId != null) {
             stream = stream.filter(pt -> pt.getCategoria() != null && pt.getCategoria().getId().equals(categoriaId));
         }
-        return stream.map(ProductoTerminadoResponse::fromEntity).toList();
+        return stream.map(pt -> ProductoTerminadoResponse.fromEntity(pt,
+                despachoService.calcularStockDespachado(pt.getId()))).toList();
     }
 
     public ProductoTerminadoResponse obtener(Long id) {
-        return ProductoTerminadoResponse.fromEntity(
-                repository.findById(id)
-                        .orElseThrow(() -> new RecursoNoEncontradoException("Producto terminado no encontrado")));
+        ProductoTerminado pt = repository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto terminado no encontrado"));
+        return ProductoTerminadoResponse.fromEntity(pt,
+                despachoService.calcularStockDespachado(pt.getId()));
     }
 
     public ProductoTerminadoResponse crear(ProductoTerminadoRequest request) {

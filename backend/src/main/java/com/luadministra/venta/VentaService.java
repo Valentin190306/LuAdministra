@@ -74,7 +74,7 @@ public class VentaService {
             linea.setVenta(venta);
             linea.setProductoTerminado(pt);
             linea.setCantidad(lineaReq.cantidad());
-            linea.setPrecioUnitario(pt.getPrecioVenta());
+            linea.setPrecioUnitario(lineaReq.precioUnitario() != null ? lineaReq.precioUnitario() : pt.getPrecioVenta());
             lineas.add(linea);
         }
 

@@ -19,9 +19,11 @@ const sections = [
     label: 'Operaciones',
     links: [
       { to: '/compras', label: 'Compras', icon: '🛒' },
+      { to: '/precios-ml', label: 'Precios ML', icon: '🏷️' },
       { to: '/recetas', label: 'Recetas', icon: '📝' },
       { to: '/produccion', label: 'Producción', icon: '⚙️' },
       { to: '/ventas', label: 'Ventas', icon: '💰' },
+      { to: '/despachos', label: 'Despachos', icon: '📤' },
     ],
   },
   {
@@ -29,6 +31,7 @@ const sections = [
     links: [
       { to: '/categorias-mp', label: 'Categorías MP', icon: '📁' },
       { to: '/categorias-pt', label: 'Categorías PT', icon: '📂' },
+      { to: '/colaboradoras', label: 'Colaboradoras', icon: '👤' },
     ],
   },
 ];
