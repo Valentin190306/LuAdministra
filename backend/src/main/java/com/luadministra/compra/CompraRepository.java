@@ -1,10 +1,9 @@
 package com.luadministra.compra;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.domain.Sort;
-
-import java.util.List;
 
 public interface CompraRepository extends JpaRepository<Compra, Long> {
-    List<Compra> findByMateriaPrimaId(Long materiaPrimaId, Sort sort);
+    Page<Compra> findByMateriaPrimaId(Long materiaPrimaId, Pageable pageable);
 }

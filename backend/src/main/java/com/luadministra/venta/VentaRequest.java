@@ -1,10 +1,11 @@
 package com.luadministra.venta;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.List;
 
 public record VentaRequest(
-        @NotNull Long productoTerminadoId,
         @NotNull LocalDate fecha,
-        @NotNull Double cantidad
+        @NotNull List<@Valid LineaVentaRequest> lineas
 ) {}

@@ -1,12 +1,12 @@
 import styles from './Table.module.css';
 
-export default function Table({ columns, data, onRowClick, emptyMessage = 'Sin datos' }) {
+export default function Table({ columns, data, onRowClick, emptyMessage = 'Sin datos', rowClassName, sentinelRef }) {
   if (!data || data.length === 0) {
     return <p className={styles.empty}>{emptyMessage}</p>;
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} ${sentinelRef ? styles.scrollWrapper : ''}`}>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -19,7 +19,7 @@ export default function Table({ columns, data, onRowClick, emptyMessage = 'Sin d
           {data.map((row, i) => (
             <tr
               key={row.id ?? i}
-              className={onRowClick ? styles.clickable : undefined}
+              className={[onRowClick ? styles.clickable : undefined, rowClassName?.(row, i)].filter(Boolean).join(' ') || undefined}
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((col) => (
@@ -31,6 +31,7 @@ export default function Table({ columns, data, onRowClick, emptyMessage = 'Sin d
           ))}
         </tbody>
       </table>
+      {sentinelRef && <div ref={sentinelRef} className={styles.sentinel} />}
     </div>
   );
 }

@@ -67,6 +67,7 @@ export default function CategoriasMP() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoriaPadreNombre', label: 'Categoría Padre', render: (r) => r.categoriaPadreNombre ?? '—' },
     {

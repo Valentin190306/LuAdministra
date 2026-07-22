@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -28,11 +29,16 @@ export default function Produccion() {
   const [desde, setDesde] = useState(monthAgo());
   const [hasta, setHasta] = useState(todayStr());
   const [usarPeriodo, setUsarPeriodo] = useState(false);
-  const apiPath = usarPeriodo
-    ? `/producciones/periodo?desde=${desde}&hasta=${hasta}`
-    : `/producciones?sortBy=${sortBy}&sortDir=${sortDir}`;
-  const { data, loading, error, refetch } = useApi(apiPath);
   const { data: ptList } = useApi('/productos-terminados');
+
+  const buildUrl = useCallback((page, size) => {
+    if (usarPeriodo) {
+      return `/producciones/periodo?desde=${desde}&hasta=${hasta}&page=${page}&size=${size}`;
+    }
+    return `/producciones?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`;
+  }, [sortBy, sortDir, usarPeriodo, desde, hasta]);
+
+  const { data, loading, hasMore, error, sentinelRef, refetch } = useInfiniteScroll(buildUrl);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -75,6 +81,7 @@ export default function Produccion() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'productoTerminadoNombre', label: 'Producto Terminado' },
     { key: 'fecha', label: 'Fecha' },
     {
@@ -92,7 +99,7 @@ export default function Produccion() {
   ];
 
   if (loading && !data) return <Loading />;
-  if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+  if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
 
   return (
     <div>
@@ -100,6 +107,7 @@ export default function Produccion() {
         <h1 className={styles.pageTitle}>Producción</h1>
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'id', label: 'ID' },
             { key: 'productoTerminadoNombre', label: 'Producto Terminado' },
             { key: 'fecha', label: 'Fecha' },
             { key: 'cantidadFabricada', label: 'Cantidad Fabricada' },
@@ -140,7 +148,11 @@ export default function Produccion() {
         )}
       </div>
 
-      <Table columns={columns} data={data} emptyMessage="No hay producciones registradas." />
+      {error && <p className={styles.errorMsg}>Error: {error.message}</p>}
+
+      <Table columns={columns} data={data ?? []} sentinelRef={sentinelRef} emptyMessage="No hay producciones registradas." />
+
+      {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Registrar Producción">
         <form onSubmit={handleSave} className={styles.form}>

@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -14,16 +15,20 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '' };
+const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '' };
 
 export default function Compras() {
   const { data: materiasPrimas } = useApi('/materias-primas');
   const [filterMpId, setFilterMpId] = useState('');
   const [sortBy, setSortBy] = useState('fecha');
   const [sortDir, setSortDir] = useState('desc');
-  const sortParams = { sortBy, sortDir };
-  const filterPath = filterMpId ? `/compras/materia-prima/${filterMpId}` : '/compras';
-  const { data, loading, error, refetch } = useApi(filterPath, sortParams);
+
+  const buildUrl = useCallback((page, size) => {
+    const base = filterMpId ? `/compras/materia-prima/${filterMpId}` : '/compras';
+    return `${base}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`;
+  }, [filterMpId, sortBy, sortDir]);
+
+  const { data, loading, hasMore, error, sentinelRef, refetch } = useInfiniteScroll(buildUrl);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -51,6 +56,7 @@ export default function Compras() {
         cantidad: Number(form.cantidad),
         precio: Number(form.precio),
         lugar: form.lugar.trim() || null,
+        url: form.url.trim() || null,
       };
       await api.post('/compras', body);
       setModalOpen(false);
@@ -74,6 +80,7 @@ export default function Compras() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'materiaPrimaNombre', label: 'Materia Prima' },
     { key: 'fecha', label: 'Fecha' },
     {
@@ -88,6 +95,11 @@ export default function Compras() {
     },
     { key: 'lugar', label: 'Lugar', render: (r) => r.lugar ?? '—' },
     {
+      key: 'url',
+      label: 'Link',
+      render: (r) => r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer">🔗 Abrir</a> : '—',
+    },
+    {
       key: 'acciones',
       label: '',
       render: (row) => (
@@ -97,7 +109,7 @@ export default function Compras() {
   ];
 
   if (loading && !data) return <Loading />;
-  if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+  if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
 
   return (
     <div>
@@ -105,11 +117,13 @@ export default function Compras() {
         <h1 className={styles.pageTitle}>Compras</h1>
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'id', label: 'ID' },
             { key: 'materiaPrimaNombre', label: 'Materia Prima' },
             { key: 'fecha', label: 'Fecha' },
             { key: 'cantidad', label: 'Cantidad' },
             { key: 'precio', label: 'Precio' },
             { key: 'lugar', label: 'Lugar' },
+            { key: 'url', label: 'Link' },
           ], 'compras.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nueva Compra</Button>
         </div>
@@ -134,7 +148,11 @@ export default function Compras() {
         </Button>
       </div>
 
-      <Table columns={columns} data={data} emptyMessage="No hay compras registradas." />
+      {error && <p className={styles.errorMsg}>Error: {error.message}</p>}
+
+      <Table columns={columns} data={data ?? []} sentinelRef={sentinelRef} emptyMessage="No hay compras registradas." />
+
+      {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
       {filterMpId && data && data.length > 0 && (
         <section className={styles.priceHistory}>
@@ -174,6 +192,9 @@ export default function Compras() {
           </div>
           <FormField label="Lugar / Proveedor (opcional)">
             <input value={form.lugar} onChange={(e) => setForm({ ...form, lugar: e.target.value })} placeholder="ej. Mercado Central" />
+          </FormField>
+          <FormField label="Link a la página del producto (opcional)">
+            <input type="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://ejemplo.com/producto" />
           </FormField>
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>

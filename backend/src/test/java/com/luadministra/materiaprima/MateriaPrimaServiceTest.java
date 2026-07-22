@@ -55,7 +55,7 @@ class MateriaPrimaServiceTest {
 
     @Test
     void crear_asignaStockCero() {
-        MateriaPrimaRequest request = new MateriaPrimaRequest("Manteca de Karite", "gramos", 100.0, null);
+        MateriaPrimaRequest request = new MateriaPrimaRequest("Manteca de Karite", "gramos", 100.0, null, null);
         MateriaPrima saved = new MateriaPrima();
         saved.setId(1L);
         saved.setNombre("Manteca de Karite");
@@ -105,7 +105,7 @@ class MateriaPrimaServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.of(existente));
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        MateriaPrimaResponse result = service.actualizar(1L, new MateriaPrimaRequest("Nuevo", "gramos", 50.0, null));
+        MateriaPrimaResponse result = service.actualizar(1L, new MateriaPrimaRequest("Nuevo", "gramos", null, 50.0, null));
 
         assertEquals("Nuevo", result.nombre());
         assertEquals("gramos", result.unidadMedida());
@@ -116,7 +116,7 @@ class MateriaPrimaServiceTest {
     void actualizar_cuandoNoExiste_lanzaExcepcion() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
-                () -> service.actualizar(99L, new MateriaPrimaRequest("Nada", "gramos", null, null)));
+                () -> service.actualizar(99L, new MateriaPrimaRequest("Nada", "gramos", null, null, null)));
     }
 
     @Test

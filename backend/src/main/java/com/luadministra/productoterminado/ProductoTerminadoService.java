@@ -56,6 +56,9 @@ public class ProductoTerminadoService {
         existente.setNombre(request.nombre());
         existente.setPrecioVenta(request.precioVenta());
         existente.setStockMinimo(request.stockMinimo());
+        if (request.stockActual() != null) {
+            existente.setStockActual(request.stockActual());
+        }
         if (request.categoriaId() != null) {
             existente.setCategoria(categoriaRepository.findById(request.categoriaId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Categoria no encontrada")));

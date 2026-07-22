@@ -10,6 +10,11 @@
   font-weight: 700;
 }
 
+.headerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
 .hint {
   font-size: 1.3rem;
   color: var(--color-text-secondary);

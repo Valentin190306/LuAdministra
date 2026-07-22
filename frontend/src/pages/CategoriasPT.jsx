@@ -67,6 +67,7 @@ export default function CategoriasPT() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoriaPadreNombre', label: 'Categoría Padre', render: (r) => r.categoriaPadreNombre ?? '—' },
     {
@@ -87,7 +88,7 @@ export default function CategoriasPT() {
   return (
     <div>
       <div className={styles.header}>
-        <h1 className={styles.pageTitle}>Categorías de Productos Terminados</h1>
+        <h1 className={styles.pageTitle}>Categorías de Productos</h1>
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => downloadCSV(data, [
             { key: 'nombre', label: 'Nombre' },

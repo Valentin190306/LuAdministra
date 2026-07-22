@@ -1,5 +1,6 @@
 package com.luadministra.produccion;
 
+import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.exception.StockInsuficienteException;
@@ -9,6 +10,9 @@ import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
 import com.luadministra.receta.Receta;
 import com.luadministra.receta.RecetaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,18 +38,20 @@ public class ProduccionService {
         this.materiaPrimaRepository = materiaPrimaRepository;
     }
 
-    public List<ProduccionResponse> listar(String sortBy, String sortDir) {
+    public PaginatedResponse<ProduccionResponse> listar(int page, int size, String sortBy, String sortDir) {
         Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "fecha");
-        return produccionRepository.findAll(sort).stream()
-                .map(ProduccionResponse::fromEntity)
-                .toList();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Produccion> produccionPage = produccionRepository.findAll(pageable);
+        List<ProduccionResponse> content = produccionPage.stream().map(ProduccionResponse::fromEntity).toList();
+        return PaginatedResponse.from(produccionPage, content);
     }
 
-    public List<ProduccionResponse> listarPorPeriodo(LocalDate desde, LocalDate hasta) {
-        return produccionRepository.findByFechaBetweenOrderByFechaDesc(desde, hasta).stream()
-                .map(ProduccionResponse::fromEntity)
-                .toList();
+    public PaginatedResponse<ProduccionResponse> listarPorPeriodo(LocalDate desde, LocalDate hasta, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha"));
+        Page<Produccion> produccionPage = produccionRepository.findByFechaBetween(desde, hasta, pageable);
+        List<ProduccionResponse> content = produccionPage.stream().map(ProduccionResponse::fromEntity).toList();
+        return PaginatedResponse.from(produccionPage, content);
     }
 
     public ProduccionResponse obtener(Long id) {

@@ -67,3 +67,119 @@
   background: var(--color-surface);
 }
 
+.lineasContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.lineaRow {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+}
+
+.lineaRow > :first-child {
+  flex: 1;
+}
+
+.lineaRow > :last-child {
+  flex: 0 0 16rem;
+}
+
+.cantidadRow {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.cantidadRow input {
+  flex: 1;
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--color-danger);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeBtn:hover {
+  background: #fee2e2;
+  color: var(--color-danger-hover);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.loadingMore {
+  text-align: center;
+  font-size: 1.3rem;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-md);
+}
+
+.detailContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.detailTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.4rem;
+}
+
+.detailTable th,
+.detailTable td {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detailTable th {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detailTable th:last-child,
+.detailTable td:last-child {
+  text-align: right;
+}
+
+.detailTotal {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--color-text);
+}
+
+@media (max-width: 600px) {
+  .lineaRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--spacing-md);
+  }
+  .lineaRow > :last-child {
+    flex: none;
+    width: 100%;
+  }
+}

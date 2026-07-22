@@ -1,10 +1,9 @@
 package com.luadministra.compra;
 
+import com.luadministra.dto.PaginatedResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/compras")
@@ -17,18 +16,22 @@ public class CompraController {
     }
 
     @GetMapping
-    public List<CompraResponse> listar(
+    public PaginatedResponse<CompraResponse> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDir) {
-        return service.listar(sortBy, sortDir);
+        return service.listar(page, size, sortBy, sortDir);
     }
 
     @GetMapping("/materia-prima/{materiaPrimaId}")
-    public List<CompraResponse> listarPorMateriaPrima(
+    public PaginatedResponse<CompraResponse> listarPorMateriaPrima(
             @PathVariable Long materiaPrimaId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDir) {
-        return service.listarPorMateriaPrima(materiaPrimaId, sortBy, sortDir);
+        return service.listarPorMateriaPrima(materiaPrimaId, page, size, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")

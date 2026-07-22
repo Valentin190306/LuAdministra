@@ -10,7 +10,7 @@ import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
 import styles from './MateriasPrimas.module.css';
 
-const emptyForm = { nombre: '', unidadMedida: '', stockMinimo: '', categoriaId: '' };
+const emptyForm = { nombre: '', unidadMedida: '', stockActual: '', stockMinimo: '', categoriaId: '' };
 
 export default function MateriasPrimas() {
   const [data, setData] = useState(null);
@@ -57,7 +57,7 @@ export default function MateriasPrimas() {
 
   function openEdit(mp) {
     setEditing(mp);
-    setForm({ nombre: mp.nombre, unidadMedida: mp.unidadMedida, stockMinimo: mp.stockMinimo ?? '', categoriaId: mp.categoriaId ?? '' });
+    setForm({ nombre: mp.nombre, unidadMedida: mp.unidadMedida, stockActual: mp.stockActual ?? '', stockMinimo: mp.stockMinimo ?? '', categoriaId: mp.categoriaId ?? '' });
     setModalOpen(true);
   }
 
@@ -69,6 +69,7 @@ export default function MateriasPrimas() {
       const body = {
         nombre: form.nombre.trim(),
         unidadMedida: form.unidadMedida.trim(),
+        stockActual: form.stockActual === '' ? null : Number(form.stockActual),
         stockMinimo: form.stockMinimo === '' ? null : Number(form.stockMinimo),
         categoriaId: form.categoriaId === '' ? null : Number(form.categoriaId),
       };
@@ -98,6 +99,7 @@ export default function MateriasPrimas() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     { key: 'unidadMedida', label: 'Unidad de Medida' },
     {
@@ -194,6 +196,11 @@ export default function MateriasPrimas() {
               ))}
             </select>
           </FormField>
+          {editing && (
+            <FormField label="Stock Actual (override manual)">
+              <input type="number" step="any" min="0" value={form.stockActual} onChange={(e) => setForm({ ...form, stockActual: e.target.value })} placeholder="Dejar vacío para mantener el actual" />
+            </FormField>
+          )}
           <FormField label="Stock Mínimo (opcional)">
             <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => setForm({ ...form, stockMinimo: e.target.value })} />
           </FormField>

@@ -16,6 +16,8 @@ export default function Recetas() {
   const [recipeMap, setRecipeMap] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPt, setSelectedPt] = useState(null);
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [newPtId, setNewPtId] = useState('');
   const [detalles, setDetalles] = useState([]);
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
@@ -32,6 +34,8 @@ export default function Recetas() {
   }, []);
 
   function openModal(pt) {
+    setCreatingNew(false);
+    setNewPtId('');
     setSelectedPt(pt);
     loadRecipe(pt.id).then((recipe) => {
       if (recipe) {
@@ -43,6 +47,15 @@ export default function Recetas() {
       }
       setModalOpen(true);
     });
+  }
+
+  function openNewRecipe() {
+    setCreatingNew(true);
+    setSelectedPt(null);
+    setNewPtId('');
+    setDetalles([{ materiaPrimaId: '', cantidad: '' }]);
+    setNotas('');
+    setModalOpen(true);
   }
 
   function addDetalle() {
@@ -68,8 +81,9 @@ export default function Recetas() {
 
     setSaving(true);
     try {
+      const ptId = creatingNew ? Number(newPtId) : selectedPt.id;
       const body = {
-        productoTerminadoId: selectedPt.id,
+        productoTerminadoId: ptId,
         detalles: valid.map((d) => ({
           materiaPrimaId: Number(d.materiaPrimaId),
           cantidad: Number(d.cantidad),
@@ -77,7 +91,7 @@ export default function Recetas() {
         notas: notas.trim() || null,
       };
 
-      const existing = recipeMap[selectedPt.id];
+      const existing = !creatingNew && recipeMap[selectedPt.id];
       if (existing) {
         await api.put(`/recetas/${existing.id}`, body);
       } else {
@@ -85,7 +99,11 @@ export default function Recetas() {
       }
 
       setModalOpen(false);
-      await loadRecipe(selectedPt.id);
+      if (creatingNew) {
+        await loadRecipe(ptId);
+      } else {
+        await loadRecipe(selectedPt.id);
+      }
     } catch (err) {
       alert(err.message);
     } finally {
@@ -112,6 +130,7 @@ export default function Recetas() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Producto Terminado' },
     {
       key: 'receta',
@@ -144,7 +163,8 @@ export default function Recetas() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Recetas</h1>
-        <Button variant="ghost" onClick={() => {
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => {
           const flat = (ptList ?? []).map((pt) => {
             const r = recipeMap[pt.id];
             return {
@@ -156,7 +176,9 @@ export default function Recetas() {
             { key: 'producto', label: 'Producto Terminado' },
             { key: 'ingredientes', label: 'Ingredientes' },
           ], 'recetas.csv');
-        }}>Exportar CSV</Button>
+          }}>Exportar CSV</Button>
+          <Button onClick={openNewRecipe}>Nueva Receta</Button>
+        </div>
       </div>
 
       <p className={styles.hint}>Seleccioná un producto terminado para definir su receta (materias primas y cantidades necesarias).</p>
@@ -167,8 +189,18 @@ export default function Recetas() {
         emptyMessage="No hay productos terminados. Creá uno primero."
       />
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={selectedPt?.nombre ?? 'Receta'}>
+      <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setCreatingNew(false); }} title={creatingNew ? 'Nueva Receta' : (selectedPt?.nombre ?? 'Receta')}>
         <form onSubmit={handleSave} className={styles.form}>
+          {creatingNew && (
+            <FormField label="Producto Terminado">
+              <select value={newPtId} onChange={(e) => setNewPtId(e.target.value)} required>
+                <option value="">Seleccionar...</option>
+                {ptList?.map((pt) => (
+                  <option key={pt.id} value={pt.id}>{pt.nombre}</option>
+                ))}
+              </select>
+            </FormField>
+          )}
           <div className={styles.detalles}>
             {detalles.map((d, i) => (
               <div key={i} className={styles.detalleRow}>

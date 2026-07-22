@@ -67,3 +67,17 @@
   background: var(--color-surface);
 }
 
+.errorMsg {
+  color: var(--color-danger);
+  font-size: 1.4rem;
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.loadingMore {
+  text-align: center;
+  font-size: 1.3rem;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-md);
+}
+

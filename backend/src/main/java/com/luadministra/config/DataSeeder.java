@@ -15,6 +15,7 @@ import com.luadministra.productoterminado.ProductoTerminadoRepository;
 import com.luadministra.receta.Receta;
 import com.luadministra.receta.RecetaDetalle;
 import com.luadministra.receta.RecetaRepository;
+import com.luadministra.venta.LineaVenta;
 import com.luadministra.venta.Venta;
 import com.luadministra.venta.VentaRepository;
 
@@ -25,6 +26,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -61,8 +63,7 @@ public class DataSeeder {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void seed() {
-        if (materiaPrimaRepo.count() > 0)
-            return;
+        if (materiaPrimaRepo.count() > 0) return;
 
         var aceites = catMP("Aceites y Grasas", null);
         var esenciales = catMP("Aceites Esenciales", aceites);
@@ -117,28 +118,28 @@ public class DataSeeder {
         receta(balsamoLabial, "Envasar en caliente y dejar enfriar 24h antes de usar.",
                 det(mantecaCacao, 15.0), det(carnauba, 5.0), det(almendras, 10.0));
 
-        comprar(karite, LocalDate.of(2024, 7, 10), 1000.0, 1400.0, "Mercado Central");
-        comprar(karite, LocalDate.of(2025, 1, 15), 1000.0, 1500.0, "Mercado Central");
-        comprar(karite, LocalDate.of(2025, 3, 20), 1000.0, 1800.0, "Mercado Central");
-        comprar(karite, LocalDate.of(2025, 9, 5), 1000.0, 2200.0, "Distribuidora Química");
-        comprar(karite, LocalDate.of(2026, 2, 10), 1000.0, 2500.0, "Mercado Central");
-        comprar(coco, LocalDate.of(2025, 2, 1), 500.0, 800.0, "El Herbolario");
-        comprar(coco, LocalDate.of(2025, 8, 15), 500.0, 950.0, "El Herbolario");
-        comprar(coco, LocalDate.of(2026, 1, 20), 500.0, 1100.0, "El Herbolario");
-        comprar(bicarbonato, LocalDate.of(2025, 1, 10), 2000.0, 400.0, "Distribuidora Química");
-        comprar(bicarbonato, LocalDate.of(2025, 11, 20), 2000.0, 450.0, "Distribuidora Química");
-        comprar(menta, LocalDate.of(2025, 2, 15), 100.0, 2500.0, "Aromas Naturales");
-        comprar(menta, LocalDate.of(2025, 7, 1), 100.0, 2750.0, "Aromas Naturales");
-        comprar(arcilla, LocalDate.of(2025, 3, 1), 1000.0, 600.0, "El Herbolario");
-        comprar(arcilla, LocalDate.of(2025, 10, 10), 1000.0, 650.0, "El Herbolario");
-        comprar(carnauba, LocalDate.of(2025, 4, 15), 500.0, 1800.0, "Distribuidora Química");
-        comprar(oliva, LocalDate.of(2025, 5, 10), 500.0, 1200.0, null);
-        comprar(almendras, LocalDate.of(2025, 6, 1), 300.0, 1500.0, "El Herbolario");
-        comprar(lavanda, LocalDate.of(2025, 6, 15), 80.0, 3200.0, "Aromas Naturales");
-        comprar(mantecaCacao, LocalDate.of(2025, 7, 20), 500.0, 1600.0, "Mercado Central");
-        comprar(caliza, LocalDate.of(2025, 8, 1), 800.0, 350.0, "Distribuidora Química");
-        comprar(mantecaCacao, LocalDate.of(2026, 3, 5), 500.0, 1900.0, "El Herbolario");
-        comprar(lavanda, LocalDate.of(2026, 4, 1), 100.0, 3400.0, "Aromas Naturales");
+        comprar(karite, LocalDate.of(2024, 7, 10), 1000.0, 1400.0, "Mercado Central", null);
+        comprar(karite, LocalDate.of(2025, 1, 15), 1000.0, 1500.0, "Mercado Central", "https://mercadocentral.example.com/manteca-karite");
+        comprar(karite, LocalDate.of(2025, 3, 20), 1000.0, 1800.0, "Mercado Central", null);
+        comprar(karite, LocalDate.of(2025, 9, 5), 1000.0, 2200.0, "Distribuidora Química", "https://distribuidora-quimica.example.com/producto/123");
+        comprar(karite, LocalDate.of(2026, 2, 10), 1000.0, 2500.0, "Mercado Central", null);
+        comprar(coco, LocalDate.of(2025, 2, 1), 500.0, 800.0, "El Herbolario", null);
+        comprar(coco, LocalDate.of(2025, 8, 15), 500.0, 950.0, "El Herbolario", null);
+        comprar(coco, LocalDate.of(2026, 1, 20), 500.0, 1100.0, "El Herbolario", null);
+        comprar(bicarbonato, LocalDate.of(2025, 1, 10), 2000.0, 400.0, "Distribuidora Química", null);
+        comprar(bicarbonato, LocalDate.of(2025, 11, 20), 2000.0, 450.0, "Distribuidora Química", null);
+        comprar(menta, LocalDate.of(2025, 2, 15), 100.0, 2500.0, "Aromas Naturales", null);
+        comprar(menta, LocalDate.of(2025, 7, 1), 100.0, 2750.0, "Aromas Naturales", null);
+        comprar(arcilla, LocalDate.of(2025, 3, 1), 1000.0, 600.0, "El Herbolario", null);
+        comprar(arcilla, LocalDate.of(2025, 10, 10), 1000.0, 650.0, "El Herbolario", null);
+        comprar(carnauba, LocalDate.of(2025, 4, 15), 500.0, 1800.0, "Distribuidora Química", "https://distribuidora-quimica.example.com/cera-carnauba");
+        comprar(oliva, LocalDate.of(2025, 5, 10), 500.0, 1200.0, null, null);
+        comprar(almendras, LocalDate.of(2025, 6, 1), 300.0, 1500.0, "El Herbolario", null);
+        comprar(lavanda, LocalDate.of(2025, 6, 15), 80.0, 3200.0, "Aromas Naturales", "https://aromas-naturales.example.com/lavanda");
+        comprar(mantecaCacao, LocalDate.of(2025, 7, 20), 500.0, 1600.0, "Mercado Central", null);
+        comprar(caliza, LocalDate.of(2025, 8, 1), 800.0, 350.0, "Distribuidora Química", null);
+        comprar(mantecaCacao, LocalDate.of(2026, 3, 5), 500.0, 1900.0, "El Herbolario", null);
+        comprar(lavanda, LocalDate.of(2026, 4, 1), 100.0, 3400.0, "Aromas Naturales", "https://aromas-naturales.example.com/lavanda");
 
         producir(shampooNormal, LocalDate.of(2025, 3, 1), 10.0);
         producir(shampooGraso, LocalDate.of(2025, 3, 1), 5.0);
@@ -155,23 +156,28 @@ public class DataSeeder {
         producir(jabonFacial, LocalDate.of(2026, 2, 15), 10.0);
         producir(desodorante, LocalDate.of(2026, 3, 20), 8.0);
 
-        vender(shampooNormal, LocalDate.of(2025, 3, 15), 2.0);
-        vender(desodorante, LocalDate.of(2025, 3, 15), 3.0);
-        vender(shampooGraso, LocalDate.of(2025, 3, 20), 2.0);
-        vender(pastaDental, LocalDate.of(2025, 3, 22), 1.0);
-        vender(jabonFacial, LocalDate.of(2025, 4, 5), 2.0);
-        vender(shampooNormal, LocalDate.of(2025, 6, 15), 3.0);
-        vender(desodorante, LocalDate.of(2025, 7, 20), 2.0);
-        vender(shampooNormal, LocalDate.of(2025, 9, 1), 1.5);
-        vender(shampooSeco, LocalDate.of(2025, 9, 10), 2.0);
-        vender(balsamoLabial, LocalDate.of(2025, 9, 15), 4.0);
-        vender(pastaDental, LocalDate.of(2025, 11, 15), 3.0);
-        vender(shampooGraso, LocalDate.of(2025, 12, 5), 1.0);
-        vender(shampooSeco, LocalDate.of(2026, 1, 20), 2.5);
-        vender(shampooNormal, LocalDate.of(2026, 2, 1), 3.0);
-        vender(balsamoLabial, LocalDate.of(2026, 3, 10), 3.0);
-        vender(jabonFacial, LocalDate.of(2026, 4, 5), 2.0);
-        vender(desodorante, LocalDate.of(2026, 4, 15), 3.0);
+        vender(LocalDate.of(2025, 3, 15), item(shampooNormal, 2.0), item(desodorante, 3.0));
+        vender(LocalDate.of(2025, 3, 20), item(shampooGraso, 2.0));
+        vender(LocalDate.of(2025, 3, 22), item(pastaDental, 1.0));
+        vender(LocalDate.of(2025, 4, 5), item(jabonFacial, 2.0));
+        vender(LocalDate.of(2025, 6, 15), item(shampooNormal, 3.0));
+        vender(LocalDate.of(2025, 7, 20), item(desodorante, 2.0));
+        vender(LocalDate.of(2025, 9, 1), item(shampooNormal, 1.5));
+        vender(LocalDate.of(2025, 9, 10), item(shampooSeco, 2.0));
+        vender(LocalDate.of(2025, 9, 15), item(balsamoLabial, 4.0));
+        vender(LocalDate.of(2025, 11, 15), item(pastaDental, 3.0));
+        vender(LocalDate.of(2025, 12, 5), item(shampooGraso, 1.0));
+        vender(LocalDate.of(2026, 1, 20), item(shampooSeco, 2.5));
+        vender(LocalDate.of(2026, 2, 1), item(shampooNormal, 3.0), item(balsamoLabial, 2.0));
+        vender(LocalDate.of(2026, 3, 10), item(balsamoLabial, 3.0));
+        vender(LocalDate.of(2026, 4, 5), item(jabonFacial, 2.0), item(desodorante, 2.0));
+        vender(LocalDate.of(2026, 4, 15), item(desodorante, 1.0), item(pastaDental, 2.0), item(shampooNormal, 2.0));
+    }
+
+    private record VentaItem(ProductoTerminado pt, double cantidad) {}
+
+    private VentaItem item(ProductoTerminado pt, double cantidad) {
+        return new VentaItem(pt, cantidad);
     }
 
     private CategoriaMateriaPrima catMP(String nombre, CategoriaMateriaPrima padre) {
@@ -225,13 +231,14 @@ public class DataSeeder {
         recetaRepo.save(r);
     }
 
-    private void comprar(MateriaPrima mp, LocalDate fecha, double cantidad, double precio, String lugar) {
+    private void comprar(MateriaPrima mp, LocalDate fecha, double cantidad, double precio, String lugar, String url) {
         var c = new Compra();
         c.setMateriaPrima(mp);
         c.setFecha(fecha);
         c.setCantidad(cantidad);
         c.setPrecio(precio);
         c.setLugar(lugar);
+        c.setUrl(url);
         compraRepo.save(c);
     }
 
@@ -243,12 +250,19 @@ public class DataSeeder {
         produccionRepo.save(p);
     }
 
-    private void vender(ProductoTerminado pt, LocalDate fecha, double cantidad) {
+    private void vender(LocalDate fecha, VentaItem... items) {
         var v = new Venta();
-        v.setProductoTerminado(pt);
         v.setFecha(fecha);
-        v.setCantidad(cantidad);
-        v.setPrecioUnitario(pt.getPrecioVenta());
+        var lineas = new ArrayList<LineaVenta>();
+        for (var i : items) {
+            var l = new LineaVenta();
+            l.setVenta(v);
+            l.setProductoTerminado(i.pt());
+            l.setCantidad(i.cantidad());
+            l.setPrecioUnitario(i.pt().getPrecioVenta());
+            lineas.add(l);
+        }
+        v.setLineas(lineas);
         ventaRepo.save(v);
     }
 }

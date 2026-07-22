@@ -10,7 +10,7 @@ import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
 import styles from './ProductosTerminados.module.css';
 
-const emptyForm = { nombre: '', precioVenta: '', stockMinimo: '', categoriaId: '' };
+const emptyForm = { nombre: '', precioVenta: '', stockActual: '', stockMinimo: '', categoriaId: '' };
 
 export default function ProductosTerminados() {
   const [data, setData] = useState(null);
@@ -57,7 +57,7 @@ export default function ProductosTerminados() {
 
   function openEdit(pt) {
     setEditing(pt);
-    setForm({ nombre: pt.nombre, precioVenta: String(pt.precioVenta), stockMinimo: pt.stockMinimo ?? '', categoriaId: pt.categoriaId ?? '' });
+    setForm({ nombre: pt.nombre, precioVenta: String(pt.precioVenta), stockActual: pt.stockActual ?? '', stockMinimo: pt.stockMinimo ?? '', categoriaId: pt.categoriaId ?? '' });
     setModalOpen(true);
   }
 
@@ -69,6 +69,7 @@ export default function ProductosTerminados() {
       const body = {
         nombre: form.nombre.trim(),
         precioVenta: Number(form.precioVenta),
+        stockActual: form.stockActual === '' ? null : Number(form.stockActual),
         stockMinimo: form.stockMinimo === '' ? null : Number(form.stockMinimo),
         categoriaId: form.categoriaId === '' ? null : Number(form.categoriaId),
       };
@@ -98,6 +99,7 @@ export default function ProductosTerminados() {
   }
 
   const columns = [
+    { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     {
       key: 'precioVenta',
@@ -187,6 +189,11 @@ export default function ProductosTerminados() {
               ))}
             </select>
           </FormField>
+          {editing && (
+            <FormField label="Stock Actual (override manual)">
+              <input type="number" step="any" min="0" value={form.stockActual} onChange={(e) => setForm({ ...form, stockActual: e.target.value })} placeholder="Dejar vacío para mantener el actual" />
+            </FormField>
+          )}
           <FormField label="Stock Mínimo (opcional)">
             <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => setForm({ ...form, stockMinimo: e.target.value })} />
           </FormField>

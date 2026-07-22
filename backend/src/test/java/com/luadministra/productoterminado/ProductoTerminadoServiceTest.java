@@ -66,7 +66,7 @@ class ProductoTerminadoServiceTest {
         when(repository.save(any())).thenReturn(saved);
 
         ProductoTerminadoResponse result = service.crear(
-                new ProductoTerminadoRequest("Shampoo cabello graso", 500.0, null, null));
+                new ProductoTerminadoRequest("Shampoo cabello graso", 500.0, null, null, null));
 
         assertEquals(0.0, result.stockActual());
 
@@ -106,7 +106,7 @@ class ProductoTerminadoServiceTest {
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         ProductoTerminadoResponse result = service.actualizar(1L,
-                new ProductoTerminadoRequest("Modificado", 2500.0, null, null));
+                new ProductoTerminadoRequest("Modificado", 2500.0, null, null, null));
 
         assertEquals("Modificado", result.nombre());
         assertEquals(2500.0, result.precioVenta());
@@ -116,7 +116,7 @@ class ProductoTerminadoServiceTest {
     void actualizar_cuandoNoExiste_lanzaExcepcion() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
-                () -> service.actualizar(99L, new ProductoTerminadoRequest("Nada", 0.0, null, null)));
+                () -> service.actualizar(99L, new ProductoTerminadoRequest("Nada", 0.0, null, null, null)));
     }
 
     @Test

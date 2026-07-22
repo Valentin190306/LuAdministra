@@ -9,11 +9,12 @@ public record CompraResponse(
         LocalDate fecha,
         Double cantidad,
         Double precio,
-        String lugar
+        String lugar,
+        String url
 ) {
      public static CompraResponse fromEntity(Compra c) {
         return new CompraResponse(c.getId(), c.getMateriaPrima().getId(),
                 c.getMateriaPrima().getNombre(), c.getFecha(),
-                c.getCantidad(), c.getPrecio(), c.getLugar());
+                c.getCantidad(), c.getPrecio(), c.getLugar(), c.getUrl());
     }
 }

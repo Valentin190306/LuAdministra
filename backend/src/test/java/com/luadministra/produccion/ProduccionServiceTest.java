@@ -1,10 +1,12 @@
 package com.luadministra.produccion;
 
+import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.exception.StockInsuficienteException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
+import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
 import com.luadministra.receta.Receta;
@@ -15,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -63,6 +68,23 @@ class ProduccionServiceTest {
     }
 
     @Test
+    void listar_retornaPagina() {
+        ProductoTerminado pt = new ProductoTerminado();
+        pt.setId(1L);
+        pt.setNombre("Jabón");
+
+        Produccion produccion = new Produccion();
+        produccion.setId(1L);
+        produccion.setProductoTerminado(pt);
+
+        Page<Produccion> page = new PageImpl<>(List.of(produccion));
+        when(produccionRepository.findAll(any(PageRequest.class))).thenReturn(page);
+
+        PaginatedResponse<ProduccionResponse> result = service.listar(0, 50, null, null);
+        assertEquals(1, result.content().size());
+    }
+
+    @Test
     void crear_descruentaStockMP() {
         ProductoTerminado pt = new ProductoTerminado();
         pt.setId(1L);
@@ -83,9 +105,7 @@ class ProduccionServiceTest {
         ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 3.0);
         service.crear(request);
 
-        // 30g * 3 unidades = 90g descontados de 200g
         assertEquals(110.0, mp.getStockActual());
-        // 3 unidades sumadas al producto
         assertEquals(3.0, pt.getStockActual());
     }
 
@@ -101,7 +121,6 @@ class ProduccionServiceTest {
         when(recetaRepository.findByProductoTerminadoId(1L)).thenReturn(Optional.of(receta));
 
         ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 3.0);
-        // 30g * 3 = 90g necesarios, solo hay 50g
         assertThrows(StockInsuficienteException.class, () -> service.crear(request));
     }
 
@@ -159,8 +178,8 @@ class ProduccionServiceTest {
         ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 2.0);
         service.crear(request);
 
-        assertEquals(60.0, mp1.getStockActual());  // 100 - (20*2)
-        assertEquals(180.0, mp2.getStockActual()); // 200 - (10*2)
+        assertEquals(60.0, mp1.getStockActual());
+        assertEquals(180.0, mp2.getStockActual());
     }
 
     @Test
@@ -182,8 +201,8 @@ class ProduccionServiceTest {
 
         service.eliminar(1L);
 
-        assertEquals(160.0, mp.getStockActual()); // 100 + (30*2)
-        assertEquals(8.0, pt.getStockActual());   // 10 - 2
+        assertEquals(160.0, mp.getStockActual());
+        assertEquals(8.0, pt.getStockActual());
         verify(produccionRepository).delete(produccion);
     }
 }

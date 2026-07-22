@@ -54,7 +54,7 @@ class MateriaPrimaControllerTest {
 
     @Test
     void crear_conDatosInvalidos_retorna400() throws Exception {
-        String body = mapper.writeValueAsString(new MateriaPrimaRequest("", "", null, null));
+        String body = mapper.writeValueAsString(new MateriaPrimaRequest("", "", null, null, null));
 
         mockMvc.perform(post("/api/materias-primas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -67,7 +67,7 @@ class MateriaPrimaControllerTest {
     void crear_retorna200() throws Exception {
         when(service.crear(any())).thenReturn(new MateriaPrimaResponse(1L, "Aceite de Coco", "ml", 0.0, 5.0, null, null));
 
-        String body = mapper.writeValueAsString(new MateriaPrimaRequest("Aceite de Coco", "ml", 5.0, null));
+        String body = mapper.writeValueAsString(new MateriaPrimaRequest("Aceite de Coco", "ml", 5.0, null, null));
 
         mockMvc.perform(post("/api/materias-primas")
                         .contentType(MediaType.APPLICATION_JSON)

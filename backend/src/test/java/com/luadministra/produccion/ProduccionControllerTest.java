@@ -1,5 +1,6 @@
 package com.luadministra.produccion;
 
+import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.GlobalExceptionHandler;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,16 +30,16 @@ class ProduccionControllerTest {
 
     @Test
     void listar_retorna200() throws Exception {
-        when(service.listar(eq("fecha"), eq("desc")))
-                .thenReturn(List.of(new ProduccionResponse(
+        when(service.listar(anyInt(), anyInt(), eq("fecha"), eq("desc")))
+                .thenReturn(new PaginatedResponse<>(List.of(new ProduccionResponse(
                         1L, 1L, "Jabón de Lavanda",
-                        LocalDate.of(2025, 3, 1), 10.0)));
+                        LocalDate.of(2025, 3, 1), 10.0)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/producciones")
                         .param("sortBy", "fecha")
                         .param("sortDir", "desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].productoTerminadoNombre").value("Jabón de Lavanda"));
+                .andExpect(jsonPath("$.content[0].productoTerminadoNombre").value("Jabón de Lavanda"));
     }
 
     @Test
@@ -62,15 +63,18 @@ class ProduccionControllerTest {
 
     @Test
     void periodo_retorna200() throws Exception {
-        when(service.listarPorPeriodo(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31)))
-                .thenReturn(List.of(new ProduccionResponse(
+        when(service.listarPorPeriodo(
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 12, 31),
+                0, 50))
+                .thenReturn(new PaginatedResponse<>(List.of(new ProduccionResponse(
                         1L, 1L, "Jabón de Lavanda",
-                        LocalDate.of(2025, 6, 15), 10.0)));
+                        LocalDate.of(2025, 6, 15), 10.0)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/producciones/periodo")
                         .param("desde", "2025-01-01")
                         .param("hasta", "2025-12-31"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].productoTerminadoNombre").value("Jabón de Lavanda"));
+                .andExpect(jsonPath("$.content[0].productoTerminadoNombre").value("Jabón de Lavanda"));
     }
 }

@@ -30,6 +30,7 @@ public class Compra {
     private Double precio;
 
     private @Nullable String lugar;
+    private @Nullable String url;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -48,4 +49,7 @@ public class Compra {
 
     public @Nullable String getLugar() { return lugar; }
     public void setLugar(@Nullable String lugar) { this.lugar = lugar; }
+
+    public @Nullable String getUrl() { return url; }
+    public void setUrl(@Nullable String url) { this.url = url; }
 }

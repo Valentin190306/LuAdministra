@@ -67,7 +67,7 @@ class ProductoTerminadoControllerTest {
 
     @Test
     void crear_conDatosInvalidos_retorna400() throws Exception {
-        String body = mapper.writeValueAsString(new ProductoTerminadoRequest("", 0.0, null, null));
+        String body = mapper.writeValueAsString(new ProductoTerminadoRequest("", 0.0, null, null, null));
 
         mockMvc.perform(post("/api/productos-terminados")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +81,7 @@ class ProductoTerminadoControllerTest {
         when(service.crear(any())).thenReturn(new ProductoTerminadoResponse(
                 1L, "Jabón de Lavanda", 2000.0, 0.0, null, null, null));
 
-        String body = mapper.writeValueAsString(new ProductoTerminadoRequest("Jabón de Lavanda", 2000.0, null, null));
+        String body = mapper.writeValueAsString(new ProductoTerminadoRequest("Jabón de Lavanda", 2000.0, null, null, null));
 
         mockMvc.perform(post("/api/productos-terminados")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -27,11 +27,12 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 ### Materia Prima
 - Nombre
 - Unidad de medida (gramos, ml, unidades, etc.)
-- Stock actual
+- Stock actual (calculado automáticamente por compras y producción, con posibilidad de ajuste manual)
 - Umbral de alerta de stock bajo (individual por materia prima)
 - Categoría (referencia a Categoría de Materia Prima)
 
 > El umbral de alerta es un campo propio de cada materia prima, no un valor global del sistema, ya que las escalas de stock varían mucho entre insumos (ej. gramos vs. unidades).
+> El stock actual se puede sobrescribir manualmente desde el modal de edición (útil después de un inventario físico), pero el valor por defecto se mantiene calculado por el sistema.
 
 ### Compra de Materia Prima
 - Materia prima asociada
@@ -39,13 +40,14 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - Cantidad comprada
 - Precio pagado
 - Lugar de compra (opcional, sin gestión formal de proveedores)
+- Enlace web (URL opcional de la página del producto/proveedor)
 
 > Permite mantener un **historial completo de precios** por materia prima, no solo el último precio pagado, para que la usuaria pueda comparar y decidir dónde reabastecerse.
 
 ### Producto Terminado
 - Nombre / variante (ej. "Shampoo en barra - cabello graso")
 - Precio de venta
-- Stock actual
+- Stock actual (calculado automáticamente por producción y ventas, con posibilidad de ajuste manual)
 - Umbral de alerta de stock bajo (individual por producto terminado)
 - Categoría (referencia a Categoría de Producto Terminado)
 
@@ -63,13 +65,12 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - Efecto: descuenta automáticamente el stock de materias primas según la receta, y suma al stock del producto terminado.
 
 ### Venta
-- Producto terminado vendido
-- Cantidad vendida
-- Fecha
-- Precio unitario (copiado del precio de venta del producto al momento de registrar la venta)
-- Efecto: descuenta automáticamente el stock del producto terminado.
+- Una cabecera de venta con fecha
+- Una o más líneas de venta, cada una con producto terminado, cantidad y precio unitario
+- Efecto: descuenta automáticamente el stock de cada producto terminado.
 
-> El precio unitario se guarda en cada venta, y no se recalcula a partir del precio actual del producto. Sin este dato, los reportes de ventas de un período pasado (RF-023) quedarían calculados con el precio de *hoy* en vez del precio real cobrado en ese momento — el mismo problema que ya se evitó en Compra de Materia Prima guardando el precio histórico.
+> El precio unitario se guarda en cada línea de venta, y no se recalcula a partir del precio actual del producto. Sin este dato, los reportes de ventas de un período pasado (RF-023) quedarían calculados con el precio de *hoy* en vez del precio real cobrado en ese momento.
+> La tabla de ventas muestra una fila por venta (ID, Fecha, Cant. de Productos, Total), con un modal para ver el detalle de las líneas.
 
 ---
 
@@ -86,7 +87,7 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 | RF-007 | El sistema debe permitir registrar un nuevo producto terminado, indicando nombre/variante y precio de venta. | Alta |
 | RF-008 | El sistema debe permitir modificar y eliminar productos terminados existentes. | Alta |
 | RF-009 | El sistema debe permitir consultar el stock actual de cada producto terminado. | Alta |
-| RF-010 | El sistema debe permitir definir una receta para cada producto terminado, asociando una o más materias primas con su cantidad necesaria. | Alta |
+| RF-010 | El sistema debe permitir definir una receta para cada producto terminado, asociando una o más materias primas con su cantidad necesaria, ya sea desde la página de recetas (botón "Nueva Receta") o desde la fila del producto en la tabla. | Alta |
 | RF-011 | El sistema debe permitir modificar la receta de un producto terminado existente. | Media |
 | RF-012 | El sistema debe permitir registrar un evento de producción, indicando producto terminado y cantidad fabricada. | Alta |
 | RF-013 | Al registrar una producción, el sistema debe descontar automáticamente el stock de cada materia prima involucrada, según la receta correspondiente. | Alta |
@@ -109,6 +110,12 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 | RF-030 | El sistema debe permitir ordenar el historial de producción por fecha y cantidad fabricada. | Media |
 | RF-031 | El sistema debe permitir ordenar el historial de ventas por fecha y cantidad vendida. | Media |
 | RF-032 | El sistema debe permitir configurar el umbral de alerta de stock bajo de forma individual para cada materia prima y cada producto terminado. | Media |
+| RF-033 | El sistema debe permitir sobrescribir el stock actual de forma manual para cada materia prima y cada producto terminado, permitiendo ajustar el stock calculado al valor real después de una inspección física. | Alta |
+| RF-034 | El sistema debe permitir guardar y visualizar un enlace web (URL) opcional al registrar una compra de materia prima, y poder acceder a dicho enlace desde el listado de compras. | Media |
+| RF-035 | La tabla de ventas debe mostrar una fila por venta (con ID, fecha, cantidad de productos y total), no una fila por línea de venta. El detalle de líneas debe mostrarse en un modal. | Alta |
+| RF-036 | Todas las tablas del sistema deben mostrar el ID numérico de cada registro como primera columna. | Baja |
+| RF-037 | Las tablas de Ventas, Compras y Producción deben cargar datos mediante paginación infinita (scroll) en lugar de paginación con botones, para manejar volúmenes crecientes sin afectar la usabilidad. | Media |
+| RF-038 | Las secciones del menú lateral deben agruparse visualmente con etiquetas y separadores, para facilitar la navegación a medida que crece la cantidad de opciones. | Baja |
 
 > **Nota:** RF-022 y RF-023 quedan pendientes de mayor especificación (granularidad temporal, filtros, formato de salida) antes de pasar a diseño.
 
@@ -145,6 +152,9 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - **Identificación de la notebook en la red local:** la IP asignada por DHCP puede cambiar entre reconexiones de Wi-Fi, rompiendo el acceso desde el celular sin aviso previo. **Pendiente de definir con la usuaria** una de estas opciones: IP reservada en el router, hostname vía mDNS (`nombre-notebook.local`), o mostrar la IP vigente en pantalla al iniciar el servidor.
 - **Firewall del sistema operativo:** al iniciar el servidor por primera vez, Windows/macOS van a solicitar confirmación para permitir conexiones entrantes en el puerto usado. Si la usuaria rechaza el permiso sin saber qué es, el acceso desde el celular falla sin error visible en la aplicación. Debe documentarse este paso en el manual de usuario final.
 - **Backup:** todos los datos viven en un único archivo SQLite, en un único disco. Se recomienda incorporar como requisito de baja prioridad una copia automática periódica del archivo `.db` a un destino externo (Google Drive, pendrive, u otro disco), para evitar pérdida total de información ante falla de la notebook.
+- **Paginación con scroll infinito:** las tablas que crecen con el tiempo (Ventas, Compras, Producción) usan scroll infinito en lugar de botones de paginación. El backend expone paginación tradicional (`page`/`size`), y el frontend acumula páginas mediante un `IntersectionObserver` en un elemento centinela al final de la tabla. Al cambiar filtros u ordenamiento, se reinicia a la página 0. Las tablas con pocos registros (Materias Primas, Productos Terminados, Categorías, Recetas) se mantienen sin paginar.
+- **ID en todas las tablas:** todas las tablas muestran el ID numérico como primera columna, sin requerir cambios en el backend (el `id` siempre está presente en las respuestas de la API).
+- **Secciones del menú lateral:** el sidebar agrupa los enlaces en secciones (Panel, Stock, Operaciones, Configuración) con etiquetas en mayúsculas y separadores con borde. Esto evita que el menú crezca como una lista plana a medida que se agregan páginas.
 
 ---
 

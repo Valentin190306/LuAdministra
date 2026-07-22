@@ -9,5 +9,6 @@ public record CompraRequest(
         @NotNull LocalDate fecha,
         @NotNull Double cantidad,
         @NotNull Double precio,
-        @Nullable String lugar
+        @Nullable String lugar,
+        @Nullable String url
 ) {}

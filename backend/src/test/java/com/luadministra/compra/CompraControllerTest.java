@@ -1,5 +1,6 @@
 package com.luadministra.compra;
 
+import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.GlobalExceptionHandler;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,23 +30,23 @@ class CompraControllerTest {
 
     @Test
     void listar_retorna200() throws Exception {
-        when(service.listar(eq("fecha"), eq("desc")))
-                .thenReturn(List.of(new CompraResponse(
+        when(service.listar(anyInt(), anyInt(), eq("fecha"), eq("desc")))
+                .thenReturn(new PaginatedResponse<>(List.of(new CompraResponse(
                         1L, 1L, "Aceite de Coco",
-                        LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan")));
+                        LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan", null)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/compras")
                         .param("sortBy", "fecha")
                         .param("sortDir", "desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].materiaPrimaNombre").value("Aceite de Coco"));
+                .andExpect(jsonPath("$.content[0].materiaPrimaNombre").value("Aceite de Coco"));
     }
 
     @Test
     void obtener_retorna200() throws Exception {
         when(service.obtener(1L)).thenReturn(new CompraResponse(
                 1L, 1L, "Aceite de Coco",
-                LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan"));
+                LocalDate.of(2025, 1, 15), 500.0, 2500.0, "Juan", null));
 
         mockMvc.perform(get("/api/compras/1"))
                 .andExpect(status().isOk())
@@ -62,15 +63,15 @@ class CompraControllerTest {
 
     @Test
     void listarPorMateriaPrima_retorna200() throws Exception {
-        when(service.listarPorMateriaPrima(eq(1L), eq("fecha"), eq("desc")))
-                .thenReturn(List.of(new CompraResponse(
+        when(service.listarPorMateriaPrima(eq(1L), anyInt(), anyInt(), eq("fecha"), eq("desc")))
+                .thenReturn(new PaginatedResponse<>(List.of(new CompraResponse(
                         1L, 1L, "Aceite de Coco",
-                        LocalDate.of(2025, 6, 15), 500.0, 2500.0, "Juan")));
+                        LocalDate.of(2025, 6, 15), 500.0, 2500.0, "Juan", null)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/compras/materia-prima/1")
                         .param("sortBy", "fecha")
                         .param("sortDir", "desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].materiaPrimaNombre").value("Aceite de Coco"));
+                .andExpect(jsonPath("$.content[0].materiaPrimaNombre").value("Aceite de Coco"));
     }
 }
