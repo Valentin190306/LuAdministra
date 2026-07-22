@@ -4,7 +4,6 @@ import com.luadministra.categoriamateriaprima.CategoriaMateriaPrimaRepository;
 import com.luadministra.compra.Compra;
 import com.luadministra.compra.CompraRepository;
 import com.luadministra.exception.RecursoNoEncontradoException;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -40,7 +39,7 @@ public class MateriaPrimaService {
         }
         if (categoriaId != null) {
             materiasPrimas = materiasPrimas.stream()
-                    .filter(mp -> mp.getCategoria() != null && mp.getCategoria().getId().equals(categoriaId))
+                    .filter(mp -> { var c = mp.getCategoria(); return c != null && c.getId().equals(categoriaId); })
                     .toList();
         }
 
@@ -69,7 +68,6 @@ public class MateriaPrimaService {
             materiasPrimas = materiasPrimas.stream().sorted(comparator).toList();
         } else {
             String effectiveSortBy = sortBy != null ? sortBy : "nombre";
-            Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC, effectiveSortBy);
             materiasPrimas = materiasPrimas.stream()
                     .sorted((a, b) -> {
                         int result = 0;

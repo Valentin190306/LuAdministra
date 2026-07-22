@@ -13,20 +13,22 @@ public record ProductoTerminadoResponse(
         @Nullable String categoriaNombre
 ) {
     public static ProductoTerminadoResponse fromEntity(ProductoTerminado pt) {
+        var cat = pt.getCategoria();
         return new ProductoTerminadoResponse(
                 pt.getId(), pt.getNombre(), pt.getPrecioVenta(),
                 pt.getStockActual(), 0.0, pt.getStockMinimo(),
-                pt.getCategoria() != null ? pt.getCategoria().getId() : null,
-                pt.getCategoria() != null ? pt.getCategoria().getNombre() : null
+                cat != null ? cat.getId() : null,
+                cat != null ? cat.getNombre() : null
         );
     }
 
     public static ProductoTerminadoResponse fromEntity(ProductoTerminado pt, Double stockDespachado) {
+        var cat = pt.getCategoria();
         return new ProductoTerminadoResponse(
                 pt.getId(), pt.getNombre(), pt.getPrecioVenta(),
                 pt.getStockActual(), stockDespachado, pt.getStockMinimo(),
-                pt.getCategoria() != null ? pt.getCategoria().getId() : null,
-                pt.getCategoria() != null ? pt.getCategoria().getNombre() : null
+                cat != null ? cat.getId() : null,
+                cat != null ? cat.getNombre() : null
         );
     }
 }

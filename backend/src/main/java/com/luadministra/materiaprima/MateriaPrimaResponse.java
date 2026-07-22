@@ -12,11 +12,12 @@ public record MateriaPrimaResponse(
         @Nullable String categoriaNombre
 ) {
     public static MateriaPrimaResponse fromEntity(MateriaPrima mp) {
+        var cat = mp.getCategoria();
         return new MateriaPrimaResponse(
                 mp.getId(), mp.getNombre(), mp.getUnidadMedida(),
                 mp.getStockActual(), mp.getStockMinimo(),
-                mp.getCategoria() != null ? mp.getCategoria().getId() : null,
-                mp.getCategoria() != null ? mp.getCategoria().getNombre() : null
+                cat != null ? cat.getId() : null,
+                cat != null ? cat.getNombre() : null
         );
     }
 }

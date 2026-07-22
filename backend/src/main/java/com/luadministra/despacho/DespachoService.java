@@ -91,7 +91,7 @@ public class DespachoService {
         List<LineaDespacho> activas = repository.findLineasByProductoTerminadoIdAndEstadoNot(
                 productoTerminadoId, EstadoDespacho.RENDIDO_TOTAL);
         return activas.stream()
-                .mapToDouble(LineaDespacho::getCantidad)
+                .mapToDouble(ld -> ld.getCantidad())
                 .sum();
     }
 }

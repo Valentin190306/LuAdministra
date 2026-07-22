@@ -31,7 +31,7 @@ public class ProductoTerminadoService {
             stream = stream.filter(pt -> pt.getNombre().toLowerCase().contains(nombre.toLowerCase()));
         }
         if (categoriaId != null) {
-            stream = stream.filter(pt -> pt.getCategoria() != null && pt.getCategoria().getId().equals(categoriaId));
+            stream = stream.filter(pt -> { var c = pt.getCategoria(); return c != null && c.getId().equals(categoriaId); });
         }
         return stream.map(pt -> ProductoTerminadoResponse.fromEntity(pt,
                 despachoService.calcularStockDespachado(pt.getId()))).toList();

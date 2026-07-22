@@ -107,7 +107,7 @@ public class RendicionService {
                 .mapToDouble(p -> p.cantidadVendida() + p.cantidadDevuelta())
                 .sum();
         double totalDespachado = despacho.getLineas().stream()
-                .mapToDouble(LineaDespacho::getCantidad)
+                .mapToDouble(ld -> ld.getCantidad())
                 .sum();
         double totalRendido = totalRendidoAnterior + totalRendidoAhora;
         if (totalRendido >= totalDespachado) {

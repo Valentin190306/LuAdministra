@@ -7,10 +7,11 @@ public record CategoriaMateriaPrimaResponse(
         String categoriaPadreNombre
 ) {
     public static CategoriaMateriaPrimaResponse fromEntity(CategoriaMateriaPrima c) {
+        var padre = c.getCategoriaPadre();
         return new CategoriaMateriaPrimaResponse(
                 c.getId(), c.getNombre(),
-                c.getCategoriaPadre() != null ? c.getCategoriaPadre().getId() : null,
-                c.getCategoriaPadre() != null ? c.getCategoriaPadre().getNombre() : null
+                padre != null ? padre.getId() : null,
+                padre != null ? padre.getNombre() : null
         );
     }
 }

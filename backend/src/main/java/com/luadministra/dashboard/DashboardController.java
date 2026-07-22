@@ -41,11 +41,11 @@ public class DashboardController {
                 .toList();
 
         List<MateriaPrimaResponse> alertasMP = materiasPrimas.stream()
-                .filter(mp -> mp.stockMinimo() != null && mp.stockActual() < mp.stockMinimo())
+                .filter(mp -> { Double min = mp.stockMinimo(); return min != null && mp.stockActual() < min; })
                 .toList();
 
         List<ProductoTerminadoResponse> alertasPT = productosTerminados.stream()
-                .filter(pt -> pt.stockMinimo() != null && pt.stockActual() < pt.stockMinimo())
+                .filter(pt -> { Double min = pt.stockMinimo(); return min != null && pt.stockActual() < min; })
                 .toList();
 
         return Map.of(
