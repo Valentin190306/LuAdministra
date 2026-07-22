@@ -13,5 +13,4 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     @Query("SELECT c FROM Compra c WHERE c.fecha = (SELECT MAX(c2.fecha) FROM Compra c2 WHERE c2.materiaPrima.id = c.materiaPrima.id)")
     List<Compra> findLatestCompraForEachMateriaPrima();
 
-    List<Compra> findByMlIdIsNotNullOrderByFechaDesc();
 }

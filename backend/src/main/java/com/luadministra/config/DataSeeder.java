@@ -138,10 +138,10 @@ public class DataSeeder {
         comprar(karite, LocalDate.of(2025, 1, 15), 1000.0, 1500.0, "Mercado Central", "https://mercadocentral.example.com/manteca-karite", null);
         comprar(karite, LocalDate.of(2025, 3, 20), 1000.0, 1800.0, "Mercado Central", null, null);
         comprar(karite, LocalDate.of(2025, 9, 5), 1000.0, 2200.0, "Distribuidora Química", "https://distribuidora-quimica.example.com/producto/123", null);
-        comprar(karite, LocalDate.of(2026, 2, 10), 1000.0, 2500.0, "Mercado Central", null, "MLA123456789");
+        comprar(karite, LocalDate.of(2026, 2, 10), 1000.0, 2500.0, "Mercado Central", null, null);
         comprar(coco, LocalDate.of(2025, 2, 1), 500.0, 800.0, "El Herbolario", null, null);
         comprar(coco, LocalDate.of(2025, 8, 15), 500.0, 950.0, "El Herbolario", null, null);
-        comprar(coco, LocalDate.of(2026, 1, 20), 500.0, 1100.0, "El Herbolario", null, "MLA987654321");
+        comprar(coco, LocalDate.of(2026, 1, 20), 500.0, 1100.0, "El Herbolario", null, null);
         comprar(bicarbonato, LocalDate.of(2025, 1, 10), 2000.0, 400.0, "Distribuidora Química", null, null);
         comprar(bicarbonato, LocalDate.of(2025, 11, 20), 2000.0, 450.0, "Distribuidora Química", null, null);
         comprar(menta, LocalDate.of(2025, 2, 15), 100.0, 2500.0, "Aromas Naturales", null, null);
@@ -274,7 +274,7 @@ public class DataSeeder {
         recetaRepo.save(r);
     }
 
-    private void comprar(MateriaPrima mp, LocalDate fecha, double cantidad, double precio, String lugar, String url, String mlId) {
+    private void comprar(MateriaPrima mp, LocalDate fecha, double cantidad, double precio, String lugar, String url, Double precioMlReferencia) {
         var c = new Compra();
         c.setMateriaPrima(mp);
         c.setFecha(fecha);
@@ -282,7 +282,7 @@ public class DataSeeder {
         c.setPrecio(precio);
         c.setLugar(lugar);
         c.setUrl(url);
-        c.setMlId(mlId);
+        c.setPrecioMlReferencia(precioMlReferencia);
         compraRepo.save(c);
     }
 
