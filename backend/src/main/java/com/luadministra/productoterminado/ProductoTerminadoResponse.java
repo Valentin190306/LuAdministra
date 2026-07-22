@@ -1,14 +1,16 @@
 package com.luadministra.productoterminado;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 public record ProductoTerminadoResponse(
         Long id,
         String nombre,
         Double precioVenta,
         Double stockActual,
         Double stockDespachado,
-        Double stockMinimo,
-        Long categoriaId,
-        String categoriaNombre
+        @Nullable Double stockMinimo,
+        @Nullable Long categoriaId,
+        @Nullable String categoriaNombre
 ) {
     public static ProductoTerminadoResponse fromEntity(ProductoTerminado pt) {
         return new ProductoTerminadoResponse(

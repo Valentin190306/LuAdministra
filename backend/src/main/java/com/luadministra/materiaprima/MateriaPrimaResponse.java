@@ -1,13 +1,15 @@
 package com.luadministra.materiaprima;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 public record MateriaPrimaResponse(
         Long id,
         String nombre,
         String unidadMedida,
         Double stockActual,
-        Double stockMinimo,
-        Long categoriaId,
-        String categoriaNombre
+        @Nullable Double stockMinimo,
+        @Nullable Long categoriaId,
+        @Nullable String categoriaNombre
 ) {
     public static MateriaPrimaResponse fromEntity(MateriaPrima mp) {
         return new MateriaPrimaResponse(

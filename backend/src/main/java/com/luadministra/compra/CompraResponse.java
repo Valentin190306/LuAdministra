@@ -1,6 +1,7 @@
 package com.luadministra.compra;
 
 import java.time.LocalDate;
+import org.eclipse.jdt.annotation.Nullable;
 
 public record CompraResponse(
         Long id,
@@ -9,9 +10,9 @@ public record CompraResponse(
         LocalDate fecha,
         Double cantidad,
         Double precio,
-        String lugar,
-        String url,
-        Double precioMlReferencia
+        @Nullable String lugar,
+        @Nullable String url,
+        @Nullable Double precioMlReferencia
 ) {
      public static CompraResponse fromEntity(Compra c) {
         return new CompraResponse(c.getId(), c.getMateriaPrima().getId(),
