@@ -9,6 +9,10 @@
   padding: var(--spacing-xl);
   min-width: 0;
   overflow-y: auto;
+  background-image: url('/bg-geometric-pattern.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: auto;
 }
 
 .hamburger {

@@ -38,6 +38,9 @@ const sections = [
 export default function Sidebar({ onNavigate }) {
   return (
     <nav className={styles.sidebar}>
+      <div className={styles.logo}>
+        <img src="/logo.png" alt="Casa Del Sol" className={styles.logoImg} />
+      </div>
       {sections.map((section, i) => (
         <div key={i} className={styles.section}>
           {section.label && (

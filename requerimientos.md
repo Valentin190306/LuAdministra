@@ -30,11 +30,9 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - Stock actual (calculado automáticamente por compras y producción, con posibilidad de ajuste manual)
 - Umbral de alerta de stock bajo (individual por materia prima)
 - Categoría (referencia a Categoría de Materia Prima)
-- ID de publicación de Mercado Libre (opcional, para seguimiento de precio de referencia — ver RF-045 a RF-048)
 
 > El umbral de alerta es un campo propio de cada materia prima, no un valor global del sistema, ya que las escalas de stock varían mucho entre insumos (ej. gramos vs. unidades).
 > El stock actual se puede sobrescribir manualmente desde el modal de edición (útil después de un inventario físico), pero el valor por defecto se mantiene calculado por el sistema.
-> El ID de publicación de Mercado Libre se guarda como identificador puro (ej. `MLA123456789`), nunca como URL libre — el backend construye la URL de consulta a partir de este ID validado. Ver Notas de diseño para el detalle de seguridad.
 
 ### Compra de Materia Prima
 - Materia prima asociada
@@ -43,8 +41,10 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - Precio pagado
 - Lugar de compra (opcional, sin gestión formal de proveedores)
 - Enlace web (URL opcional de la página del producto/proveedor)
+- Precio de referencia de Mercado Libre (opcional, numérico ingresado manualmente por la usuaria)
 
 > Permite mantener un **historial completo de precios** por materia prima, no solo el último precio pagado, para que la usuaria pueda comparar y decidir dónde reabastecerse.
+> El campo de precio de referencia ML es de entrada manual (la usuaria consulta el precio en su navegador y lo ingresa) — no hay integración automática con la API de Mercado Libre. El frontend extrae automáticamente el ID de ML (`MLA...`, `MLU...`, etc.) si la usuaria pega una URL completa en lugar del ID.
 
 ### Producto Terminado
 - Nombre / variante (ej. "Shampoo en barra - cabello graso")
@@ -82,28 +82,23 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 
 ### Despacho
 - Colaboradora asociada
-- Producto terminado
-- Cantidad despachada
 - Fecha de despacho
 - Estado (pendiente / rendido parcialmente / rendido total)
+- Una o más líneas de despacho, cada una con producto terminado y cantidad despachada
 
 > Un despacho **no descuenta** el stock total del producto terminado: el stock sigue siendo de la usuaria hasta que se vende. En cambio, mueve conceptualmente una porción del stock de "en depósito" a "despachado a colaboradora", por lo que el stock de Producto Terminado debe mostrarse desglosado entre ambos estados (ver RF-041).
+> Un despacho puede incluir múltiples productos, cada uno con su propia cantidad. Las rendiciones posteriores se registran por línea de despacho.
 
 ### Rendición
 - Despacho asociado
-- Cantidad vendida (genera automáticamente una Venta con la fecha real de la rendición)
-- Cantidad devuelta (vuelve al stock en depósito)
 - Monto entregado por la colaboradora
 - Fecha de rendición
+- Una o más líneas de rendición, cada una con:
+  - Línea de despacho asociada
+  - Cantidad vendida (genera automáticamente una Venta con la fecha real de la rendición)
+  - Cantidad devuelta (vuelve al stock en depósito)
 
-> Una rendición puede ser parcial: la colaboradora puede vender una parte, devolver otra, y rendir cuentas en más de una oportunidad para un mismo despacho. **Pendiente de confirmar con el cliente:** si el precio de venta a considerar es el vigente al momento del despacho o al momento de la rendición (mismo problema ya resuelto para Venta en RF-017; se recomienda guardarlo en el Despacho, no recalcularlo).
-
-### Consulta de Precio de Mercado Libre
-- Materia prima asociada
-- Precio obtenido
-- Fecha y hora de la consulta
-
-> Registra el resultado de cada consulta manual de precio contra la API pública de Mercado Libre (ver RF-045 a RF-048). Es un histórico de **precio de referencia de mercado**, separado y no confundido con la tabla de Compra, que representa una compra real efectuada por la usuaria.
+> Una rendición puede ser parcial: la colaboradora puede vender una parte, devolver otra, y rendir cuentas en más de una oportunidad para un mismo despacho. Cada línea de rendición se asocia a una línea de despacho específica, permitiendo seguimiento por producto. El sistema genera automáticamente una Venta única con múltiples líneas (una por producto vendido) al registrar la rendición.
 
 ---
 
@@ -150,19 +145,19 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 | RF-037 | Las tablas de Ventas, Compras y Producción deben cargar datos mediante paginación infinita (scroll) en lugar de paginación con botones, para manejar volúmenes crecientes sin afectar la usabilidad. | Media |
 | RF-038 | Las secciones del menú lateral deben agruparse visualmente con etiquetas y separadores, para facilitar la navegación a medida que crece la cantidad de opciones. | Baja |
 | RF-039 | El sistema debe permitir registrar colaboradoras (vendedoras), indicando nombre y contacto opcional. | Media |
-| RF-040 | El sistema debe permitir despachar stock de un producto terminado a una colaboradora, indicando cantidad y fecha, sin descontar el stock total del producto terminado (solo cambia su ubicación conceptual). | Alta |
+| RF-040 | El sistema debe permitir despachar stock de uno o más productos terminados a una colaboradora en un mismo despacho, indicando cantidades y fecha, sin descontar el stock total de los productos (solo cambia su ubicación conceptual). | Alta |
 | RF-041 | El sistema debe mostrar el stock de cada producto terminado desglosado entre "en depósito" y "despachado a colaboradoras". | Alta |
-| RF-042 | El sistema debe permitir registrar una rendición de cuentas de una colaboradora sobre un despacho, indicando cantidad vendida, cantidad devuelta y monto entregado. | Alta |
-| RF-043 | Al registrar una rendición, el sistema debe generar automáticamente la venta correspondiente a la cantidad vendida, y devolver la cantidad no vendida al stock en depósito. | Alta |
+| RF-042 | El sistema debe permitir registrar una rendición de cuentas de una colaboradora sobre un despacho, indicando por cada producto del despacho la cantidad vendida y la cantidad devuelta, más el monto total entregado. | Alta |
+| RF-043 | Al registrar una rendición, el sistema debe generar automáticamente la venta correspondiente a los productos vendidos (creando una Venta con múltiples líneas), y devolver los productos no vendidos al stock en depósito. | Alta |
 | RF-044 | El sistema debe permitir consultar el historial de despachos y rendiciones por colaboradora. | Media |
-| RF-045 | El sistema debe permitir asociar opcionalmente un ID de publicación de Mercado Libre a una materia prima. | Media |
-| RF-046 | El sistema debe permitir consultar bajo demanda (acción manual del usuario) el precio actual de una materia prima en Mercado Libre, mediante la API pública. | Baja |
-| RF-047 | El sistema debe guardar un historial con fecha y hora de cada consulta de precio de Mercado Libre realizada, sin sobrescribir consultas anteriores. | Baja |
-| RF-048 | El sistema debe mostrar el precio de referencia obtenido de Mercado Libre junto al historial de compras reales de la materia prima, para permitir su comparación. | Baja |
+| RF-045 | El sistema debe permitir ingresar opcionalmente un precio de referencia de Mercado Libre al registrar una compra de materia prima. | Media |
+| RF-046 | El precio de referencia ML debe ser ingresado manualmente por la usuaria (no se consulta ninguna API automática). | Baja |
+| RF-047 | El sistema debe mostrar el precio de referencia ML junto al historial de compras de cada materia prima para permitir la comparación. | Baja |
+| RF-048 | (Eliminado — reemplazado por RF-045 a RF-047: precio de referencia ML de ingreso manual) | - |
+| RF-049 | El sistema debe permitir extraer el ID de publicación de Mercado Libre automáticamente si la usuaria pega una URL completa de ML en lugar del ID. | Baja |
 
 > **Nota:** RF-022 y RF-023 quedan pendientes de mayor especificación (granularidad temporal, filtros, formato de salida) antes de pasar a diseño.
-> **Nota:** RF-042 y RF-043 quedan pendientes de confirmar con el cliente en dos puntos: (1) si el umbral de alerta de stock bajo (RF-020/032) debe calcularse sobre el stock total del producto terminado o solo sobre el stock en depósito — se recomienda esto último, ya que es lo relevante para decidir si hace falta producir más; (2) si una colaboradora puede tener despachos de más de un producto sin liquidar simultáneamente (se asume que sí).
-> **Nota:** RF-045 a RF-048 dependen de un servicio externo (API pública de Mercado Libre) fuera del control del proyecto. Mercado Libre ha anunciado la eliminación progresiva del campo de precio en esta API pública, sin fecha límite comunicada a la fecha de este documento; el diseño debe encapsular esta dependencia para poder reemplazarla sin afectar el resto del sistema (ver Notas de diseño).
+> **Nota:** RF-042 y RF-043 — el sistema genera una Venta única con múltiples líneas de detalle (una por producto vendido) al registrar la rendición, reflejando la estructura de LineaRendicion.
 
 ---
 
@@ -201,13 +196,9 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - **ID en todas las tablas:** todas las tablas muestran el ID numérico como primera columna, sin requerir cambios en el backend (el `id` siempre está presente en las respuestas de la API).
 - **Secciones del menú lateral:** el sidebar agrupa los enlaces en secciones (Panel, Stock, Operaciones, Configuración) con etiquetas en mayúsculas y separadores con borde. Esto evita que el menú crezca como una lista plana a medida que se agregan páginas.
 - **Stock desglosado por ubicación:** el stock de Producto Terminado deja de ser un único número; se calcula como `stock en depósito` + `stock despachado a colaboradoras (no rendido)`. Los despachos y sus rendiciones deben conciliar contra este total en todo momento (invariante a validar con tests).
-- **Integración con Mercado Libre — única excepción a RNF-002:** la consulta de precio de referencia (RF-045 a RF-048) es el único punto de todo el sistema donde el backend inicia una conexión saliente a internet; el resto de la aplicación funciona íntegramente offline. Esto se documenta como excepción explícita y acotada a RNF-002, no como una contradicción.
-- **Seguridad de la integración con Mercado Libre (superficie de ataque):** dado que el backend no autentica requests dentro de la red local (RNF-003, un solo usuario en su propia red), este es el único lugar del sistema con tráfico saliente y debe mitigarse como tal:
-  - El frontend nunca envía una URL libre; solo el ID de publicación (validado con un patrón fijo, ej. `^ML[AB][0-9]+$`). El backend construye la URL de consulta a partir de ese ID, nunca a partir de un valor arbitrario del cliente — esto evita que el servidor actúe como proxy abierto (SSRF).
-  - El dominio de destino (`api.mercadolibre.com`) queda fijo en el código, no configurable.
-  - La consulta se dispara únicamente por acción manual del usuario (botón "Actualizar precio ahora"), nunca en background ni por scheduler automático.
-  - Toda la lógica de esta integración se aísla en un único service del backend, para que la superficie de código con permiso de salir a internet sea auditable de un vistazo.
-  - Se configuran timeouts explícitos y cortos (conexión y lectura, ej. 3-5 segundos) para no bloquear threads del servidor ante un servicio externo lento o caído.
+- **Precio de referencia de Mercado Libre — integración automática eliminada:** la consulta automática de precios ML fue descartada porque la API pública ahora requiere OAuth y el cliente se negó a asociar una cuenta de ML (temor a AFIP). En su lugar, el campo `precioMlReferencia` es de ingreso manual en el formulario de compra. El frontend extrae automáticamente el ID de publicación (ej. `MLA123456789`) si la usuaria pega una URL completa de ML, usando el patrón `M[A-Z]{2,}\d+`.
+- **Precarga de recetas en página de recetas:** la página Recetas.jsx carga la lista completa de recetas (`GET /api/recetas`) al montarse para que los botones "Editar Receta" y "Eliminar" aparezcan inmediatamente en la tabla, sin requerir que la usuaria abra primero un modal para recién ver las opciones.
+- **Filtro por estado en despachos:** el backend acepta un parámetro opcional `estado` en `GET /api/despachos` para filtrar por `EstadoDespacho`. El frontend expone un combo de selección con tres opciones: Todos / Pendientes / Rendidos, que refresca la tabla al cambiar.
 
 ---
 
