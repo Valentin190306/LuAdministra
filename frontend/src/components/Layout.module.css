@@ -9,12 +9,28 @@
   padding: var(--spacing-xl);
   min-width: 0;
   overflow-y: auto;
-  background-color: var(--color-surface);
+  position: relative;
+}
+
+.main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface);
+  z-index: -2;
+}
+
+.main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image: url('/bg-geometric-pattern.png');
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: calc(100% + 280px) -280px;
   background-size: auto;
-  background-blend-mode: multiply;
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .hamburger {

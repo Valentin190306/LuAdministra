@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
+import ActionMenu from '../components/ui/ActionMenu';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
@@ -71,6 +72,14 @@ export default function Despachos() {
   const [rendicionesData, setRendicionesData] = useState(null);
   const [loadingRendiciones, setLoadingRendiciones] = useState(false);
 
+  const [stockModalColaboradora, setStockModalColaboradora] = useState(null);
+  const [stockData, setStockData] = useState(null);
+  const [loadingStock, setLoadingStock] = useState(false);
+
+  const [devolverModal, setDevolverModal] = useState(null);
+  const [devolverProductos, setDevolverProductos] = useState([]);
+  const [savingDevolver, setSavingDevolver] = useState(false);
+
   const colOptions = useMemo(() => {
     if (!colaboradoras) return [];
     return [{ id: '', nombre: 'Todas' }, ...colaboradoras];
@@ -137,11 +146,31 @@ export default function Despachos() {
     }
   }
 
-  function openRendicion(d) {
+  async function openRendicion(d) {
     setRendicionModal(d);
-    setRendicionProductos(emptyRendicionProductos(d.productos));
     setRendicionMonto('');
     setRendicionFecha(todayStr());
+    try {
+      const rendiciones = await api.get(`/despachos/${d.id}/rendiciones`);
+      const yaRendido = {};
+      rendiciones.forEach((r) => {
+        r.productos.forEach((p) => {
+          yaRendido[p.productoTerminadoId] = (yaRendido[p.productoTerminadoId] || 0)
+            + p.cantidadVendida + p.cantidadDevuelta;
+        });
+      });
+      setRendicionProductos(
+        d.productos.map((p) => ({
+          productoTerminadoId: p.productoTerminadoId,
+          productoTerminadoNombre: p.productoTerminadoNombre,
+          cantidadDespachada: p.cantidad - (yaRendido[p.productoTerminadoId] || 0),
+          cantidadVendida: '',
+          cantidadDevuelta: '',
+        }))
+      );
+    } catch {
+      setRendicionProductos(emptyRendicionProductos(d.productos));
+    }
   }
 
   function updateRendicionProducto(index, field, value) {
@@ -193,13 +222,72 @@ export default function Despachos() {
     }
   }
 
+  async function openStockConsignado(d) {
+    setStockModalColaboradora(d);
+    setStockData(null);
+    setLoadingStock(true);
+    try {
+      const result = await api.get(`/despachos/stock-consignado?colaboradoraId=${d.colaboradoraId}`);
+      setStockData(result);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoadingStock(false);
+    }
+  }
+
+  function openDevolver(d) {
+    setDevolverModal(d);
+    setDevolverProductos(
+      d.productos.map((p) => ({
+        productoTerminadoId: p.productoTerminadoId,
+        productoTerminadoNombre: p.productoTerminadoNombre,
+        cantidadDespachada: p.cantidad,
+        cantidadDevuelta: '',
+      }))
+    );
+  }
+
+  function updateDevolverProducto(index, value) {
+    setDevolverProductos((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], cantidadDevuelta: value };
+      return next;
+    });
+  }
+
+  async function handleDevolverSave(e) {
+    e.preventDefault();
+    const valid = devolverProductos.filter((p) => Number(p.cantidadDevuelta) > 0);
+    if (valid.length === 0) return;
+    setSavingDevolver(true);
+    try {
+      await api.post('/rendiciones', {
+        despachoId: devolverModal.id,
+        montoEntregado: 0,
+        fecha: todayStr(),
+        productos: valid.map((p) => ({
+          productoTerminadoId: p.productoTerminadoId,
+          cantidadVendida: 0,
+          cantidadDevuelta: Number(p.cantidadDevuelta),
+        })),
+      });
+      setDevolverModal(null);
+      refetch();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSavingDevolver(false);
+    }
+  }
+
   const columns = [
     { key: 'id', label: 'ID' },
     { key: 'colaboradoraNombre', label: 'Colaboradora' },
     {
       key: 'productos',
       label: 'Productos',
-      render: (r) => r.productos.map((p) => p.productoTerminadoNombre).join(', '),
+      render: (r) => `${r.productos.length} producto(s)`,
     },
     { key: 'fecha', label: 'Fecha' },
     {
@@ -215,15 +303,18 @@ export default function Despachos() {
     {
       key: 'acciones',
       label: '',
-      render: (row) => (
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={() => openVerRendiciones(row)}>Rendiciones</Button>
-          {row.estado !== 'RENDIDO_TOTAL' && (
-            <Button variant="ghost" onClick={() => openRendicion(row)}>Rendir</Button>
-          )}
-          <Button variant="ghost" onClick={() => setDeleteTarget(row)}>Eliminar</Button>
-        </div>
-      ),
+      render: (row) => {
+        const items = [
+          { label: 'Rendiciones', onClick: () => openVerRendiciones(row) },
+          { label: 'Stock en consignación', onClick: () => openStockConsignado(row) },
+        ];
+        if (row.estado !== 'RENDIDO_TOTAL') {
+          items.push({ label: 'Rendir', onClick: () => openRendicion(row) });
+          items.push({ label: 'Devolver', onClick: () => openDevolver(row) });
+        }
+        items.push({ label: 'Eliminar', onClick: () => setDeleteTarget(row) });
+        return <ActionMenu actions={items} />;
+      },
     },
   ];
 
@@ -393,6 +484,69 @@ export default function Despachos() {
           ) : (
             <p>No hay rendiciones registradas para este despacho.</p>
           )
+        )}
+      </Modal>
+
+      <Modal isOpen={!!stockModalColaboradora} onClose={() => { setStockModalColaboradora(null); setStockData(null); }} title="Stock en consignación">
+        {loadingStock ? <Loading /> : (
+          stockData && stockData.length > 0 ? (
+            <table className={styles.stockTable}>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Despachado</th>
+                  <th>Rendido</th>
+                  <th>Pendiente</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockData.map((s, i) => (
+                  <tr key={i}>
+                    <td>{s.productoTerminadoNombre}</td>
+                    <td>{s.cantidadDespachada}</td>
+                    <td>{s.cantidadRendida}</td>
+                    <td className={styles.stockPendiente}>{s.cantidadPendiente}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No hay productos en consignación con esta colaboradora.</p>
+          )
+        )}
+      </Modal>
+
+      <Modal isOpen={!!devolverModal} onClose={() => setDevolverModal(null)} title={`Devolver productos - Despacho #${devolverModal?.id}`}>
+        {devolverModal && (
+          <div>
+            <p className={styles.despachoInfo}>
+              <strong>{devolverModal.colaboradoraNombre}</strong> — {devolverModal.productos.length} producto(s)
+              {' | '}Estado: {estadoLabels[devolverModal.estado]}
+            </p>
+            <form onSubmit={handleDevolverSave} className={styles.form}>
+              <div className={styles.productosSection}>
+                <label className={styles.sectionLabel}>Productos a devolver</label>
+                {devolverProductos.map((p, i) => (
+                  <div key={i} className={styles.rendicionProducto}>
+                    <span className={styles.rendicionProductoNombre}>{p.productoTerminadoNombre}</span>
+                    <span className={styles.rendicionProductoDisponible}>Disp: {p.cantidadDespachada}</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      placeholder="Devuelto"
+                      value={p.cantidadDevuelta}
+                      onChange={(e) => updateDevolverProducto(i, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className={styles.formActions}>
+                <Button variant="ghost" type="button" onClick={() => setDevolverModal(null)}>Cancelar</Button>
+                <Button type="submit" disabled={savingDevolver}>{savingDevolver ? 'Guardando...' : 'Registrar Devolución'}</Button>
+              </div>
+            </form>
+          </div>
         )}
       </Modal>
 

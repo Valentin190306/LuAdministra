@@ -13,6 +13,9 @@ public interface DespachoRepository extends JpaRepository<Despacho, Long> {
     Page<Despacho> findByColaboradoraIdAndEstado(Long colaboradoraId, EstadoDespacho estado, Pageable pageable);
     Page<Despacho> findByEstado(EstadoDespacho estado, Pageable pageable);
 
+    @Query("SELECT d FROM Despacho d WHERE d.colaboradora.id = :colaboradoraId AND d.estado <> 'RENDIDO_TOTAL'")
+    List<Despacho> findActivosByColaboradoraId(Long colaboradoraId);
+
     @Query("SELECT ld FROM LineaDespacho ld JOIN ld.despacho d WHERE ld.productoTerminado.id = :productoTerminadoId AND d.estado <> :estado")
     List<LineaDespacho> findLineasByProductoTerminadoIdAndEstadoNot(Long productoTerminadoId, EstadoDespacho estado);
 

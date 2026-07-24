@@ -5,6 +5,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/despachos")
 public class DespachoController {
@@ -40,5 +42,10 @@ public class DespachoController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/stock-consignado")
+    public List<StockConsignadoResponse> stockConsignado(@RequestParam Long colaboradoraId) {
+        return service.stockConsignado(colaboradoraId);
     }
 }

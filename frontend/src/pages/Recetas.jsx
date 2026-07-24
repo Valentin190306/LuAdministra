@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
+import ActionMenu from '../components/ui/ActionMenu';
 import Modal from '../components/ui/Modal';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
@@ -153,16 +154,12 @@ export default function Recetas() {
     {
       key: 'acciones',
       label: '',
-      render: (row) => (
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={() => openModal(row)}>
-            {recipeMap[row.id] ? 'Editar Receta' : 'Configurar'}
-          </Button>
-          {recipeMap[row.id] && (
-            <Button variant="ghost" onClick={() => setDeleting(row)}>Eliminar</Button>
-          )}
-        </div>
-      ),
+      render: (row) => {
+        const items = [];
+        items.push({ label: recipeMap[row.id] ? 'Editar Receta' : 'Configurar', onClick: () => openModal(row) });
+        if (recipeMap[row.id]) items.push({ label: 'Eliminar', onClick: () => setDeleting(row) });
+        return <ActionMenu actions={items} />;
+      },
     },
   ];
 

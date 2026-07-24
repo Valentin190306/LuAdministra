@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
+import ActionMenu from '../components/ui/ActionMenu';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
@@ -115,10 +116,10 @@ export default function MateriasPrimas() {
       key: 'acciones',
       label: '',
       render: (row) => (
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={() => openEdit(row)}>Editar</Button>
-          <Button variant="ghost" onClick={() => setDeleteTarget(row)}>Eliminar</Button>
-        </div>
+        <ActionMenu actions={[
+          { label: 'Editar', onClick: () => openEdit(row) },
+          { label: 'Eliminar', onClick: () => setDeleteTarget(row) },
+        ]} />
       ),
     },
   ];

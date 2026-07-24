@@ -221,3 +221,27 @@
   color: var(--color-text-secondary);
   padding: var(--spacing-md);
 }
+
+.stockTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.4rem;
+}
+
+.stockTable th {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.stockTable td {
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stockPendiente {
+  font-weight: 700;
+  color: var(--color-primary);
+}

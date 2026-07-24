@@ -37,11 +37,11 @@
 }
 
 .ghost {
-  background: transparent;
+  background: var(--color-bg);
   border-color: var(--color-border);
   color: var(--color-text);
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--color-bg);
+  background: var(--color-border);
 }

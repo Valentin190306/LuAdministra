@@ -6,6 +6,7 @@ import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.rendicion.RendicionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +14,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class DespachoService {
@@ -21,13 +25,16 @@ public class DespachoService {
     private final DespachoRepository repository;
     private final ColaboradoraRepository colaboradoraRepository;
     private final ProductoTerminadoRepository productoTerminadoRepository;
+    private final RendicionRepository rendicionRepository;
 
     public DespachoService(DespachoRepository repository,
                            ColaboradoraRepository colaboradoraRepository,
-                           ProductoTerminadoRepository productoTerminadoRepository) {
+                           ProductoTerminadoRepository productoTerminadoRepository,
+                           RendicionRepository rendicionRepository) {
         this.repository = repository;
         this.colaboradoraRepository = colaboradoraRepository;
         this.productoTerminadoRepository = productoTerminadoRepository;
+        this.rendicionRepository = rendicionRepository;
     }
 
     public PaginatedResponse<DespachoResponse> listar(int page, int size, String sortBy, String sortDir,
@@ -93,5 +100,44 @@ public class DespachoService {
         return activas.stream()
                 .mapToDouble(ld -> ld.getCantidad())
                 .sum();
+    }
+
+    public List<StockConsignadoResponse> stockConsignado(Long colaboradoraId) {
+        if (!colaboradoraRepository.existsById(colaboradoraId)) {
+            throw new RecursoNoEncontradoException("Colaboradora no encontrada");
+        }
+
+        List<Despacho> activos = repository.findActivosByColaboradoraId(colaboradoraId);
+
+        Map<Long, Double> despachadoPorProducto = activos.stream()
+                .flatMap(d -> d.getLineas().stream())
+                .collect(Collectors.groupingBy(
+                        ld -> ld.getProductoTerminado().getId(),
+                        Collectors.summingDouble(LineaDespacho::getCantidad)
+                ));
+
+        Map<Long, Double> rendidoPorProducto = activos.stream()
+                .flatMap(d -> rendicionRepository.findByDespachoId(d.getId()).stream())
+                .flatMap(r -> r.getLineas().stream())
+                .collect(Collectors.groupingBy(
+                        lr -> lr.getProductoTerminado().getId(),
+                        Collectors.summingDouble(lr -> lr.getCantidadVendida() + lr.getCantidadDevuelta())
+                ));
+
+        List<StockConsignadoResponse> result = new ArrayList<>();
+        for (var entry : despachadoPorProducto.entrySet()) {
+            Long ptId = entry.getKey();
+            Double despachado = entry.getValue();
+            Double rendido = rendidoPorProducto.getOrDefault(ptId, 0.0);
+            String nombre = activos.stream()
+                    .flatMap(d -> d.getLineas().stream())
+                    .filter(ld -> ld.getProductoTerminado().getId().equals(ptId))
+                    .findFirst()
+                    .map(ld -> ld.getProductoTerminado().getNombre())
+                    .orElse("");
+            result.add(new StockConsignadoResponse(ptId, nombre, despachado, rendido, despachado - rendido));
+        }
+
+        return result;
     }
 }
