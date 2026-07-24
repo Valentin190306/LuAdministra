@@ -86,8 +86,16 @@ public class ProduccionService {
         produccion.setProductoTerminado(pt);
         produccion.setFecha(request.fecha());
         produccion.setCantidadFabricada(request.cantidadFabricada());
+        produccion.setDiasVigencia(request.diasVigencia());
 
         return ProduccionResponse.fromEntity(produccionRepository.save(produccion));
+    }
+
+    public List<ProduccionResponse> listarLotesPorProducto(Long productoTerminadoId) {
+        return produccionRepository.findByProductoTerminadoIdOrderByFechaDesc(productoTerminadoId)
+                .stream()
+                .map(ProduccionResponse::fromEntity)
+                .toList();
     }
 
     @Transactional

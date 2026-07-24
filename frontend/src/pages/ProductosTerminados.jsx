@@ -50,6 +50,10 @@ export default function ProductosTerminados() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  const [lotesModal, setLotesModal] = useState(null);
+  const [lotesData, setLotesData] = useState(null);
+  const [loadingLotes, setLoadingLotes] = useState(false);
+
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
@@ -99,6 +103,19 @@ export default function ProductosTerminados() {
     }
   }
 
+  async function openLotes(pt) {
+    setLotesModal(pt);
+    setLoadingLotes(true);
+    try {
+      const result = await api.get(`/producciones/lotes?productoId=${pt.id}`);
+      setLotesData(result);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoadingLotes(false);
+    }
+  }
+
   const columns = [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
@@ -131,6 +148,7 @@ export default function ProductosTerminados() {
       render: (row) => (
         <ActionMenu actions={[
           { label: 'Editar', onClick: () => openEdit(row) },
+          { label: 'Ver vencimientos', onClick: () => openLotes(row) },
           { label: 'Eliminar', onClick: () => setDeleteTarget(row) },
         ]} />
       ),
@@ -212,6 +230,42 @@ export default function ProductosTerminados() {
             <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!lotesModal} onClose={() => { setLotesModal(null); setLotesData(null); }} title={`Vencimientos - ${lotesModal?.nombre}`}>
+        {loadingLotes ? <Loading /> : (
+          lotesData && lotesData.length > 0 ? (
+            <table className={styles.lotesTable}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Fecha Producción</th>
+                  <th>Cantidad</th>
+                  <th>Días Vigencia</th>
+                  <th>Fecha Vencimiento</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lotesData.map((l) => {
+                  const vencido = l.fechaVencimiento && new Date(l.fechaVencimiento) < new Date();
+                  return (
+                    <tr key={l.id} className={vencido ? styles.vencidoRow : undefined}>
+                      <td>{l.id}</td>
+                      <td>{l.fecha}</td>
+                      <td>{l.cantidadFabricada} u</td>
+                      <td>{l.diasVigencia ?? '—'}</td>
+                      <td>{l.fechaVencimiento ?? 'Imperecedero'}</td>
+                      <td>{vencido ? '⚠ Vencido' : '✓ Vigente'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p>No hay lotes registrados para este producto.</p>
+          )
+        )}
       </Modal>
 
       <ConfirmDialog

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/producciones")
@@ -44,6 +45,11 @@ public class ProduccionController {
     @PostMapping
     public ProduccionResponse crear(@Valid @RequestBody ProduccionRequest request) {
         return service.crear(request);
+    }
+
+    @GetMapping("/lotes")
+    public List<ProduccionResponse> listarLotes(@RequestParam Long productoId) {
+        return service.listarLotesPorProducto(productoId);
     }
 
     @DeleteMapping("/{id}")

@@ -3,6 +3,7 @@ package com.luadministra.produccion;
 import com.luadministra.productoterminado.ProductoTerminado;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.eclipse.jdt.annotation.Nullable;
 import java.time.LocalDate;
 
 @Entity
@@ -24,6 +25,8 @@ public class Produccion {
     @Column(nullable = false)
     private Double cantidadFabricada;
 
+    private @Nullable Integer diasVigencia;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -35,4 +38,7 @@ public class Produccion {
 
     public Double getCantidadFabricada() { return cantidadFabricada; }
     public void setCantidadFabricada(Double cantidadFabricada) { this.cantidadFabricada = cantidadFabricada; }
+
+    public @Nullable Integer getDiasVigencia() { return diasVigencia; }
+    public void setDiasVigencia(@Nullable Integer diasVigencia) { this.diasVigencia = diasVigencia; }
 }

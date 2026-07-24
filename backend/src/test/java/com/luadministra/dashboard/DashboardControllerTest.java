@@ -4,6 +4,7 @@ import com.luadministra.despacho.DespachoService;
 import com.luadministra.exception.GlobalExceptionHandler;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
+import com.luadministra.produccion.ProduccionRepository;
 import com.luadministra.productoterminado.ProductoTerminado;
 import com.luadministra.productoterminado.ProductoTerminadoRepository;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class DashboardControllerTest {
     @MockitoBean
     private DespachoService despachoService;
 
+    @MockitoBean
+    private ProduccionRepository produccionRepository;
+
     @Test
     void stock_retornaDashboard() throws Exception {
         MateriaPrima mp = new MateriaPrima();
@@ -54,6 +58,7 @@ class DashboardControllerTest {
         when(materiaPrimaRepository.findAll()).thenReturn(List.of(mp));
         when(productoTerminadoRepository.findAll()).thenReturn(List.of(pt));
         when(despachoService.calcularStockDespachado(1L)).thenReturn(5.0);
+        when(produccionRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())
@@ -75,6 +80,7 @@ class DashboardControllerTest {
         when(materiaPrimaRepository.findAll()).thenReturn(List.of(mp));
         when(productoTerminadoRepository.findAll()).thenReturn(List.of());
         when(despachoService.calcularStockDespachado(any())).thenReturn(0.0);
+        when(produccionRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())
@@ -93,6 +99,7 @@ class DashboardControllerTest {
         when(materiaPrimaRepository.findAll()).thenReturn(List.of(mp));
         when(productoTerminadoRepository.findAll()).thenReturn(List.of());
         when(despachoService.calcularStockDespachado(any())).thenReturn(0.0);
+        when(produccionRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())

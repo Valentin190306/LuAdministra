@@ -102,7 +102,7 @@ class ProduccionServiceTest {
         saved.setCantidadFabricada(3.0);
         when(produccionRepository.save(any())).thenReturn(saved);
 
-        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 3.0);
+        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 3.0, null);
         service.crear(request);
 
         assertEquals(110.0, mp.getStockActual());
@@ -120,7 +120,7 @@ class ProduccionServiceTest {
         when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
         when(recetaRepository.findByProductoTerminadoId(1L)).thenReturn(Optional.of(receta));
 
-        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 3.0);
+        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 3.0, null);
         assertThrows(StockInsuficienteException.class, () -> service.crear(request));
     }
 
@@ -132,7 +132,7 @@ class ProduccionServiceTest {
         when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
         when(recetaRepository.findByProductoTerminadoId(1L)).thenReturn(Optional.empty());
 
-        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 1.0);
+        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 1.0, null);
         assertThrows(SolicitudInvalidaException.class, () -> service.crear(request));
     }
 
@@ -140,7 +140,7 @@ class ProduccionServiceTest {
     void crear_cuandoProductoNoExiste_lanzaExcepcion() {
         when(productoTerminadoRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
-                () -> service.crear(new ProduccionRequest(99L, LocalDate.now(), 1.0)));
+                () -> service.crear(new ProduccionRequest(99L, LocalDate.now(), 1.0, null)));
     }
 
     @Test
@@ -175,7 +175,7 @@ class ProduccionServiceTest {
         saved.setCantidadFabricada(2.0);
         when(produccionRepository.save(any())).thenReturn(saved);
 
-        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 2.0);
+        ProduccionRequest request = new ProduccionRequest(1L, LocalDate.now(), 2.0, null);
         service.crear(request);
 
         assertEquals(60.0, mp1.getStockActual());

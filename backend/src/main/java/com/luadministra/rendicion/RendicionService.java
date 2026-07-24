@@ -70,12 +70,13 @@ public class RendicionService {
                 throw new SolicitudInvalidaException(
                         "El producto ID " + prodReq.productoTerminadoId() + " no está en el despacho");
             }
+            double devuelta = devueltaOrDefault(prodReq);
             double disponible = lineaDespacho.getCantidad()
                     - rendidoAnteriorPorProducto.getOrDefault(prodReq.productoTerminadoId(), 0.0);
-            if (prodReq.cantidadVendida() + prodReq.cantidadDevuelta() > disponible) {
+            if (prodReq.cantidadVendida() + devuelta > disponible) {
                 throw new SolicitudInvalidaException(
                         "La suma vendido+devuelto del producto " + lineaDespacho.getProductoTerminado().getNombre()
-                        + " (" + (prodReq.cantidadVendida() + prodReq.cantidadDevuelta())
+                        + " (" + (prodReq.cantidadVendida() + devuelta)
                         + ") supera el disponible (" + disponible + ")");
             }
 
@@ -86,10 +87,10 @@ public class RendicionService {
                         lineaDespacho.getPrecioUnitario()));
             }
 
-            if (prodReq.cantidadDevuelta() > 0) {
+            if (devuelta > 0) {
                 ProductoTerminado pt = productoTerminadoRepository.findById(prodReq.productoTerminadoId())
                         .orElseThrow(() -> new RecursoNoEncontradoException("Producto terminado no encontrado"));
-                pt.setStockActual(pt.getStockActual() + prodReq.cantidadDevuelta());
+                pt.setStockActual(pt.getStockActual() + devuelta);
                 productoTerminadoRepository.save(pt);
             }
         }
@@ -104,7 +105,7 @@ public class RendicionService {
                 .mapToDouble(lr -> lr.getCantidadVendida() + lr.getCantidadDevuelta())
                 .sum();
         double totalRendidoAhora = request.productos().stream()
-                .mapToDouble(p -> p.cantidadVendida() + p.cantidadDevuelta())
+                .mapToDouble(p -> p.cantidadVendida() + devueltaOrDefault(p))
                 .sum();
         double totalDespachado = despacho.getLineas().stream()
                 .mapToDouble(ld -> ld.getCantidad())
@@ -127,10 +128,14 @@ public class RendicionService {
             lr.setRendicion(rendicion);
             lr.setProductoTerminado(productoTerminadoRepository.getReferenceById(prodReq.productoTerminadoId()));
             lr.setCantidadVendida(prodReq.cantidadVendida());
-            lr.setCantidadDevuelta(prodReq.cantidadDevuelta());
+            lr.setCantidadDevuelta(devueltaOrDefault(prodReq));
             rendicion.getLineas().add(lr);
         }
 
         return RendicionResponse.fromEntity(rendicionRepository.save(rendicion));
+    }
+
+    private static double devueltaOrDefault(LineaRendicionRequest r) {
+        return r.cantidadDevuelta() != null ? r.cantidadDevuelta() : 0.0;
     }
 }

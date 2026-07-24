@@ -18,7 +18,7 @@ export default function Dashboard() {
   if (error) return <p className={styles.errorMsg}>Error: {error.message}</p>;
   if (!data) return <Loading />;
 
-  const { materiasPrimas, productosTerminados, alertasMP, alertasPT } = data;
+  const { materiasPrimas, productosTerminados, alertasMP, alertasPT, alertasVencimiento } = data;
 
   return (
     <div>
@@ -50,9 +50,9 @@ export default function Dashboard() {
           <span className={styles.cardValue}>{productosTerminados.length}</span>
           <span className={styles.cardLabel}>Productos Terminados</span>
         </div>
-        <div className={`${styles.card} ${alertasMP.length > 0 || alertasPT.length > 0 ? styles.cardAlert : ''}`}>
-          <span className={styles.cardValue}>{alertasMP.length + alertasPT.length}</span>
-          <span className={styles.cardLabel}>Alertas de Stock</span>
+        <div className={`${styles.card} ${(alertasMP.length > 0 || alertasPT.length > 0 || (alertasVencimiento?.length ?? 0) > 0) ? styles.cardAlert : ''}`}>
+          <span className={styles.cardValue}>{alertasMP.length + alertasPT.length + (alertasVencimiento?.length ?? 0)}</span>
+          <span className={styles.cardLabel}>Alertas</span>
         </div>
       </div>
 
@@ -73,6 +73,20 @@ export default function Dashboard() {
               <span>{pt.nombre}</span>
               <span className={styles.alertStock}>{pt.stockActual - (pt.stockDespachado ?? 0)} u (depósito)</span>
               <span className={styles.alertMin}>(mín: {pt.stockMinimo})</span>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {alertasVencimiento && alertasVencimiento.length > 0 && (
+        <section className={styles.alerts}>
+          <h2 className={styles.sectionTitle}>Alertas de vencimiento</h2>
+          {alertasVencimiento.map((av, i) => (
+            <div key={i} className={`${styles.alert} ${styles.alertVencido}`}>
+              <span className={styles.alertType}>PT</span>
+              <span>{av.productoTerminadoNombre}</span>
+              <span className={styles.alertStock}>Vencido: {av.fechaVencimiento}</span>
+              <span className={styles.alertMin}>Lote #{av.produccionId}</span>
             </div>
           ))}
         </section>

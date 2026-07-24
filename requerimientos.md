@@ -64,7 +64,9 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - Producto terminado fabricado
 - Cantidad fabricada
 - Fecha
-- Efecto: descuenta automáticamente el stock de materias primas según la receta, y suma al stock del producto terminado.
+- Días de vigencia (opcional; indica el período de validez del lote desde su fabricación; si se omite, el producto se considera imperecedero)
+- Efecto: descuenta automáticamente el stock de materias primas según la receta, y suma al stock del producto terminado. Si se indicaron días de vigencia, el sistema calcula la fecha de vencimiento (`fecha + díasDeVigencia`).
+- Cada producción constituye un **lote** del producto terminado, que queda asociado a su fecha de vencimiento calculada.
 
 ### Venta
 - Una cabecera de venta con fecha
@@ -155,9 +157,13 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 | RF-047 | El sistema debe mostrar el precio de referencia ML junto al historial de compras de cada materia prima para permitir la comparación. | Baja |
 | RF-048 | (Eliminado — reemplazado por RF-045 a RF-047: precio de referencia ML de ingreso manual) | - |
 | RF-049 | El sistema debe permitir extraer el ID de publicación de Mercado Libre automáticamente si la usuaria pega una URL completa de ML en lugar del ID. | Baja |
+| RF-050 | El sistema debe permitir ingresar opcionalmente los días de vigencia al registrar una producción, indicando el período de validez del lote desde su fecha de fabricación. | Media |
+| RF-051 | Al registrar una producción con días de vigencia, el sistema debe calcular y almacenar la fecha de vencimiento (`fecha de fabricación + días de vigencia`). | Media |
+| RF-052 | El sistema debe alertar en el panel de resumen (Dashboard) cuando existan lotes vencidos que aún tengan stock en depósito. | Media |
+| RF-053 | El sistema debe mostrar, desde el listado de productos terminados, un modal con el detalle de todos los lotes (producciones) de ese producto, incluyendo su fecha de fabricación, cantidad, días de vigencia, fecha de vencimiento y estado (vigente/vencido). | Media |
 
 > **Nota:** RF-022 y RF-023 quedan pendientes de mayor especificación (granularidad temporal, filtros, formato de salida) antes de pasar a diseño.
-> **Nota:** RF-042 y RF-043 — el sistema genera una Venta única con múltiples líneas de detalle (una por producto vendido) al registrar la rendición, reflejando la estructura de LineaRendicion.
+> **Nota:** RF-042 y RF-043 — el sistema genera una Venta única con múltiples líneas de detalle (una por producto vendido) al registrar la rendición, reflejando la estructura de LineaRendicion. El campo `cantidadDevuelta` es opcional en la API; si se omite se trata como 0. La interfaz separa conceptualmente "Rendir" (solo vendido + monto) de "Devolver" (solo devuelto, sin monto), aunque ambos usan el mismo endpoint. El campo `diasVigencia` es opcional en la producción.
 
 ---
 
@@ -199,6 +205,8 @@ Sistema de gestión de inventario para un emprendimiento de fabricación y venta
 - **Precio de referencia de Mercado Libre — integración automática eliminada:** la consulta automática de precios ML fue descartada porque la API pública ahora requiere OAuth y el cliente se negó a asociar una cuenta de ML (temor a AFIP). En su lugar, el campo `precioMlReferencia` es de ingreso manual en el formulario de compra. El frontend extrae automáticamente el ID de publicación (ej. `MLA123456789`) si la usuaria pega una URL completa de ML, usando el patrón `M[A-Z]{2,}\d+`.
 - **Precarga de recetas en página de recetas:** la página Recetas.jsx carga la lista completa de recetas (`GET /api/recetas`) al montarse para que los botones "Editar Receta" y "Eliminar" aparezcan inmediatamente en la tabla, sin requerir que la usuaria abra primero un modal para recién ver las opciones.
 - **Filtro por estado en despachos:** el backend acepta un parámetro opcional `estado` en `GET /api/despachos` para filtrar por `EstadoDespacho`. El frontend expone un combo de selección con tres opciones: Todos / Pendientes / Rendidos, que refresca la tabla al cambiar.
+- **Vigencia y vencimiento de lotes:** cada producción constituye un lote del producto terminado. Opcionalmente se le asignan `diasVigencia` (días de validez desde la fabricación). La `fechaVencimiento` se calcula como `fechaProduccion + diasVigencia` y se expone en la respuesta de la API. Los lotes sin vigencia se consideran imperecederos. No existe un tracking granular de consumo por lote (FIFO); el stock total se maneja de forma agregada en `ProductoTerminado.stockActual`. Los lotes son solo informativos y disparan alertas de vencimiento en el Dashboard cuando `fechaVencimiento < today` y el producto aún tiene stock > 0.
+- **Lotes consultables desde productos terminados:** la acción "Ver vencimientos" en el menú de cada producto terminado abre un modal con la lista de todos sus lotes (producciones), ordenados por fecha descendente, mostrando ID, fecha de producción, cantidad, días de vigencia, fecha de vencimiento, y estado (✓ Vigente / ⚠ Vencido). Las filas vencidas se destacan visualmente.
 
 ---
 

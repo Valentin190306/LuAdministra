@@ -16,7 +16,7 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const emptyForm = { productoTerminadoId: '', fecha: todayStr(), cantidadFabricada: '' };
+const emptyForm = { productoTerminadoId: '', fecha: todayStr(), cantidadFabricada: '', diasVigencia: '' };
 
 function monthAgo() {
   const d = new Date();
@@ -60,6 +60,7 @@ export default function Produccion() {
         productoTerminadoId: Number(form.productoTerminadoId),
         fecha: form.fecha,
         cantidadFabricada: Number(form.cantidadFabricada),
+        diasVigencia: form.diasVigencia === '' ? null : Number(form.diasVigencia),
       });
       setModalOpen(false);
       refetch();
@@ -172,6 +173,9 @@ export default function Produccion() {
           </FormField>
           <FormField label="Cantidad Fabricada">
             <input type="number" step="any" min="0" value={form.cantidadFabricada} onChange={(e) => setForm({ ...form, cantidadFabricada: e.target.value })} required />
+          </FormField>
+          <FormField label="Días de vigencia (opcional)">
+            <input type="number" min="1" step="1" value={form.diasVigencia} onChange={(e) => setForm({ ...form, diasVigencia: e.target.value })} placeholder="Ej: 365" />
           </FormField>
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>

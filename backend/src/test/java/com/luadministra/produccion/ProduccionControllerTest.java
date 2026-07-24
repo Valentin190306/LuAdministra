@@ -33,7 +33,7 @@ class ProduccionControllerTest {
         when(service.listar(anyInt(), anyInt(), eq("fecha"), eq("desc")))
                 .thenReturn(new PaginatedResponse<>(List.of(new ProduccionResponse(
                         1L, 1L, "Jabón de Lavanda",
-                        LocalDate.of(2025, 3, 1), 10.0)), 0, 50, 1, 1));
+                        LocalDate.of(2025, 3, 1), 10.0, null, null)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/producciones")
                         .param("sortBy", "fecha")
@@ -46,7 +46,7 @@ class ProduccionControllerTest {
     void obtener_retorna200() throws Exception {
         when(service.obtener(1L)).thenReturn(new ProduccionResponse(
                 1L, 1L, "Jabón de Lavanda",
-                LocalDate.of(2025, 3, 1), 10.0));
+                LocalDate.of(2025, 3, 1), 10.0, null, null));
 
         mockMvc.perform(get("/api/producciones/1"))
                 .andExpect(status().isOk())
@@ -69,7 +69,7 @@ class ProduccionControllerTest {
                 0, 50))
                 .thenReturn(new PaginatedResponse<>(List.of(new ProduccionResponse(
                         1L, 1L, "Jabón de Lavanda",
-                        LocalDate.of(2025, 6, 15), 10.0)), 0, 50, 1, 1));
+                        LocalDate.of(2025, 6, 15), 10.0, null, null)), 0, 50, 1, 1));
 
         mockMvc.perform(get("/api/producciones/periodo")
                         .param("desde", "2025-01-01")

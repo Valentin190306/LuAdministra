@@ -36,7 +36,6 @@ function emptyRendicionProductos(productos) {
     productoTerminadoNombre: p.productoTerminadoNombre,
     cantidadDespachada: p.cantidad,
     cantidadVendida: '',
-    cantidadDevuelta: '',
   }));
 }
 
@@ -165,7 +164,6 @@ export default function Despachos() {
           productoTerminadoNombre: p.productoTerminadoNombre,
           cantidadDespachada: p.cantidad - (yaRendido[p.productoTerminadoId] || 0),
           cantidadVendida: '',
-          cantidadDevuelta: '',
         }))
       );
     } catch {
@@ -184,7 +182,7 @@ export default function Despachos() {
   async function handleRendicionSave(e) {
     e.preventDefault();
     const valid = rendicionProductos.filter(
-      (p) => Number(p.cantidadVendida) > 0 || Number(p.cantidadDevuelta) > 0
+      (p) => Number(p.cantidadVendida) > 0
     );
     if (valid.length === 0) return;
     setSavingRendicion(true);
@@ -196,7 +194,6 @@ export default function Despachos() {
         productos: valid.map((p) => ({
           productoTerminadoId: p.productoTerminadoId,
           cantidadVendida: Number(p.cantidadVendida) || 0,
-          cantidadDevuelta: Number(p.cantidadDevuelta) || 0,
         })),
       });
       setRendicionModal(null);
@@ -432,14 +429,6 @@ export default function Despachos() {
                       placeholder="Vendido"
                       value={p.cantidadVendida}
                       onChange={(e) => updateRendicionProducto(i, 'cantidadVendida', e.target.value)}
-                    />
-                    <input
-                      type="number"
-                      step="any"
-                      min="0"
-                      placeholder="Devuelto"
-                      value={p.cantidadDevuelta}
-                      onChange={(e) => updateRendicionProducto(i, 'cantidadDevuelta', e.target.value)}
                     />
                   </div>
                 ))}
