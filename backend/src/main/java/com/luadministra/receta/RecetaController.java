@@ -21,9 +21,9 @@ public class RecetaController {
         return service.obtenerTodas();
     }
 
-    @GetMapping("/producto/{productoTerminadoId}")
-    public RecetaResponse obtenerPorProducto(@PathVariable Long productoTerminadoId) {
-        return service.obtenerPorProducto(productoTerminadoId);
+    @GetMapping("/producto/{productoId}")
+    public RecetaResponse obtenerPorProducto(@PathVariable Long productoId) {
+        return service.obtenerPorProducto(productoId);
     }
 
     @PostMapping

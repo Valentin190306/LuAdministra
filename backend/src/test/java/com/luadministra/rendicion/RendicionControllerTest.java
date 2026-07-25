@@ -34,10 +34,10 @@ class RendicionControllerTest {
     private ObjectMapper mapper;
 
     @Test
-    void listarPorDespacho_retorna200() throws Exception {
-        when(service.listarPorDespacho(1L)).thenReturn(List.of());
+    void listarPorConsignacion_retorna200() throws Exception {
+        when(service.listarPorConsignacion(1L)).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/despachos/1/rendiciones"))
+        mockMvc.perform(get("/api/rendiciones/consignacion/1"))
                 .andExpect(status().isOk());
     }
 
@@ -68,7 +68,7 @@ class RendicionControllerTest {
     }
 
     @Test
-    void crear_cuandoDespachoNoExiste_retorna404() throws Exception {
+    void crear_cuandoConsignacionNoExiste_retorna404() throws Exception {
         when(service.crear(any())).thenThrow(new RecursoNoEncontradoException("no encontrado"));
 
         String body = mapper.writeValueAsString(

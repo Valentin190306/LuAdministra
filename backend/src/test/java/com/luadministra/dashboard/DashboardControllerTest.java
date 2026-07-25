@@ -1,12 +1,12 @@
 package com.luadministra.dashboard;
 
-import com.luadministra.despacho.DespachoService;
+import com.luadministra.producto.ProductoService;
 import com.luadministra.exception.GlobalExceptionHandler;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
-import com.luadministra.produccion.ProduccionRepository;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.lote.LoteRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,13 +31,13 @@ class DashboardControllerTest {
     private MateriaPrimaRepository materiaPrimaRepository;
 
     @MockitoBean
-    private ProductoTerminadoRepository productoTerminadoRepository;
+    private ProductoRepository productoRepository;
 
     @MockitoBean
-    private DespachoService despachoService;
+    private ProductoService productoService;
 
     @MockitoBean
-    private ProduccionRepository produccionRepository;
+    private LoteRepository loteRepository;
 
     @Test
     void stock_retornaDashboard() throws Exception {
@@ -48,7 +48,7 @@ class DashboardControllerTest {
         mp.setStockActual(100.0);
         mp.setStockMinimo(50.0);
 
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
         pt.setNombre("Jabón");
         pt.setStockActual(20.0);
@@ -56,9 +56,9 @@ class DashboardControllerTest {
         pt.setPrecioVenta(100.0);
 
         when(materiaPrimaRepository.findAll()).thenReturn(List.of(mp));
-        when(productoTerminadoRepository.findAll()).thenReturn(List.of(pt));
-        when(despachoService.calcularStockDespachado(1L)).thenReturn(5.0);
-        when(produccionRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
+        when(productoRepository.findAll()).thenReturn(List.of(pt));
+        when(productoService.calcularStockConsignado(1L)).thenReturn(5.0);
+        when(loteRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())
@@ -78,9 +78,9 @@ class DashboardControllerTest {
         mp.setStockActual(100.0);
 
         when(materiaPrimaRepository.findAll()).thenReturn(List.of(mp));
-        when(productoTerminadoRepository.findAll()).thenReturn(List.of());
-        when(despachoService.calcularStockDespachado(any())).thenReturn(0.0);
-        when(produccionRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
+        when(productoRepository.findAll()).thenReturn(List.of());
+        when(productoService.calcularStockConsignado(anyLong())).thenReturn(0.0);
+        when(loteRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())
@@ -97,16 +97,16 @@ class DashboardControllerTest {
         mp.setStockMinimo(5.0);
 
         when(materiaPrimaRepository.findAll()).thenReturn(List.of(mp));
-        when(productoTerminadoRepository.findAll()).thenReturn(List.of());
-        when(despachoService.calcularStockDespachado(any())).thenReturn(0.0);
-        when(produccionRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
+        when(productoRepository.findAll()).thenReturn(List.of());
+        when(productoService.calcularStockConsignado(anyLong())).thenReturn(0.0);
+        when(loteRepository.findByDiasVigenciaIsNotNull()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alertasMP[0].nombre").value("Aceite"));
     }
 
-    private static <T> T any() {
-        return org.mockito.ArgumentMatchers.any();
+    private static long anyLong() {
+        return org.mockito.ArgumentMatchers.anyLong();
     }
 }

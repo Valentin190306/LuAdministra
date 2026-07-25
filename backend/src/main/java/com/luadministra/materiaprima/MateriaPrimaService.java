@@ -1,6 +1,6 @@
 package com.luadministra.materiaprima;
 
-import com.luadministra.categoriamateriaprima.CategoriaMateriaPrimaRepository;
+import com.luadministra.categoria.CategoriaRepository;
 import com.luadministra.compra.Compra;
 import com.luadministra.compra.CompraRepository;
 import com.luadministra.exception.RecursoNoEncontradoException;
@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 public class MateriaPrimaService {
 
     private final MateriaPrimaRepository repository;
-    private final CategoriaMateriaPrimaRepository categoriaRepository;
+    private final CategoriaRepository categoriaRepository;
     private final CompraRepository compraRepository;
 
     public MateriaPrimaService(MateriaPrimaRepository repository,
-                               CategoriaMateriaPrimaRepository categoriaRepository,
+                               CategoriaRepository categoriaRepository,
                                CompraRepository compraRepository) {
         this.repository = repository;
         this.categoriaRepository = categoriaRepository;

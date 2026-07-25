@@ -1,6 +1,6 @@
 package com.luadministra.venta;
 
-import com.luadministra.productoterminado.ProductoTerminado;
+import com.luadministra.producto.Producto;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -17,7 +17,8 @@ public class LineaVenta {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    private ProductoTerminado productoTerminado;
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
 
     @NotNull
     @Column(nullable = false)
@@ -33,8 +34,8 @@ public class LineaVenta {
     public Venta getVenta() { return venta; }
     public void setVenta(Venta venta) { this.venta = venta; }
 
-    public ProductoTerminado getProductoTerminado() { return productoTerminado; }
-    public void setProductoTerminado(ProductoTerminado productoTerminado) { this.productoTerminado = productoTerminado; }
+    public Producto getProducto() { return producto; }
+    public void setProducto(Producto producto) { this.producto = producto; }
 
     public Double getCantidad() { return cantidad; }
     public void setCantidad(Double cantidad) { this.cantidad = cantidad; }

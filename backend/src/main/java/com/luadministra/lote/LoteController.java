@@ -1,0 +1,60 @@
+package com.luadministra.lote;
+
+import com.luadministra.dto.PaginatedResponse;
+import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/lotes")
+public class LoteController {
+
+    private final LoteService service;
+
+    public LoteController(LoteService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public PaginatedResponse<LoteResponse> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listar(page, size, sortBy, sortDir);
+    }
+
+    @GetMapping("/periodo")
+    public PaginatedResponse<LoteResponse> listarPorPeriodo(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return service.listarPorPeriodo(desde, hasta, page, size);
+    }
+
+    @GetMapping("/{id}")
+    public LoteResponse obtener(@PathVariable Long id) {
+        return service.obtener(id);
+    }
+
+    @PostMapping
+    public LoteResponse crear(@Valid @RequestBody LoteRequest request) {
+        return service.crear(request);
+    }
+
+    @GetMapping("/lotes-por-producto")
+    public List<LoteResponse> listarLotes(@RequestParam Long productoId) {
+        return service.listarLotesPorProducto(productoId);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        service.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
+}

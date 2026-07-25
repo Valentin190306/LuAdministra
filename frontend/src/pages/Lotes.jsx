@@ -1,0 +1,196 @@
+import { useState, useCallback } from 'react';
+import { api } from '../api/client';
+import { useApi } from '../hooks/useApi';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import Table from '../components/ui/Table';
+import Button from '../components/ui/Button';
+import ActionMenu from '../components/ui/ActionMenu';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import FormField from '../components/ui/FormField';
+import Loading from '../components/ui/Loading';
+import { downloadCSV } from '../utils/csv';
+import styles from './Lotes.module.css';
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const emptyForm = { productoId: '', fecha: todayStr(), cantidadFabricada: '', diasVigencia: '' };
+
+function monthAgo() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+export default function Lotes() {
+  const [sortBy, setSortBy] = useState('fecha');
+  const [sortDir, setSortDir] = useState('desc');
+  const [desde, setDesde] = useState(monthAgo());
+  const [hasta, setHasta] = useState(todayStr());
+  const [usarPeriodo, setUsarPeriodo] = useState(false);
+  const { data: ptList } = useApi('/productos');
+
+  const buildUrl = useCallback((page, size) => {
+    if (usarPeriodo) {
+      return `/lotes/periodo?desde=${desde}&hasta=${hasta}&page=${page}&size=${size}`;
+    }
+    return `/lotes?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`;
+  }, [sortBy, sortDir, usarPeriodo, desde, hasta]);
+
+  const { data, loading, hasMore, error, sentinelRef, refetch } = useInfiniteScroll(buildUrl);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  function openCreate() {
+    setForm(emptyForm);
+    setModalOpen(true);
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    if (!form.productoId || !form.cantidadFabricada) return;
+    setSaving(true);
+    try {
+      await api.post('/lotes', {
+        productoId: Number(form.productoId),
+        fecha: form.fecha,
+        cantidadFabricada: Number(form.cantidadFabricada),
+        diasVigencia: form.diasVigencia === '' ? null : Number(form.diasVigencia),
+      });
+      setModalOpen(false);
+      refetch();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/lotes/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      refetch();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  const columns = [
+    { key: 'id', label: 'ID' },
+    { key: 'productoNombre', label: 'Producto' },
+    { key: 'fecha', label: 'Fecha' },
+    {
+      key: 'cantidadFabricada',
+      label: 'Cantidad',
+      render: (r) => `${r.cantidadFabricada} u`,
+    },
+    {
+      key: 'acciones',
+      label: '',
+      render: (row) => (
+        <ActionMenu actions={[
+          { label: 'Eliminar', onClick: () => setDeleteTarget(row) },
+        ]} />
+      ),
+    },
+  ];
+
+  if (loading && !data) return <Loading />;
+  if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+
+  return (
+    <div>
+      <div className={styles.header}>
+        <h1 className={styles.pageTitle}>Lotes de Producción</h1>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => downloadCSV(data, [
+            { key: 'id', label: 'ID' },
+            { key: 'productoNombre', label: 'Producto' },
+            { key: 'fecha', label: 'Fecha' },
+            { key: 'cantidadFabricada', label: 'Cantidad Fabricada' },
+          ], 'lotes.csv')}>Exportar CSV</Button>
+          <Button onClick={openCreate}>Registrar Lote</Button>
+        </div>
+      </div>
+
+      <p className={styles.hint}>Al registrar una producción se descuenta automáticamente el stock de materias primas según la receta y se incrementa el stock del producto terminado.</p>
+
+      <div className={styles.filters}>
+        <label className={styles.filterLabel}>
+          <input type="checkbox" checked={usarPeriodo} onChange={(e) => setUsarPeriodo(e.target.checked)} />
+          Filtrar por período
+        </label>
+        {usarPeriodo && (
+          <>
+            <label className={styles.filterLabel}>
+              Desde:
+              <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className={styles.filterSelect} />
+            </label>
+            <label className={styles.filterLabel}>
+              Hasta:
+              <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className={styles.filterSelect} />
+            </label>
+          </>
+        )}
+        {!usarPeriodo && (
+          <>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="fecha">Ordenar por fecha</option>
+              <option value="cantidadFabricada">Ordenar por cantidad</option>
+            </select>
+            <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
+              {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
+            </Button>
+          </>
+        )}
+      </div>
+
+      {error && <p className={styles.errorMsg}>Error: {error.message}</p>}
+
+      <Table columns={columns} data={data ?? []} sentinelRef={sentinelRef} emptyMessage="No hay lotes registrados." />
+
+      {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
+
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Registrar Lote">
+        <form onSubmit={handleSave} className={styles.form}>
+          <FormField label="Producto">
+            <select value={form.productoId} onChange={(e) => setForm({ ...form, productoId: e.target.value })} required>
+              <option value="">Seleccionar...</option>
+              {ptList?.map((pt) => (
+                <option key={pt.id} value={pt.id}>{pt.nombre}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Fecha">
+            <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
+          </FormField>
+          <FormField label="Cantidad Fabricada">
+            <input type="number" step="any" min="0" value={form.cantidadFabricada} onChange={(e) => setForm({ ...form, cantidadFabricada: e.target.value })} required />
+          </FormField>
+          <FormField label="Días de vigencia (opcional)">
+            <input type="number" min="1" step="1" value={form.diasVigencia} onChange={(e) => setForm({ ...form, diasVigencia: e.target.value })} placeholder="Ej: 365" />
+          </FormField>
+          <div className={styles.formActions}>
+            <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Eliminar Lote"
+        message={`¿Eliminar la producción de "${deleteTarget?.productoNombre}" del ${deleteTarget?.fecha}? Se revertirá el stock de materias primas y productos.`}
+      />
+    </div>
+  );
+}

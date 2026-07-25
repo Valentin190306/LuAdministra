@@ -3,8 +3,8 @@ package com.luadministra.receta;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,7 +25,7 @@ class RecetaServiceTest {
     private RecetaRepository repository;
 
     @Mock
-    private ProductoTerminadoRepository productoTerminadoRepository;
+    private ProductoRepository productoRepository;
 
     @Mock
     private MateriaPrimaRepository materiaPrimaRepository;
@@ -35,20 +35,20 @@ class RecetaServiceTest {
 
     @Test
     void guardar_creaRecetaConDetalles() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
 
         MateriaPrima mp = new MateriaPrima();
         mp.setId(10L);
         mp.setNombre("Manteca de Karite");
 
-        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(pt));
         when(materiaPrimaRepository.findById(10L)).thenReturn(Optional.of(mp));
-        when(repository.findByProductoTerminadoId(1L)).thenReturn(Optional.empty());
+        when(repository.findByProductoId(1L)).thenReturn(Optional.empty());
 
         Receta saved = new Receta();
         saved.setId(1L);
-        saved.setProductoTerminado(pt);
+        saved.setProducto(pt);
         when(repository.save(any())).thenReturn(saved);
 
         RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(10L, 50.0)), null);
@@ -60,11 +60,11 @@ class RecetaServiceTest {
 
     @Test
     void guardar_cuandoMPNoExiste_lanzaExcepcion() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
 
-        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
-        when(repository.findByProductoTerminadoId(1L)).thenReturn(Optional.empty());
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(pt));
+        when(repository.findByProductoId(1L)).thenReturn(Optional.empty());
         when(materiaPrimaRepository.findById(99L)).thenReturn(Optional.empty());
 
         RecetaRequest request = new RecetaRequest(1L, List.of(new RecetaDetalleRequest(99L, 50.0)), null);
@@ -73,15 +73,15 @@ class RecetaServiceTest {
 
     @Test
     void obtenerPorProducto_cuandoExiste_retorna() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
 
         Receta receta = new Receta();
         receta.setId(1L);
-        receta.setProductoTerminado(pt);
+        receta.setProducto(pt);
         receta.setNotas("Nota de prueba");
 
-        when(repository.findByProductoTerminadoId(1L)).thenReturn(Optional.of(receta));
+        when(repository.findByProductoId(1L)).thenReturn(Optional.of(receta));
 
         RecetaResponse result = service.obtenerPorProducto(1L);
         assertNotNull(result);
@@ -89,13 +89,13 @@ class RecetaServiceTest {
 
     @Test
     void obtenerPorProducto_cuandoNoExiste_lanzaExcepcion() {
-        when(repository.findByProductoTerminadoId(99L)).thenReturn(Optional.empty());
+        when(repository.findByProductoId(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class, () -> service.obtenerPorProducto(99L));
     }
 
     @Test
     void actualizar_modificaNotasYDetalles() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
 
         MateriaPrima mp = new MateriaPrima();
@@ -104,7 +104,7 @@ class RecetaServiceTest {
 
         Receta existente = new Receta();
         existente.setId(1L);
-        existente.setProductoTerminado(pt);
+        existente.setProducto(pt);
         existente.setNotas("Vieja nota");
 
         when(repository.findById(1L)).thenReturn(Optional.of(existente));
@@ -119,12 +119,12 @@ class RecetaServiceTest {
 
     @Test
     void actualizar_cuandoProductoNoCoincide_lanzaExcepcion() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
 
         Receta existente = new Receta();
         existente.setId(1L);
-        existente.setProductoTerminado(pt);
+        existente.setProducto(pt);
 
         when(repository.findById(1L)).thenReturn(Optional.of(existente));
 

@@ -5,14 +5,14 @@ import org.eclipse.jdt.annotation.Nullable;
 
 public record RecetaResponse(
         Long id,
-        Long productoTerminadoId,
-        String productoTerminadoNombre,
+        Long productoId,
+        String productoNombre,
         List<RecetaDetalleResponse> detalles,
         @Nullable String notas
 ) {
     public static RecetaResponse fromEntity(Receta r) {
-        return new RecetaResponse(r.getId(), r.getProductoTerminado().getId(),
-                r.getProductoTerminado().getNombre(),
+        return new RecetaResponse(r.getId(), r.getProducto().getId(),
+                r.getProducto().getNombre(),
                 r.getDetalles().stream().map(RecetaDetalleResponse::fromEntity).toList(),
                 r.getNotas());
     }

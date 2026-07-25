@@ -11,7 +11,7 @@ import { downloadCSV } from '../utils/csv';
 import styles from './Recetas.module.css';
 
 export default function Recetas() {
-  const { data: ptList, loading: ptLoading } = useApi('/productos-terminados');
+  const { data: ptList, loading: ptLoading } = useApi('/productos');
   const { data: mpList } = useApi('/materias-primas');
   const { data: allRecipes } = useApi('/recetas');
 
@@ -38,7 +38,7 @@ export default function Recetas() {
   useEffect(() => {
     if (!allRecipes) return;
     setRecipeMap((prev) => {
-      const map = Object.fromEntries(allRecipes.map((r) => [r.productoTerminadoId, r]));
+      const map = Object.fromEntries(allRecipes.map((r) => [r.productoId, r]));
       return { ...prev, ...map };
     });
   }, [allRecipes]);
@@ -93,7 +93,7 @@ export default function Recetas() {
     try {
       const ptId = creatingNew ? Number(newPtId) : selectedPt.id;
       const body = {
-        productoTerminadoId: ptId,
+        productoId: ptId,
         detalles: valid.map((d) => ({
           materiaPrimaId: Number(d.materiaPrimaId),
           cantidad: Number(d.cantidad),

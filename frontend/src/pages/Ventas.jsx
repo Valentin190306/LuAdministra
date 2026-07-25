@@ -28,7 +28,7 @@ export default function Ventas() {
   const [desde, setDesde] = useState(monthAgo());
   const [hasta, setHasta] = useState(todayStr());
   const [usarPeriodo, setUsarPeriodo] = useState(false);
-  const { data: ptList } = useApi('/productos-terminados');
+  const { data: ptList } = useApi('/productos');
 
   const buildUrl = useCallback((page, size) => {
     if (usarPeriodo) {
@@ -41,19 +41,19 @@ export default function Ventas() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [fecha, setFecha] = useState(todayStr());
-  const [lineas, setLineas] = useState([{ productoTerminadoId: '', cantidad: '' }]);
+  const [lineas, setLineas] = useState([{ productoId: '', cantidad: '' }]);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [detailVenta, setDetailVenta] = useState(null);
 
   function openCreate() {
     setFecha(todayStr());
-    setLineas([{ productoTerminadoId: '', cantidad: '' }]);
+    setLineas([{ productoId: '', cantidad: '' }]);
     setModalOpen(true);
   }
 
   function addLinea() {
-    setLineas((prev) => [...prev, { productoTerminadoId: '', cantidad: '' }]);
+    setLineas((prev) => [...prev, { productoId: '', cantidad: '' }]);
   }
 
   function updateLinea(index, field, value) {
@@ -70,14 +70,14 @@ export default function Ventas() {
 
   async function handleSave(e) {
     e.preventDefault();
-    const valid = lineas.filter((l) => l.productoTerminadoId && l.cantidad);
+    const valid = lineas.filter((l) => l.productoId && l.cantidad);
     if (valid.length === 0) return;
     setSaving(true);
     try {
       await api.post('/ventas', {
         fecha,
         lineas: valid.map((l) => ({
-          productoTerminadoId: Number(l.productoTerminadoId),
+          productoId: Number(l.productoId),
           cantidad: Number(l.cantidad),
         })),
       });
@@ -201,7 +201,7 @@ export default function Ventas() {
             {lineas.map((l, i) => (
               <div key={i} className={styles.lineaRow}>
                 <FormField label={i === 0 ? 'Producto Terminado' : undefined}>
-                  <select value={l.productoTerminadoId} onChange={(e) => updateLinea(i, 'productoTerminadoId', e.target.value)} required>
+                  <select value={l.productoId} onChange={(e) => updateLinea(i, 'productoId', e.target.value)} required>
                     <option value="">Seleccionar...</option>
                     {ptList?.map((pt) => (
                       <option key={pt.id} value={pt.id}>{pt.nombre} (stock: {pt.stockActual} u)</option>
@@ -250,7 +250,7 @@ export default function Ventas() {
             <tbody>
               {detailVenta?.lineas.map((l) => (
                 <tr key={l.id}>
-                  <td>{l.productoTerminadoNombre}</td>
+                  <td>{l.productoNombre}</td>
                   <td>{l.cantidad} u</td>
                   <td>${Number(l.precioUnitario).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                   <td>${(l.cantidad * l.precioUnitario).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>

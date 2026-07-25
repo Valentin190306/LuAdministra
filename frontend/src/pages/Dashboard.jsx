@@ -37,7 +37,7 @@ export default function Dashboard() {
             { key: 'stockActual', label: 'En Depósito' },
             { key: 'stockDespachado', label: 'Despachado' },
             { key: 'stockMinimo', label: 'Stock Mínimo' },
-          ], 'productos-terminados.csv')}>Exportar PT</Button>
+          ], 'productos.csv')}>Exportar PT</Button>
         </div>
       </div>
 
@@ -84,9 +84,9 @@ export default function Dashboard() {
           {alertasVencimiento.map((av, i) => (
             <div key={i} className={`${styles.alert} ${styles.alertVencido}`}>
               <span className={styles.alertType}>PT</span>
-              <span>{av.productoTerminadoNombre}</span>
+              <span>{av.productoNombre}</span>
               <span className={styles.alertStock}>Vencido: {av.fechaVencimiento}</span>
-              <span className={styles.alertMin}>Lote #{av.produccionId}</span>
+              <span className={styles.alertMin}>Lote #{av.loteId}</span>
             </div>
           ))}
         </section>

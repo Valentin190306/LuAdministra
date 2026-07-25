@@ -1,13 +1,13 @@
 package com.luadministra.dashboard;
 
-import com.luadministra.despacho.DespachoService;
+import com.luadministra.lote.LoteRepository;
+import com.luadministra.lote.LoteResponse;
 import com.luadministra.materiaprima.MateriaPrimaResponse;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
-import com.luadministra.produccion.ProduccionRepository;
-import com.luadministra.produccion.ProduccionResponse;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
-import com.luadministra.productoterminado.ProductoTerminadoResponse;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
+import com.luadministra.producto.ProductoResponse;
+import com.luadministra.producto.ProductoService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,18 +21,18 @@ import java.util.Map;
 public class DashboardController {
 
     private final MateriaPrimaRepository materiaPrimaRepository;
-    private final ProductoTerminadoRepository productoTerminadoRepository;
-    private final DespachoService despachoService;
-    private final ProduccionRepository produccionRepository;
+    private final ProductoRepository productoRepository;
+    private final ProductoService productoService;
+    private final LoteRepository loteRepository;
 
     public DashboardController(MateriaPrimaRepository materiaPrimaRepository,
-                               ProductoTerminadoRepository productoTerminadoRepository,
-                               DespachoService despachoService,
-                               ProduccionRepository produccionRepository) {
+                               ProductoRepository productoRepository,
+                               ProductoService productoService,
+                               LoteRepository loteRepository) {
         this.materiaPrimaRepository = materiaPrimaRepository;
-        this.productoTerminadoRepository = productoTerminadoRepository;
-        this.despachoService = despachoService;
-        this.produccionRepository = produccionRepository;
+        this.productoRepository = productoRepository;
+        this.productoService = productoService;
+        this.loteRepository = loteRepository;
     }
 
     @GetMapping("/stock")
@@ -40,44 +40,44 @@ public class DashboardController {
         List<MateriaPrimaResponse> materiasPrimas = materiaPrimaRepository.findAll().stream()
                 .map(MateriaPrimaResponse::fromEntity)
                 .toList();
-        List<ProductoTerminado> pts = productoTerminadoRepository.findAll();
-        List<ProductoTerminadoResponse> productosTerminados = pts.stream()
-                .map(pt -> ProductoTerminadoResponse.fromEntity(pt,
-                        despachoService.calcularStockDespachado(pt.getId())))
+        List<Producto> productos = productoRepository.findAll();
+        List<ProductoResponse> productosResponse = productos.stream()
+                .map(p -> ProductoResponse.fromEntity(p,
+                        productoService.calcularStockConsignado(p.getId())))
                 .toList();
 
         List<MateriaPrimaResponse> alertasMP = materiasPrimas.stream()
                 .filter(mp -> { Double min = mp.stockMinimo(); return min != null && mp.stockActual() < min; })
                 .toList();
 
-        List<ProductoTerminadoResponse> alertasPT = productosTerminados.stream()
-                .filter(pt -> { Double min = pt.stockMinimo(); return min != null && pt.stockActual() < min; })
+        List<ProductoResponse> alertasPT = productosResponse.stream()
+                .filter(p -> { Double min = p.stockMinimo(); return min != null && p.stockActual() < min; })
                 .toList();
 
-        List<ProduccionResponse> produccionesVencidas = produccionRepository
+        List<LoteResponse> lotesVencidos = loteRepository
                 .findByDiasVigenciaIsNotNull().stream()
-                .filter(p -> p.getFecha().plusDays(p.getDiasVigencia()).isBefore(LocalDate.now()))
-                .map(ProduccionResponse::fromEntity)
+                .filter(l -> l.getFecha().plusDays(l.getDiasVigencia()).isBefore(LocalDate.now()))
+                .map(LoteResponse::fromEntity)
                 .toList();
 
-        List<Map<String, Object>> alertasVencimiento = produccionesVencidas.stream()
-                .filter(pv -> {
-                    var pt = pts.stream().filter(p -> p.getId().equals(pv.productoTerminadoId())).findFirst();
-                    return pt.isPresent() && pt.get().getStockActual() > 0;
+        List<Map<String, Object>> alertasVencimiento = lotesVencidos.stream()
+                .filter(lv -> {
+                    var p = productos.stream().filter(prod -> prod.getId().equals(lv.productoId())).findFirst();
+                    return p.isPresent() && p.get().getStockActual() > 0;
                 })
-                .map(pv -> Map.<String, Object>of(
-                        "produccionId", pv.id(),
-                        "productoTerminadoId", pv.productoTerminadoId(),
-                        "productoTerminadoNombre", pv.productoTerminadoNombre(),
-                        "fechaProduccion", pv.fecha().toString(),
-                        "fechaVencimiento", pv.fechaVencimiento() != null ? pv.fechaVencimiento().toString() : null,
-                        "cantidadFabricada", pv.cantidadFabricada()
+                .map(lv -> Map.<String, Object>of(
+                        "loteId", lv.id(),
+                        "productoId", lv.productoId(),
+                        "productoNombre", lv.productoNombre(),
+                        "fechaProduccion", lv.fecha().toString(),
+                        "fechaVencimiento", lv.fechaVencimiento() != null ? lv.fechaVencimiento().toString() : null,
+                        "cantidadFabricada", lv.cantidadFabricada()
                 ))
                 .toList();
 
         return Map.of(
                 "materiasPrimas", materiasPrimas,
-                "productosTerminados", productosTerminados,
+                "productosTerminados", productosResponse,
                 "alertasMP", alertasMP,
                 "alertasPT", alertasPT,
                 "alertasVencimiento", alertasVencimiento

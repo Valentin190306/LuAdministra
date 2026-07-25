@@ -31,7 +31,8 @@ public class Compra {
 
     private @Nullable String lugar;
     private @Nullable String url;
-    private @Nullable Double precioMlReferencia;
+    @Column(name = "precio_ml_referencia")
+    private @Nullable Double precioMLReferencia;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -54,6 +55,6 @@ public class Compra {
     public @Nullable String getUrl() { return url; }
     public void setUrl(@Nullable String url) { this.url = url; }
 
-    public @Nullable Double getPrecioMlReferencia() { return precioMlReferencia; }
-    public void setPrecioMlReferencia(@Nullable Double precioMlReferencia) { this.precioMlReferencia = precioMlReferencia; }
+    public @Nullable Double getPrecioMLReferencia() { return precioMLReferencia; }
+    public void setPrecioMLReferencia(@Nullable Double precioMLReferencia) { this.precioMLReferencia = precioMLReferencia; }
 }

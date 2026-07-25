@@ -1,22 +1,22 @@
 package com.luadministra.config;
 
-import com.luadministra.categoriamateriaprima.CategoriaMateriaPrima;
-import com.luadministra.categoriamateriaprima.CategoriaMateriaPrimaRepository;
-import com.luadministra.categoriaproductoterminado.CategoriaProductoTerminado;
-import com.luadministra.categoriaproductoterminado.CategoriaProductoTerminadoRepository;
-import com.luadministra.colaboradora.Colaboradora;
-import com.luadministra.colaboradora.ColaboradoraRepository;
+import com.luadministra.categoria.Categoria;
+import com.luadministra.categoria.CategoriaRepository;
+import com.luadministra.categoria.TipoCategoria;
+import com.luadministra.consignacion.Consignacion;
+import com.luadministra.consignacion.ConsignacionRepository;
+import com.luadministra.consignacion.EstadoConsignacion;
+import com.luadministra.consignacion.LineaConsignacion;
+import com.luadministra.consignatario.Consignatario;
+import com.luadministra.consignatario.ConsignatarioRepository;
 import com.luadministra.compra.Compra;
 import com.luadministra.compra.CompraRepository;
-import com.luadministra.despacho.Despacho;
-import com.luadministra.despacho.DespachoRepository;
-import com.luadministra.despacho.EstadoDespacho;
+import com.luadministra.lote.Lote;
+import com.luadministra.lote.LoteRepository;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
-import com.luadministra.produccion.Produccion;
-import com.luadministra.produccion.ProduccionRepository;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import com.luadministra.receta.Receta;
 import com.luadministra.receta.RecetaDetalle;
 import com.luadministra.receta.RecetaRepository;
@@ -40,39 +40,36 @@ import java.util.List;
 public class DataSeeder {
 
     private final MateriaPrimaRepository materiaPrimaRepo;
-    private final ProductoTerminadoRepository productoTerminadoRepo;
+    private final ProductoRepository productoRepo;
     private final RecetaRepository recetaRepo;
     private final CompraRepository compraRepo;
-    private final ProduccionRepository produccionRepo;
+    private final LoteRepository loteRepo;
     private final VentaRepository ventaRepo;
-    private final CategoriaMateriaPrimaRepository categoriaMPRepo;
-    private final CategoriaProductoTerminadoRepository categoriaPTRepo;
-    private final ColaboradoraRepository colaboradoraRepo;
-    private final DespachoRepository despachoRepo;
+    private final CategoriaRepository categoriaRepo;
+    private final ConsignatarioRepository consignatarioRepo;
+    private final ConsignacionRepository consignacionRepo;
     private final RendicionRepository rendicionRepo;
 
     public DataSeeder(
             MateriaPrimaRepository materiaPrimaRepo,
-            ProductoTerminadoRepository productoTerminadoRepo,
+            ProductoRepository productoRepo,
             RecetaRepository recetaRepo,
             CompraRepository compraRepo,
-            ProduccionRepository produccionRepo,
+            LoteRepository loteRepo,
             VentaRepository ventaRepo,
-            CategoriaMateriaPrimaRepository categoriaMPRepo,
-            CategoriaProductoTerminadoRepository categoriaPTRepo,
-            ColaboradoraRepository colaboradoraRepo,
-            DespachoRepository despachoRepo,
+            CategoriaRepository categoriaRepo,
+            ConsignatarioRepository consignatarioRepo,
+            ConsignacionRepository consignacionRepo,
             RendicionRepository rendicionRepo) {
         this.materiaPrimaRepo = materiaPrimaRepo;
-        this.productoTerminadoRepo = productoTerminadoRepo;
+        this.productoRepo = productoRepo;
         this.recetaRepo = recetaRepo;
         this.compraRepo = compraRepo;
-        this.produccionRepo = produccionRepo;
+        this.loteRepo = loteRepo;
         this.ventaRepo = ventaRepo;
-        this.categoriaMPRepo = categoriaMPRepo;
-        this.categoriaPTRepo = categoriaPTRepo;
-        this.colaboradoraRepo = colaboradoraRepo;
-        this.despachoRepo = despachoRepo;
+        this.categoriaRepo = categoriaRepo;
+        this.consignatarioRepo = consignatarioRepo;
+        this.consignacionRepo = consignacionRepo;
         this.rendicionRepo = rendicionRepo;
     }
 
@@ -81,16 +78,16 @@ public class DataSeeder {
     public void seed() {
         if (materiaPrimaRepo.count() > 0) return;
 
-        var aceites = catMP("Aceites y Grasas", null);
-        var esenciales = catMP("Aceites Esenciales", aceites);
-        var polvos = catMP("Polvos y Arcillas", null);
-        var ceras = catMP("Ceras", null);
-        var harinas = catMP("Harinas y Almidones", polvos);
+        var aceites = cat("Aceites y Grasas", null, TipoCategoria.MATERIA_PRIMA);
+        var esenciales = cat("Aceites Esenciales", aceites, TipoCategoria.MATERIA_PRIMA);
+        var polvos = cat("Polvos y Arcillas", null, TipoCategoria.MATERIA_PRIMA);
+        var ceras = cat("Ceras", null, TipoCategoria.MATERIA_PRIMA);
+        var harinas = cat("Harinas y Almidones", polvos, TipoCategoria.MATERIA_PRIMA);
 
-        var shampooCat = catPT("Shampoos", null);
-        var cuidadoBucal = catPT("Cuidado Bucal", null);
-        var desodorantesCat = catPT("Desodorantes", null);
-        var rostro = catPT("Rostro y Cuidado Facial", null);
+        var shampooCat = cat("Shampoos", null, TipoCategoria.PRODUCTO);
+        var cuidadoBucal = cat("Cuidado Bucal", null, TipoCategoria.PRODUCTO);
+        var desodorantesCat = cat("Desodorantes", null, TipoCategoria.PRODUCTO);
+        var rostro = cat("Rostro y Cuidado Facial", null, TipoCategoria.PRODUCTO);
 
         var karite = mp("Manteca de Karité", "g", 500.0, 200.0, aceites);
         var coco = mp("Aceite de Coco", "ml", 300.0, 150.0, aceites);
@@ -189,55 +186,53 @@ public class DataSeeder {
         vender(LocalDate.of(2026, 4, 5), item(jabonFacial, 2.0), item(desodorante, 2.0));
         vender(LocalDate.of(2026, 4, 15), item(desodorante, 1.0), item(pastaDental, 2.0), item(shampooNormal, 2.0));
 
-        // Colaboradoras
-        var maria = colab("María González", "maria@email.com");
-        var laura = colab("Laura Rodríguez", null);
-        var ana = colab("Ana Martínez", "11-5555-1234");
+        // Consignatarios
+        var maria = consig("María González", "maria@email.com");
+        var laura = consig("Laura Rodríguez", null);
+        var ana = consig("Ana Martínez", "11-5555-1234");
 
-        // Despachos (no descuentan stock, solo registran)
-        var despacho1 = despacho(maria, LocalDate.of(2026, 3, 1),
-                new DespachoLinea(shampooNormal, 10.0));
-        var despacho2 = despacho(laura, LocalDate.of(2026, 3, 10),
-                new DespachoLinea(pastaDental, 15.0));
-        var despacho3 = despacho(ana, LocalDate.of(2026, 3, 15),
-                new DespachoLinea(desodorante, 8.0));
-        var despacho4 = despacho(maria, LocalDate.of(2026, 4, 1),
-                new DespachoLinea(shampooGraso, 5.0));
+        // Consignaciones (no descuentan stock, solo registran)
+        var consig1 = consignacion(maria, LocalDate.of(2026, 3, 1),
+                new ConsignacionLinea(shampooNormal, 10.0));
+        var consig2 = consignacion(laura, LocalDate.of(2026, 3, 10),
+                new ConsignacionLinea(pastaDental, 15.0));
+        var consig3 = consignacion(ana, LocalDate.of(2026, 3, 15),
+                new ConsignacionLinea(desodorante, 8.0));
+        var consig4 = consignacion(maria, LocalDate.of(2026, 4, 1),
+                new ConsignacionLinea(shampooGraso, 5.0));
 
-        // Rendiciones sobre despacho1 (parcial + final)
-        rendir(despacho1, 5100.0, LocalDate.of(2026, 3, 20),
-                new RendicionLinea(shampooNormal, 6.0, 3.0));
-        rendir(despacho1, 850.0, LocalDate.of(2026, 4, 5),
-                new RendicionLinea(shampooNormal, 1.0, 0.0));
+        // Rendiciones
+        var lc1 = consig1.getLineas().get(0);
+        var lc2 = consig2.getLineas().get(0);
+        var lc3 = consig3.getLineas().get(0);
+        var lc4 = consig4.getLineas().get(0);
 
-        // Rendición sobre despacho2 (parcial)
-        rendir(despacho2, 6500.0, LocalDate.of(2026, 4, 10),
-                new RendicionLinea(pastaDental, 10.0, 3.0));
+        rendir(consig1, 5100.0, LocalDate.of(2026, 3, 20),
+                new RendicionLinea(lc1, 6.0, 3.0));
+        rendir(consig1, 850.0, LocalDate.of(2026, 4, 5),
+                new RendicionLinea(lc1, 1.0, 0.0));
+
+        rendir(consig2, 6500.0, LocalDate.of(2026, 4, 10),
+                new RendicionLinea(lc2, 10.0, 3.0));
     }
 
-    private record VentaItem(ProductoTerminado pt, double cantidad) {}
-    private record DespachoLinea(ProductoTerminado pt, double cantidad) {}
-    private record RendicionLinea(ProductoTerminado pt, double vendida, double devuelta) {}
+    private record VentaItem(Producto p, double cantidad) {}
+    private record ConsignacionLinea(Producto p, double cantidad) {}
+    private record RendicionLinea(LineaConsignacion lc, double vendida, double devuelta) {}
 
-    private VentaItem item(ProductoTerminado pt, double cantidad) {
-        return new VentaItem(pt, cantidad);
+    private VentaItem item(Producto p, double cantidad) {
+        return new VentaItem(p, cantidad);
     }
 
-    private CategoriaMateriaPrima catMP(String nombre, CategoriaMateriaPrima padre) {
-        var c = new CategoriaMateriaPrima();
+    private Categoria cat(String nombre, Categoria padre, TipoCategoria tipo) {
+        var c = new Categoria();
         c.setNombre(nombre);
         c.setCategoriaPadre(padre);
-        return categoriaMPRepo.save(c);
+        c.setTipo(tipo);
+        return categoriaRepo.save(c);
     }
 
-    private CategoriaProductoTerminado catPT(String nombre, CategoriaProductoTerminado padre) {
-        var c = new CategoriaProductoTerminado();
-        c.setNombre(nombre);
-        c.setCategoriaPadre(padre);
-        return categoriaPTRepo.save(c);
-    }
-
-    private MateriaPrima mp(String nombre, String unidad, double stock, Double stockMinimo, CategoriaMateriaPrima categoria) {
+    private MateriaPrima mp(String nombre, String unidad, double stock, Double stockMinimo, Categoria categoria) {
         var m = new MateriaPrima();
         m.setNombre(nombre);
         m.setUnidadMedida(unidad);
@@ -247,14 +242,14 @@ public class DataSeeder {
         return materiaPrimaRepo.save(m);
     }
 
-    private ProductoTerminado pt(String nombre, double precio, double stock, Double stockMinimo, CategoriaProductoTerminado categoria) {
-        var p = new ProductoTerminado();
+    private Producto pt(String nombre, double precio, double stock, Double stockMinimo, Categoria categoria) {
+        var p = new Producto();
         p.setNombre(nombre);
         p.setPrecioVenta(precio);
         p.setStockActual(stock);
         p.setStockMinimo(stockMinimo);
         p.setCategoria(categoria);
-        return productoTerminadoRepo.save(p);
+        return productoRepo.save(p);
     }
 
     private RecetaDetalle det(MateriaPrima mp, double cantidad) {
@@ -264,9 +259,9 @@ public class DataSeeder {
         return d;
     }
 
-    private void receta(ProductoTerminado pt, String notas, RecetaDetalle... detalles) {
+    private void receta(Producto p, String notas, RecetaDetalle... detalles) {
         var r = new Receta();
-        r.setProductoTerminado(pt);
+        r.setProducto(p);
         r.setNotas(notas);
         var lista = List.of(detalles);
         lista.forEach(d -> d.setReceta(r));
@@ -274,7 +269,7 @@ public class DataSeeder {
         recetaRepo.save(r);
     }
 
-    private void comprar(MateriaPrima mp, LocalDate fecha, double cantidad, double precio, String lugar, String url, Double precioMlReferencia) {
+    private void comprar(MateriaPrima mp, LocalDate fecha, double cantidad, double precio, String lugar, String url, Double precioMLReferencia) {
         var c = new Compra();
         c.setMateriaPrima(mp);
         c.setFecha(fecha);
@@ -282,89 +277,89 @@ public class DataSeeder {
         c.setPrecio(precio);
         c.setLugar(lugar);
         c.setUrl(url);
-        c.setPrecioMlReferencia(precioMlReferencia);
+        c.setPrecioMLReferencia(precioMLReferencia);
         compraRepo.save(c);
     }
 
-    private void producir(ProductoTerminado pt, LocalDate fecha, double cantidad) {
-        var p = new Produccion();
-        p.setProductoTerminado(pt);
-        p.setFecha(fecha);
-        p.setCantidadFabricada(cantidad);
-        produccionRepo.save(p);
+    private void producir(Producto p, LocalDate fecha, double cantidad) {
+        var l = new Lote();
+        l.setProducto(p);
+        l.setFecha(fecha);
+        l.setCantidadFabricada(cantidad);
+        loteRepo.save(l);
     }
 
-    private Colaboradora colab(String nombre, String contacto) {
-        var c = new Colaboradora();
+    private Consignatario consig(String nombre, String contacto) {
+        var c = new Consignatario();
         c.setNombre(nombre);
         c.setContacto(contacto);
-        return colaboradoraRepo.save(c);
+        return consignatarioRepo.save(c);
     }
 
-    private Despacho despacho(Colaboradora colab, LocalDate fecha, DespachoLinea... lineas) {
-        var d = new Despacho();
-        d.setColaboradora(colab);
-        d.setFecha(fecha);
+    private Consignacion consignacion(Consignatario consig, LocalDate fecha, ConsignacionLinea... lineas) {
+        var c = new Consignacion();
+        c.setConsignatario(consig);
+        c.setFecha(fecha);
         for (var l : lineas) {
-            var ld = new com.luadministra.despacho.LineaDespacho();
-            ld.setDespacho(d);
-            ld.setProductoTerminado(l.pt());
-            ld.setCantidad(l.cantidad());
-            ld.setPrecioUnitario(l.pt().getPrecioVenta());
-            d.getLineas().add(ld);
+            var lc = new LineaConsignacion();
+            lc.setConsignacion(c);
+            lc.setProducto(l.p());
+            lc.setCantidad(l.cantidad());
+            lc.setPrecioUnitario(l.p().getPrecioVenta());
+            c.getLineas().add(lc);
         }
-        return despachoRepo.save(d);
+        return consignacionRepo.save(c);
     }
 
-    private void rendir(Despacho despacho, double monto, LocalDate fecha, RendicionLinea... lineas) {
+    private void rendir(Consignacion consignacion, double monto, LocalDate fecha, RendicionLinea... lineas) {
         var r = new Rendicion();
-        r.setDespacho(despacho);
+        r.setConsignacion(consignacion);
         r.setMontoEntregado(monto);
         r.setFecha(fecha);
         for (var l : lineas) {
             var lr = new com.luadministra.rendicion.LineaRendicion();
             lr.setRendicion(r);
-            lr.setProductoTerminado(l.pt());
+            lr.setLineaConsignacion(l.lc());
             lr.setCantidadVendida(l.vendida());
             lr.setCantidadDevuelta(l.devuelta());
             r.getLineas().add(lr);
 
             if (l.vendida() > 0) {
-                l.pt().setStockActual(l.pt().getStockActual() - l.vendida());
+                l.lc().getProducto().setStockActual(l.lc().getProducto().getStockActual() - l.vendida());
             }
             if (l.devuelta() > 0) {
-                l.pt().setStockActual(l.pt().getStockActual() + l.devuelta());
+                l.lc().getProducto().setStockActual(l.lc().getProducto().getStockActual() + l.devuelta());
             }
-            productoTerminadoRepo.save(l.pt());
+            productoRepo.save(l.lc().getProducto());
 
             if (l.vendida() > 0) {
                 var venta = new Venta();
                 venta.setFecha(fecha);
                 var vl = new LineaVenta();
                 vl.setVenta(venta);
-                vl.setProductoTerminado(l.pt());
+                vl.setProducto(l.lc().getProducto());
                 vl.setCantidad(l.vendida());
-                vl.setPrecioUnitario(l.pt().getPrecioVenta());
+                vl.setPrecioUnitario(l.lc().getPrecioUnitario());
                 venta.setLineas(List.of(vl));
                 ventaRepo.save(venta);
             }
         }
         rendicionRepo.save(r);
 
-        double totalDespachado = despacho.getLineas().stream()
-                .mapToDouble(ld -> ld.getCantidad())
+        double totalConsignado = consignacion.getLineas().stream()
+                .mapToDouble(lc -> lc.getCantidad())
                 .sum();
-        var anteriores = rendicionRepo.findByDespachoId(despacho.getId());
+        var anteriores = rendicionRepo.findByConsignacionId(consignacion.getId());
         double totalRendido = anteriores.stream()
                 .flatMap(rr -> rr.getLineas().stream())
                 .mapToDouble(lr -> lr.getCantidadVendida() + lr.getCantidadDevuelta())
                 .sum();
-        if (totalRendido >= totalDespachado) {
-            despacho.setEstado(EstadoDespacho.RENDIDO_TOTAL);
+        if (totalRendido >= totalConsignado) {
+            consignacion.setEstado(EstadoConsignacion.RENDIDO_TOTAL);
         } else {
-            despacho.setEstado(EstadoDespacho.RENDIDO_PARCIAL);
+            consignacion.setEstado(EstadoConsignacion.RENDIDO_PARCIAL);
         }
-        despachoRepo.save(despacho);
+        consignacionRepo.save(consignacion);
     }
 
     private void vender(LocalDate fecha, VentaItem... items) {
@@ -374,9 +369,9 @@ public class DataSeeder {
         for (var i : items) {
             var l = new LineaVenta();
             l.setVenta(v);
-            l.setProductoTerminado(i.pt());
+            l.setProducto(i.p());
             l.setCantidad(i.cantidad());
-            l.setPrecioUnitario(i.pt().getPrecioVenta());
+            l.setPrecioUnitario(i.p().getPrecioVenta());
             lineas.add(l);
         }
         v.setLineas(lineas);

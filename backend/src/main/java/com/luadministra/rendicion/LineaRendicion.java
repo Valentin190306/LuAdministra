@@ -1,6 +1,6 @@
 package com.luadministra.rendicion;
 
-import com.luadministra.productoterminado.ProductoTerminado;
+import com.luadministra.consignacion.LineaConsignacion;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -17,7 +17,8 @@ public class LineaRendicion {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    private ProductoTerminado productoTerminado;
+    @JoinColumn(name = "linea_consignacion_id")
+    private LineaConsignacion lineaConsignacion;
 
     @NotNull
     @Column(nullable = false)
@@ -33,8 +34,8 @@ public class LineaRendicion {
     public Rendicion getRendicion() { return rendicion; }
     public void setRendicion(Rendicion rendicion) { this.rendicion = rendicion; }
 
-    public ProductoTerminado getProductoTerminado() { return productoTerminado; }
-    public void setProductoTerminado(ProductoTerminado productoTerminado) { this.productoTerminado = productoTerminado; }
+    public LineaConsignacion getLineaConsignacion() { return lineaConsignacion; }
+    public void setLineaConsignacion(LineaConsignacion lineaConsignacion) { this.lineaConsignacion = lineaConsignacion; }
 
     public Double getCantidadVendida() { return cantidadVendida; }
     public void setCantidadVendida(Double cantidadVendida) { this.cantidadVendida = cantidadVendida; }

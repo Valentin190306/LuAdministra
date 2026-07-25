@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface RendicionRepository extends JpaRepository<Rendicion, Long> {
 
-    List<Rendicion> findByDespachoId(Long despachoId);
-    Page<Rendicion> findByDespachoId(Long despachoId, Pageable pageable);
+    List<Rendicion> findByConsignacionId(Long consignacionId);
+    Page<Rendicion> findByConsignacionId(Long consignacionId, Pageable pageable);
 }

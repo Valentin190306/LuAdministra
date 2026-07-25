@@ -3,14 +3,13 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import MateriasPrimas from './pages/MateriasPrimas';
 import Compras from './pages/Compras';
-import CategoriasMP from './pages/CategoriasMP';
-import ProductosTerminados from './pages/ProductosTerminados';
-import CategoriasPT from './pages/CategoriasPT';
+import Categorias from './pages/Categorias';
+import Productos from './pages/Productos';
 import Recetas from './pages/Recetas';
-import Produccion from './pages/Produccion';
+import Lotes from './pages/Lotes';
 import Ventas from './pages/Ventas';
-import Colaboradoras from './pages/Colaboradoras';
-import Despachos from './pages/Despachos';
+import Consignatarios from './pages/Consignatarios';
+import Consignaciones from './pages/Consignaciones';
 
 
 export default function App() {
@@ -20,15 +19,14 @@ export default function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/materias-primas" element={<MateriasPrimas />} />
-        <Route path="/categorias-mp" element={<CategoriasMP />} />
+        <Route path="/categorias" element={<Categorias />} />
         <Route path="/compras" element={<Compras />} />
-        <Route path="/productos-terminados" element={<ProductosTerminados />} />
-        <Route path="/categorias-pt" element={<CategoriasPT />} />
+        <Route path="/productos" element={<Productos />} />
         <Route path="/recetas" element={<Recetas />} />
-        <Route path="/produccion" element={<Produccion />} />
+        <Route path="/lotes" element={<Lotes />} />
         <Route path="/ventas" element={<Ventas />} />
-        <Route path="/colaboradoras" element={<Colaboradoras />} />
-        <Route path="/despachos" element={<Despachos />} />
+        <Route path="/consignatarios" element={<Consignatarios />} />
+        <Route path="/consignaciones" element={<Consignaciones />} />
 
       </Route>
     </Routes>

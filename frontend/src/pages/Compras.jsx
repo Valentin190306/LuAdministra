@@ -16,7 +16,7 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '', precioMlReferencia: '' };
+const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '', precioMLReferencia: '' };
 
 export default function Compras() {
   const { data: materiasPrimas } = useApi('/materias-primas');
@@ -58,7 +58,7 @@ export default function Compras() {
         precio: Number(form.precio),
         lugar: form.lugar.trim() || null,
         url: form.url.trim() || null,
-        precioMlReferencia: form.precioMlReferencia ? Number(form.precioMlReferencia) : null,
+        precioMLReferencia: form.precioMLReferencia ? Number(form.precioMLReferencia) : null,
       };
       await api.post('/compras', body);
       setModalOpen(false);
@@ -102,9 +102,9 @@ export default function Compras() {
       render: (r) => r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer">🔗 Abrir</a> : '—',
     },
     {
-      key: 'precioMlReferencia',
+      key: 'precioMLReferencia',
       label: 'Precio ML Ref.',
-      render: (r) => r.precioMlReferencia != null ? `$${r.precioMlReferencia.toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—',
+      render: (r) => r.precioMLReferencia != null ? `$${r.precioMLReferencia.toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—',
     },
     {
       key: 'acciones',
@@ -133,7 +133,7 @@ export default function Compras() {
             { key: 'precio', label: 'Precio' },
             { key: 'lugar', label: 'Lugar' },
             { key: 'url', label: 'Link' },
-            { key: 'precioMlReferencia', label: 'Precio ML Ref.' },
+            { key: 'precioMLReferencia', label: 'Precio ML Ref.' },
           ], 'compras.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nueva Compra</Button>
         </div>
@@ -207,7 +207,7 @@ export default function Compras() {
             <input type="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://ejemplo.com/producto" />
           </FormField>
           <FormField label="Precio ML de referencia ($) (opcional)">
-            <input type="number" step="any" min="0" value={form.precioMlReferencia} onChange={(e) => setForm({ ...form, precioMlReferencia: e.target.value })} placeholder="ej. 19949" />
+            <input type="number" step="any" min="0" value={form.precioMLReferencia} onChange={(e) => setForm({ ...form, precioMLReferencia: e.target.value })} placeholder="ej. 19949" />
           </FormField>
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>

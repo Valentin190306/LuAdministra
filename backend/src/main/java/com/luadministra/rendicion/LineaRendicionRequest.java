@@ -3,7 +3,7 @@ package com.luadministra.rendicion;
 import jakarta.validation.constraints.NotNull;
 
 public record LineaRendicionRequest(
-        @NotNull Long productoTerminadoId,
+        @NotNull Long lineaConsignacionId,
         @NotNull Double cantidadVendida,
         Double cantidadDevuelta
 ) {}

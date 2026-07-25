@@ -3,8 +3,8 @@ package com.luadministra.venta;
 import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.StockInsuficienteException;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,11 +20,11 @@ import java.util.List;
 public class VentaService {
 
     private final VentaRepository ventaRepository;
-    private final ProductoTerminadoRepository productoTerminadoRepository;
+    private final ProductoRepository productoRepository;
 
-    public VentaService(VentaRepository ventaRepository, ProductoTerminadoRepository productoTerminadoRepository) {
+    public VentaService(VentaRepository ventaRepository, ProductoRepository productoRepository) {
         this.ventaRepository = ventaRepository;
-        this.productoTerminadoRepository = productoTerminadoRepository;
+        this.productoRepository = productoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -59,22 +59,22 @@ public class VentaService {
 
         List<LineaVenta> lineas = new ArrayList<>();
         for (LineaVentaRequest lineaReq : request.lineas()) {
-            ProductoTerminado pt = productoTerminadoRepository
-                    .findById(lineaReq.productoTerminadoId())
-                    .orElseThrow(() -> new RecursoNoEncontradoException("Producto terminado no encontrado"));
+            Producto producto = productoRepository
+                    .findById(lineaReq.productoId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
 
-            if (pt.getStockActual() < lineaReq.cantidad()) {
-                throw new StockInsuficienteException("Stock insuficiente de " + pt.getNombre());
+            if (producto.getStockActual() < lineaReq.cantidad()) {
+                throw new StockInsuficienteException("Stock insuficiente de " + producto.getNombre());
             }
 
-            pt.setStockActual(pt.getStockActual() - lineaReq.cantidad());
-            productoTerminadoRepository.save(pt);
+            producto.setStockActual(producto.getStockActual() - lineaReq.cantidad());
+            productoRepository.save(producto);
 
             LineaVenta linea = new LineaVenta();
             linea.setVenta(venta);
-            linea.setProductoTerminado(pt);
+            linea.setProducto(producto);
             linea.setCantidad(lineaReq.cantidad());
-            linea.setPrecioUnitario(lineaReq.precioUnitario() != null ? lineaReq.precioUnitario() : pt.getPrecioVenta());
+            linea.setPrecioUnitario(lineaReq.precioUnitario() != null ? lineaReq.precioUnitario() : producto.getPrecioVenta());
             lineas.add(linea);
         }
 
@@ -89,9 +89,9 @@ public class VentaService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
 
         for (LineaVenta linea : venta.getLineas()) {
-            ProductoTerminado pt = linea.getProductoTerminado();
-            pt.setStockActual(pt.getStockActual() + linea.getCantidad());
-            productoTerminadoRepository.save(pt);
+            Producto producto = linea.getProducto();
+            producto.setStockActual(producto.getStockActual() + linea.getCantidad());
+            productoRepository.save(producto);
         }
 
         ventaRepository.delete(venta);

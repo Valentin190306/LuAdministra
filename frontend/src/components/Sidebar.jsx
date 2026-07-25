@@ -12,7 +12,7 @@ const sections = [
     label: 'Stock',
     links: [
       { to: '/materias-primas', label: 'Materias Primas', icon: '🧪' },
-      { to: '/productos-terminados', label: 'Productos', icon: '📦' },
+      { to: '/productos', label: 'Productos', icon: '📦' },
     ],
   },
   {
@@ -20,17 +20,16 @@ const sections = [
     links: [
       { to: '/compras', label: 'Compras', icon: '🛒' },
       { to: '/recetas', label: 'Recetas', icon: '📝' },
-      { to: '/produccion', label: 'Producción', icon: '⚙️' },
+      { to: '/lotes', label: 'Lotes', icon: '⚙️' },
       { to: '/ventas', label: 'Ventas', icon: '💰' },
-      { to: '/despachos', label: 'Despachos', icon: '📤' },
+      { to: '/consignaciones', label: 'Consignaciones', icon: '📤' },
     ],
   },
   {
     label: 'Configuración',
     links: [
-      { to: '/categorias-mp', label: 'Categorías MP', icon: '📁' },
-      { to: '/categorias-pt', label: 'Categorías PT', icon: '📂' },
-      { to: '/colaboradoras', label: 'Colaboradoras', icon: '👤' },
+      { to: '/categorias', label: 'Categorías', icon: '📁' },
+      { to: '/consignatarios', label: 'Consignatarios', icon: '👤' },
     ],
   },
 ];

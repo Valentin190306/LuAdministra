@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class SpaController {
 
     @RequestMapping(value = {"/", "/dashboard", "/materias-primas", "/compras",
-                             "/productos-terminados", "/recetas", "/produccion", "/ventas",
-                             "/categorias-mp", "/categorias-pt",
-                             "/colaboradoras", "/despachos"})
+                             "/productos", "/recetas", "/lotes", "/ventas",
+                             "/categorias",
+                             "/consignatarios", "/consignaciones"})
     public String forward() {
         return "forward:/index.html";
     }

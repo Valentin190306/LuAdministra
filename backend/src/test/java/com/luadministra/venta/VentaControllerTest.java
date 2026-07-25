@@ -49,7 +49,7 @@ class VentaControllerTest {
                         .param("sortBy", "fecha")
                         .param("sortDir", "desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].lineas[0].productoTerminadoNombre").value("Jabón de Lavanda"));
+                .andExpect(jsonPath("$.content[0].lineas[0].productoNombre").value("Jabón de Lavanda"));
     }
 
     @Test
@@ -58,7 +58,7 @@ class VentaControllerTest {
 
         mockMvc.perform(get("/api/ventas/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.lineas[0].productoTerminadoNombre").value("Jabón de Lavanda"));
+                .andExpect(jsonPath("$.lineas[0].productoNombre").value("Jabón de Lavanda"));
     }
 
     @Test
@@ -92,7 +92,7 @@ class VentaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.lineas[0].productoTerminadoNombre").value("Jabón de Lavanda"));
+                .andExpect(jsonPath("$.lineas[0].productoNombre").value("Jabón de Lavanda"));
     }
 
     @Test
@@ -107,6 +107,6 @@ class VentaControllerTest {
                         .param("desde", "2025-01-01")
                         .param("hasta", "2025-12-31"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].lineas[0].productoTerminadoNombre").value("Jabón de Lavanda"));
+                .andExpect(jsonPath("$.content[0].lineas[0].productoNombre").value("Jabón de Lavanda"));
     }
 }

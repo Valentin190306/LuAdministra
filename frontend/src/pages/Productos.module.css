@@ -1,0 +1,91 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.pageTitle {
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-sm);
+}
+
+.lowStock {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.errorMsg {
+  color: var(--color-danger);
+  font-size: 1.4rem;
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.filters {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  flex: 1;
+  min-width: 180px;
+}
+
+.lotesTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.4rem;
+}
+
+.lotesTable th,
+.lotesTable td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.lotesTable th {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vencidoRow {
+  background: #fff0f0;
+  color: var(--color-danger);
+  font-weight: 600;
+}

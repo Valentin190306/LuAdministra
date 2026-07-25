@@ -37,7 +37,7 @@ class RecetaControllerTest {
 
         mockMvc.perform(get("/api/recetas/producto/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.productoTerminadoNombre").value("Producto 1"));
+                .andExpect(jsonPath("$.productoNombre").value("Producto 1"));
     }
 
     @Test
@@ -84,7 +84,7 @@ class RecetaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.productoTerminadoNombre").value("Producto 1"));
+                .andExpect(jsonPath("$.productoNombre").value("Producto 1"));
     }
 
     @Test

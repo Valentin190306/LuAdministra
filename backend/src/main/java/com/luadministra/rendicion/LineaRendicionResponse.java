@@ -2,16 +2,18 @@ package com.luadministra.rendicion;
 
 public record LineaRendicionResponse(
         Long id,
-        Long productoTerminadoId,
-        String productoTerminadoNombre,
+        Long lineaConsignacionId,
+        Long productoId,
+        String productoNombre,
         Double cantidadVendida,
         Double cantidadDevuelta
 ) {
     public static LineaRendicionResponse fromEntity(LineaRendicion lr) {
         return new LineaRendicionResponse(
                 lr.getId(),
-                lr.getProductoTerminado().getId(),
-                lr.getProductoTerminado().getNombre(),
+                lr.getLineaConsignacion().getId(),
+                lr.getLineaConsignacion().getProducto().getId(),
+                lr.getLineaConsignacion().getProducto().getNombre(),
                 lr.getCantidadVendida(),
                 lr.getCantidadDevuelta()
         );

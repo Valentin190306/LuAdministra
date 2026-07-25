@@ -1,6 +1,6 @@
 package com.luadministra.receta;
 
-import com.luadministra.productoterminado.ProductoTerminado;
+import com.luadministra.producto.Producto;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.eclipse.jdt.annotation.Nullable;
@@ -17,7 +17,8 @@ public class Receta {
 
     @NotNull
     @OneToOne(fetch = FetchType.LAZY)
-    private ProductoTerminado productoTerminado;
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
 
     @OneToMany(mappedBy = "receta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecetaDetalle> detalles = new ArrayList<>();
@@ -27,8 +28,8 @@ public class Receta {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public ProductoTerminado getProductoTerminado() { return productoTerminado; }
-    public void setProductoTerminado(ProductoTerminado productoTerminado) { this.productoTerminado = productoTerminado; }
+    public Producto getProducto() { return producto; }
+    public void setProducto(Producto producto) { this.producto = producto; }
 
     public List<RecetaDetalle> getDetalles() { return detalles; }
     public void setDetalles(List<RecetaDetalle> detalles) { this.detalles = detalles; }

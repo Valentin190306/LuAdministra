@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record RendicionRequest(
-        @NotNull Long despachoId,
+        @NotNull Long consignacionId,
         @NotNull List<LineaRendicionRequest> productos,
         @NotNull Double montoEntregado,
         @NotNull LocalDate fecha

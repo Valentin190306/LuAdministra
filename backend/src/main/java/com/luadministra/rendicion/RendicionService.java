@@ -1,13 +1,13 @@
 package com.luadministra.rendicion;
 
-import com.luadministra.despacho.Despacho;
-import com.luadministra.despacho.DespachoRepository;
-import com.luadministra.despacho.EstadoDespacho;
-import com.luadministra.despacho.LineaDespacho;
+import com.luadministra.consignacion.Consignacion;
+import com.luadministra.consignacion.ConsignacionRepository;
+import com.luadministra.consignacion.EstadoConsignacion;
+import com.luadministra.consignacion.LineaConsignacion;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import com.luadministra.venta.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,77 +21,76 @@ import java.util.stream.Collectors;
 public class RendicionService {
 
     private final RendicionRepository rendicionRepository;
-    private final DespachoRepository despachoRepository;
-    private final ProductoTerminadoRepository productoTerminadoRepository;
+    private final ConsignacionRepository consignacionRepository;
+    private final ProductoRepository productoRepository;
     private final VentaService ventaService;
 
     public RendicionService(RendicionRepository rendicionRepository,
-                            DespachoRepository despachoRepository,
-                            ProductoTerminadoRepository productoTerminadoRepository,
+                            ConsignacionRepository consignacionRepository,
+                            ProductoRepository productoRepository,
                             VentaService ventaService) {
         this.rendicionRepository = rendicionRepository;
-        this.despachoRepository = despachoRepository;
-        this.productoTerminadoRepository = productoTerminadoRepository;
+        this.consignacionRepository = consignacionRepository;
+        this.productoRepository = productoRepository;
         this.ventaService = ventaService;
     }
 
-    public List<RendicionResponse> listarPorDespacho(Long despachoId) {
-        return rendicionRepository.findByDespachoId(despachoId).stream()
+    public List<RendicionResponse> listarPorConsignacion(Long consignacionId) {
+        return rendicionRepository.findByConsignacionId(consignacionId).stream()
                 .map(RendicionResponse::fromEntity)
                 .toList();
     }
 
     @Transactional
     public RendicionResponse crear(RendicionRequest request) {
-        Despacho despacho = despachoRepository.findById(request.despachoId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Despacho no encontrado"));
+        Consignacion consignacion = consignacionRepository.findById(request.consignacionId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Consignacion no encontrada"));
 
-        if (despacho.getEstado() == EstadoDespacho.RENDIDO_TOTAL) {
-            throw new SolicitudInvalidaException("El despacho ya está completamente rendido");
+        if (consignacion.getEstado() == EstadoConsignacion.RENDIDO_TOTAL) {
+            throw new SolicitudInvalidaException("La consignacion ya está completamente rendida");
         }
 
-        Map<Long, LineaDespacho> lineasDespacho = despacho.getLineas().stream()
-                .collect(Collectors.toMap(ld -> ld.getProductoTerminado().getId(), ld -> ld));
+        Map<Long, LineaConsignacion> lineasConsignacion = consignacion.getLineas().stream()
+                .collect(Collectors.toMap(lc -> lc.getId(), lc -> lc));
 
-        List<Rendicion> anteriores = rendicionRepository.findByDespachoId(request.despachoId());
+        List<Rendicion> anteriores = rendicionRepository.findByConsignacionId(request.consignacionId());
 
-        Map<Long, Double> rendidoAnteriorPorProducto = anteriores.stream()
+        Map<Long, Double> rendidoAnteriorPorLinea = anteriores.stream()
                 .flatMap(r -> r.getLineas().stream())
                 .collect(Collectors.groupingBy(
-                        lr -> lr.getProductoTerminado().getId(),
+                        lr -> lr.getLineaConsignacion().getId(),
                         Collectors.summingDouble(lr -> lr.getCantidadVendida() + lr.getCantidadDevuelta())
                 ));
 
         List<LineaVentaRequest> lineasVenta = new ArrayList<>();
 
         for (LineaRendicionRequest prodReq : request.productos()) {
-            LineaDespacho lineaDespacho = lineasDespacho.get(prodReq.productoTerminadoId());
-            if (lineaDespacho == null) {
+            LineaConsignacion lineaConsignacion = lineasConsignacion.get(prodReq.lineaConsignacionId());
+            if (lineaConsignacion == null) {
                 throw new SolicitudInvalidaException(
-                        "El producto ID " + prodReq.productoTerminadoId() + " no está en el despacho");
+                        "La línea de consignación ID " + prodReq.lineaConsignacionId() + " no está en la consignacion");
             }
             double devuelta = devueltaOrDefault(prodReq);
-            double disponible = lineaDespacho.getCantidad()
-                    - rendidoAnteriorPorProducto.getOrDefault(prodReq.productoTerminadoId(), 0.0);
+            double disponible = lineaConsignacion.getCantidad()
+                    - rendidoAnteriorPorLinea.getOrDefault(prodReq.lineaConsignacionId(), 0.0);
             if (prodReq.cantidadVendida() + devuelta > disponible) {
                 throw new SolicitudInvalidaException(
-                        "La suma vendido+devuelto del producto " + lineaDespacho.getProductoTerminado().getNombre()
+                        "La suma vendido+devuelto del producto " + lineaConsignacion.getProducto().getNombre()
                         + " (" + (prodReq.cantidadVendida() + devuelta)
                         + ") supera el disponible (" + disponible + ")");
             }
 
             if (prodReq.cantidadVendida() > 0) {
                 lineasVenta.add(new LineaVentaRequest(
-                        prodReq.productoTerminadoId(),
+                        lineaConsignacion.getProducto().getId(),
                         prodReq.cantidadVendida(),
-                        lineaDespacho.getPrecioUnitario()));
+                        lineaConsignacion.getPrecioUnitario()));
             }
 
             if (devuelta > 0) {
-                ProductoTerminado pt = productoTerminadoRepository.findById(prodReq.productoTerminadoId())
-                        .orElseThrow(() -> new RecursoNoEncontradoException("Producto terminado no encontrado"));
-                pt.setStockActual(pt.getStockActual() + devuelta);
-                productoTerminadoRepository.save(pt);
+                Producto producto = lineaConsignacion.getProducto();
+                producto.setStockActual(producto.getStockActual() + devuelta);
+                productoRepository.save(producto);
             }
         }
 
@@ -107,26 +106,26 @@ public class RendicionService {
         double totalRendidoAhora = request.productos().stream()
                 .mapToDouble(p -> p.cantidadVendida() + devueltaOrDefault(p))
                 .sum();
-        double totalDespachado = despacho.getLineas().stream()
-                .mapToDouble(ld -> ld.getCantidad())
+        double totalConsignado = consignacion.getLineas().stream()
+                .mapToDouble(lc -> lc.getCantidad())
                 .sum();
         double totalRendido = totalRendidoAnterior + totalRendidoAhora;
-        if (totalRendido >= totalDespachado) {
-            despacho.setEstado(EstadoDespacho.RENDIDO_TOTAL);
+        if (totalRendido >= totalConsignado) {
+            consignacion.setEstado(EstadoConsignacion.RENDIDO_TOTAL);
         } else {
-            despacho.setEstado(EstadoDespacho.RENDIDO_PARCIAL);
+            consignacion.setEstado(EstadoConsignacion.RENDIDO_PARCIAL);
         }
-        despachoRepository.save(despacho);
+        consignacionRepository.save(consignacion);
 
         Rendicion rendicion = new Rendicion();
-        rendicion.setDespacho(despacho);
+        rendicion.setConsignacion(consignacion);
         rendicion.setMontoEntregado(request.montoEntregado());
         rendicion.setFecha(request.fecha());
 
         for (LineaRendicionRequest prodReq : request.productos()) {
             LineaRendicion lr = new LineaRendicion();
             lr.setRendicion(rendicion);
-            lr.setProductoTerminado(productoTerminadoRepository.getReferenceById(prodReq.productoTerminadoId()));
+            lr.setLineaConsignacion(lineasConsignacion.get(prodReq.lineaConsignacionId()));
             lr.setCantidadVendida(prodReq.cantidadVendida());
             lr.setCantidadDevuelta(devueltaOrDefault(prodReq));
             rendicion.getLineas().add(lr);

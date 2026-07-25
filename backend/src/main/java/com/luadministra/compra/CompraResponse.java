@@ -12,11 +12,11 @@ public record CompraResponse(
         Double precio,
         @Nullable String lugar,
         @Nullable String url,
-        @Nullable Double precioMlReferencia
+        @Nullable Double precioMLReferencia
 ) {
      public static CompraResponse fromEntity(Compra c) {
         return new CompraResponse(c.getId(), c.getMateriaPrima().getId(),
                 c.getMateriaPrima().getNombre(), c.getFecha(),
-                c.getCantidad(), c.getPrecio(), c.getLugar(), c.getUrl(), c.getPrecioMlReferencia());
+                c.getCantidad(), c.getPrecio(), c.getLugar(), c.getUrl(), c.getPrecioMLReferencia());
     }
 }

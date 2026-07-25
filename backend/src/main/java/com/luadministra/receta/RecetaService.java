@@ -4,8 +4,8 @@ import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,30 +16,30 @@ import java.util.List;
 public class RecetaService {
 
     private final RecetaRepository repository;
-    private final ProductoTerminadoRepository productoTerminadoRepository;
+    private final ProductoRepository productoRepository;
     private final MateriaPrimaRepository materiaPrimaRepository;
 
     public RecetaService(RecetaRepository repository,
-                         ProductoTerminadoRepository productoTerminadoRepository,
+                         ProductoRepository productoRepository,
                          MateriaPrimaRepository materiaPrimaRepository) {
         this.repository = repository;
-        this.productoTerminadoRepository = productoTerminadoRepository;
+        this.productoRepository = productoRepository;
         this.materiaPrimaRepository = materiaPrimaRepository;
     }
 
-    public RecetaResponse obtenerPorProducto(Long productoTerminadoId) {
+    public RecetaResponse obtenerPorProducto(Long productoId) {
         return RecetaResponse.fromEntity(
-                repository.findByProductoTerminadoId(productoTerminadoId)
+                repository.findByProductoId(productoId)
                         .orElseThrow(() -> new RecursoNoEncontradoException("Receta no encontrada para el producto")));
     }
 
     @Transactional
     public RecetaResponse guardar(RecetaRequest request) {
-        ProductoTerminado pt = productoTerminadoRepository.findById(request.productoTerminadoId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Producto terminado no encontrado"));
+        Producto producto = productoRepository.findById(request.productoId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
 
-        Receta receta = repository.findByProductoTerminadoId(pt.getId()).orElse(new Receta());
-        receta.setProductoTerminado(pt);
+        Receta receta = repository.findByProductoId(producto.getId()).orElse(new Receta());
+        receta.setProducto(producto);
         receta.setNotas(request.notas());
 
         receta.getDetalles().clear();
@@ -61,8 +61,8 @@ public class RecetaService {
         Receta receta = repository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Receta no encontrada"));
 
-        if (!receta.getProductoTerminado().getId().equals(request.productoTerminadoId())) {
-            throw new SolicitudInvalidaException("El producto terminado no coincide con la receta");
+        if (!receta.getProducto().getId().equals(request.productoId())) {
+            throw new SolicitudInvalidaException("El producto no coincide con la receta");
         }
         receta.setNotas(request.notas());
 

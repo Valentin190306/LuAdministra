@@ -1,6 +1,6 @@
 package com.luadministra.rendicion;
 
-import com.luadministra.despacho.Despacho;
+import com.luadministra.consignacion.Consignacion;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -16,7 +16,8 @@ public class Rendicion {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    private Despacho despacho;
+    @JoinColumn(name = "consignacion_id")
+    private Consignacion consignacion;
 
     @NotNull
     @Column(nullable = false)
@@ -32,8 +33,8 @@ public class Rendicion {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Despacho getDespacho() { return despacho; }
-    public void setDespacho(Despacho despacho) { this.despacho = despacho; }
+    public Consignacion getConsignacion() { return consignacion; }
+    public void setConsignacion(Consignacion consignacion) { this.consignacion = consignacion; }
 
     public Double getMontoEntregado() { return montoEntregado; }
     public void setMontoEntregado(Double montoEntregado) { this.montoEntregado = montoEntregado; }

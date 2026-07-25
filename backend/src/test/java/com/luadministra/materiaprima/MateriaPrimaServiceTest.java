@@ -1,6 +1,6 @@
 package com.luadministra.materiaprima;
 
-import com.luadministra.categoriamateriaprima.CategoriaMateriaPrimaRepository;
+import com.luadministra.categoria.CategoriaRepository;
 import com.luadministra.compra.CompraRepository;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ class MateriaPrimaServiceTest {
     private MateriaPrimaRepository repository;
 
     @Mock
-    private CategoriaMateriaPrimaRepository categoriaRepository;
+    private CategoriaRepository categoriaRepository;
 
     @Mock
     private CompraRepository compraRepository;

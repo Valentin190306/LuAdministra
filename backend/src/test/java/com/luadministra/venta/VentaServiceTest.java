@@ -2,8 +2,8 @@ package com.luadministra.venta;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.StockInsuficienteException;
-import com.luadministra.productoterminado.ProductoTerminado;
-import com.luadministra.productoterminado.ProductoTerminadoRepository;
+import com.luadministra.producto.Producto;
+import com.luadministra.producto.ProductoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -29,7 +29,7 @@ class VentaServiceTest {
     private VentaRepository ventaRepository;
 
     @Mock
-    private ProductoTerminadoRepository productoTerminadoRepository;
+    private ProductoRepository productoRepository;
 
     @InjectMocks
     private VentaService service;
@@ -50,13 +50,13 @@ class VentaServiceTest {
 
     @Test
     void crear_descruentaStockPT() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
         pt.setNombre("Shampoo");
         pt.setStockActual(10.0);
         pt.setPrecioVenta(2000.0);
 
-        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(pt));
 
         Venta saved = new Venta();
         saved.setId(1L);
@@ -64,7 +64,7 @@ class VentaServiceTest {
         LineaVenta linea = new LineaVenta();
         linea.setId(1L);
         linea.setVenta(saved);
-        linea.setProductoTerminado(pt);
+        linea.setProducto(pt);
         linea.setCantidad(3.0);
         linea.setPrecioUnitario(2000.0);
         saved.setLineas(List.of(linea));
@@ -76,17 +76,17 @@ class VentaServiceTest {
 
         assertEquals(7.0, pt.getStockActual());
         assertEquals(1, result.lineas().size());
-        verify(productoTerminadoRepository).save(pt);
+        verify(productoRepository).save(pt);
     }
 
     @Test
     void crear_cuandoStockInsuficiente_lanzaExcepcion() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
         pt.setNombre("Shampoo");
         pt.setStockActual(2.0);
 
-        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(pt));
 
         VentaRequest request = new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(1L, 5.0, null)));
         assertThrows(StockInsuficienteException.class, () -> service.crear(request));
@@ -95,20 +95,20 @@ class VentaServiceTest {
 
     @Test
     void crear_cuandoProductoNoExiste_lanzaExcepcion() {
-        when(productoTerminadoRepository.findById(99L)).thenReturn(Optional.empty());
+        when(productoRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
                 () -> service.crear(new VentaRequest(LocalDate.now(), List.of(new LineaVentaRequest(99L, 1.0, null)))));
     }
 
     @Test
     void crear_capturaPrecioUnitario() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
         pt.setNombre("Shampoo");
         pt.setStockActual(10.0);
         pt.setPrecioVenta(2500.0);
 
-        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt));
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(pt));
 
         Venta saved = new Venta();
         saved.setId(1L);
@@ -116,7 +116,7 @@ class VentaServiceTest {
         LineaVenta linea = new LineaVenta();
         linea.setId(1L);
         linea.setVenta(saved);
-        linea.setProductoTerminado(pt);
+        linea.setProducto(pt);
         linea.setCantidad(3.0);
         linea.setPrecioUnitario(2500.0);
         saved.setLineas(List.of(linea));
@@ -131,28 +131,28 @@ class VentaServiceTest {
 
     @Test
     void crear_multiplesLineas() {
-        ProductoTerminado pt1 = new ProductoTerminado();
+        Producto pt1 = new Producto();
         pt1.setId(1L);
         pt1.setNombre("Shampoo");
         pt1.setStockActual(10.0);
         pt1.setPrecioVenta(2500.0);
 
-        ProductoTerminado pt2 = new ProductoTerminado();
+        Producto pt2 = new Producto();
         pt2.setId(2L);
         pt2.setNombre("Jabón");
         pt2.setStockActual(20.0);
         pt2.setPrecioVenta(1500.0);
 
-        when(productoTerminadoRepository.findById(1L)).thenReturn(Optional.of(pt1));
-        when(productoTerminadoRepository.findById(2L)).thenReturn(Optional.of(pt2));
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(pt1));
+        when(productoRepository.findById(2L)).thenReturn(Optional.of(pt2));
 
         Venta saved = new Venta();
         saved.setId(1L);
         saved.setFecha(LocalDate.now());
         LineaVenta l1 = new LineaVenta();
-        l1.setId(1L); l1.setVenta(saved); l1.setProductoTerminado(pt1); l1.setCantidad(3.0); l1.setPrecioUnitario(2500.0);
+        l1.setId(1L); l1.setVenta(saved); l1.setProducto(pt1); l1.setCantidad(3.0); l1.setPrecioUnitario(2500.0);
         LineaVenta l2 = new LineaVenta();
-        l2.setId(2L); l2.setVenta(saved); l2.setProductoTerminado(pt2); l2.setCantidad(2.0); l2.setPrecioUnitario(1500.0);
+        l2.setId(2L); l2.setVenta(saved); l2.setProducto(pt2); l2.setCantidad(2.0); l2.setPrecioUnitario(1500.0);
         saved.setLineas(List.of(l1, l2));
 
         when(ventaRepository.save(any())).thenReturn(saved);
@@ -171,7 +171,7 @@ class VentaServiceTest {
 
     @Test
     void eliminar_revierteStockPT() {
-        ProductoTerminado pt = new ProductoTerminado();
+        Producto pt = new Producto();
         pt.setId(1L);
         pt.setNombre("Shampoo");
         pt.setStockActual(7.0);
@@ -181,7 +181,7 @@ class VentaServiceTest {
         LineaVenta linea = new LineaVenta();
         linea.setId(1L);
         linea.setVenta(venta);
-        linea.setProductoTerminado(pt);
+        linea.setProducto(pt);
         linea.setCantidad(3.0);
         linea.setPrecioUnitario(2000.0);
         venta.setLineas(List.of(linea));
@@ -191,7 +191,7 @@ class VentaServiceTest {
         service.eliminar(1L);
 
         assertEquals(10.0, pt.getStockActual());
-        verify(productoTerminadoRepository).save(pt);
+        verify(productoRepository).save(pt);
         verify(ventaRepository).delete(venta);
     }
 }
