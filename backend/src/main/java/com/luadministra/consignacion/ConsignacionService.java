@@ -4,8 +4,10 @@ import com.luadministra.consignatario.Consignatario;
 import com.luadministra.consignatario.ConsignatarioRepository;
 import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.producto.Producto;
 import com.luadministra.producto.ProductoRepository;
+import com.luadministra.rendicion.Rendicion;
 import com.luadministra.rendicion.RendicionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,12 +39,20 @@ public class ConsignacionService {
         this.rendicionRepository = rendicionRepository;
     }
 
+    @Transactional(readOnly = true)
     public PaginatedResponse<ConsignacionResponse> listar(int page, int size, String sortBy, String sortDir,
                                                            Long consignatarioId, String estado) {
         Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "fecha");
         Pageable pageable = PageRequest.of(page, size, sort);
-        EstadoConsignacion estadoEnum = estado != null ? EstadoConsignacion.valueOf(estado) : null;
+        EstadoConsignacion estadoEnum = null;
+        if (estado != null) {
+            try {
+                estadoEnum = EstadoConsignacion.valueOf(estado);
+            } catch (IllegalArgumentException e) {
+                throw new SolicitudInvalidaException("Estado inválido: " + estado);
+            }
+        }
         Page<Consignacion> consignacionPage;
         if (consignatarioId != null && estadoEnum != null) {
             consignacionPage = repository.findByConsignatarioIdAndEstado(consignatarioId, estadoEnum, pageable);
@@ -57,6 +67,7 @@ public class ConsignacionService {
         return PaginatedResponse.from(consignacionPage, content);
     }
 
+    @Transactional(readOnly = true)
     public ConsignacionResponse obtener(Long id) {
         return ConsignacionResponse.fromEntity(
                 repository.findById(id)
@@ -94,6 +105,7 @@ public class ConsignacionService {
         repository.delete(consignacion);
     }
 
+    @Transactional(readOnly = true)
     public List<StockConsignadoResponse> stockConsignado(Long consignatarioId) {
         if (!consignatarioRepository.existsById(consignatarioId)) {
             throw new RecursoNoEncontradoException("Consignatario no encontrado");
@@ -105,11 +117,16 @@ public class ConsignacionService {
                 .flatMap(c -> c.getLineas().stream())
                 .collect(Collectors.groupingBy(
                         lc -> lc.getProducto().getId(),
-                        Collectors.summingDouble(LineaConsignacion::getCantidad)
+                        Collectors.summingDouble(lc -> lc.getCantidad() != null ? lc.getCantidad() : 0.0)
                 ));
 
+        List<Long> consignacionIds = activos.stream().map(c -> c.getId()).toList();
+        Map<Long, List<Rendicion>> rendicionesPorConsignacion = rendicionRepository.findByConsignacionIdIn(consignacionIds)
+                .stream()
+                .collect(Collectors.groupingBy(r -> r.getConsignacion().getId()));
+
         Map<Long, Double> rendidoPorProducto = activos.stream()
-                .flatMap(c -> rendicionRepository.findByConsignacionId(c.getId()).stream())
+                .flatMap(c -> rendicionesPorConsignacion.getOrDefault(c.getId(), List.of()).stream())
                 .flatMap(r -> r.getLineas().stream())
                 .collect(Collectors.groupingBy(
                         lr -> lr.getLineaConsignacion().getProducto().getId(),

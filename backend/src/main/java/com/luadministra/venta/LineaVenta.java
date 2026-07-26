@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
+@Table(name = "linea_venta")
 public class LineaVenta {
 
     @Id
@@ -42,4 +43,16 @@ public class LineaVenta {
 
     public Double getPrecioUnitario() { return precioUnitario; }
     public void setPrecioUnitario(Double precioUnitario) { this.precioUnitario = precioUnitario; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LineaVenta other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

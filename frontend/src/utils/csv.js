@@ -6,7 +6,10 @@ function escape(val) {
 }
 
 export function downloadCSV(data, columns, filename) {
-  if (!data || data.length === 0) return;
+  if (!data || data.length === 0) {
+    console.warn('No data to export');
+    return;
+  }
 
   const headers = columns.map((c) => c.label).join(',');
   const rows = data

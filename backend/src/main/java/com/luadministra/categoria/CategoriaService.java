@@ -2,10 +2,12 @@ package com.luadministra.categoria;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class CategoriaService {
 
     private final CategoriaRepository repository;
@@ -16,7 +18,7 @@ public class CategoriaService {
 
     public List<CategoriaResponse> listar(TipoCategoria tipo) {
         if (tipo != null) {
-            return repository.findByTipo(tipo).stream()
+            return repository.findByTipoOrderByNombreAsc(tipo).stream()
                     .map(CategoriaResponse::fromEntity)
                     .toList();
         }
@@ -31,6 +33,7 @@ public class CategoriaService {
                         .orElseThrow(() -> new RecursoNoEncontradoException("Categoria no encontrada")));
     }
 
+    @Transactional
     public CategoriaResponse crear(CategoriaRequest request) {
         Categoria categoria = new Categoria();
         categoria.setNombre(request.nombre());
@@ -42,6 +45,7 @@ public class CategoriaService {
         return CategoriaResponse.fromEntity(repository.save(categoria));
     }
 
+    @Transactional
     public CategoriaResponse actualizar(Long id, CategoriaRequest request) {
         Categoria existente = repository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Categoria no encontrada"));
@@ -56,6 +60,7 @@ public class CategoriaService {
         return CategoriaResponse.fromEntity(repository.save(existente));
     }
 
+    @Transactional
     public void eliminar(Long id) {
         repository.deleteById(id);
     }

@@ -7,7 +7,7 @@ public record ProductoResponse(
         String nombre,
         Double precioVenta,
         Double stockActual,
-        Double stockDespachado,
+        Double stockConsignado,
         @Nullable Double stockMinimo,
         @Nullable Long categoriaId,
         @Nullable String categoriaNombre
@@ -22,11 +22,11 @@ public record ProductoResponse(
         );
     }
 
-    public static ProductoResponse fromEntity(Producto p, Double stockDespachado) {
+    public static ProductoResponse fromEntity(Producto p, Double stockConsignado) {
         var cat = p.getCategoria();
         return new ProductoResponse(
                 p.getId(), p.getNombre(), p.getPrecioVenta(),
-                p.getStockActual(), stockDespachado, p.getStockMinimo(),
+                p.getStockActual(), stockConsignado, p.getStockMinimo(),
                 cat != null ? cat.getId() : null,
                 cat != null ? cat.getNombre() : null
         );

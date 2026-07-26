@@ -13,12 +13,16 @@ public record LoteResponse(
         @Nullable LocalDate fechaVencimiento
 ) {
     public static LoteResponse fromEntity(Lote l) {
+        var prod = l.getProducto();
+        Long prodId = prod != null ? prod.getId() : null;
+        String prodNombre = prod != null ? prod.getNombre() : null;
+        LocalDate fecha = l.getFecha();
+        Integer dv = l.getDiasVigencia();
         return new LoteResponse(
-                l.getId(), l.getProducto().getId(),
-                l.getProducto().getNombre(), l.getFecha(),
+                l.getId(), prodId, prodNombre, fecha,
                 l.getCantidadFabricada(),
-                l.getDiasVigencia(),
-                l.getDiasVigencia() != null ? l.getFecha().plusDays(l.getDiasVigencia()) : null
+                dv,
+                fecha != null && dv != null ? fecha.plusDays(dv) : null
         );
     }
 }

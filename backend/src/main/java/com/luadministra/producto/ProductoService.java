@@ -5,11 +5,14 @@ import com.luadministra.consignacion.ConsignacionRepository;
 import com.luadministra.consignacion.EstadoConsignacion;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class ProductoService {
 
     private final ProductoRepository repository;
@@ -25,17 +28,16 @@ public class ProductoService {
     }
 
     public List<ProductoResponse> listar(String nombre, Long categoriaId, String sortBy, String sortDir) {
+        Specification<Producto> spec = Specification
+                .where(ProductoSpecification.nombreContains(nombre))
+                .and(ProductoSpecification.categoriaIdEquals(categoriaId));
+
         Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "nombre");
-        var stream = repository.findAll(sort).stream();
-        if (nombre != null && !nombre.isBlank()) {
-            stream = stream.filter(p -> p.getNombre().toLowerCase().contains(nombre.toLowerCase()));
-        }
-        if (categoriaId != null) {
-            stream = stream.filter(p -> { var c = p.getCategoria(); return c != null && c.getId().equals(categoriaId); });
-        }
-        return stream.map(p -> ProductoResponse.fromEntity(p,
-                calcularStockConsignado(p.getId()))).toList();
+
+        return repository.findAll(spec, sort).stream()
+                .map(p -> ProductoResponse.fromEntity(p, calcularStockConsignado(p.getId())))
+                .toList();
     }
 
     public ProductoResponse obtener(Long id) {
@@ -44,6 +46,7 @@ public class ProductoService {
         return ProductoResponse.fromEntity(p, calcularStockConsignado(p.getId()));
     }
 
+    @Transactional
     public ProductoResponse crear(ProductoRequest request) {
         Producto p = new Producto();
         p.setNombre(request.nombre());
@@ -57,6 +60,7 @@ public class ProductoService {
         return ProductoResponse.fromEntity(repository.save(p));
     }
 
+    @Transactional
     public ProductoResponse actualizar(Long id, ProductoRequest request) {
         Producto existente = repository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
@@ -75,6 +79,7 @@ public class ProductoService {
         return ProductoResponse.fromEntity(repository.save(existente));
     }
 
+    @Transactional
     public void eliminar(Long id) {
         repository.deleteById(id);
     }

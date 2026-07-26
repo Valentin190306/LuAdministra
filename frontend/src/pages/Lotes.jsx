@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -10,19 +10,10 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { todayStr, monthAgo } from '../utils/dates';
 import styles from './Lotes.module.css';
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 const emptyForm = { productoId: '', fecha: todayStr(), cantidadFabricada: '', diasVigencia: '' };
-
-function monthAgo() {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return d.toISOString().slice(0, 10);
-}
 
 export default function Lotes() {
   const [sortBy, setSortBy] = useState('fecha');
@@ -43,17 +34,27 @@ export default function Lotes() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setForm(emptyForm);
+    setErrores({});
     setModalOpen(true);
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!form.productoId) e.productoId = 'Requerido';
+    if (!form.cantidadFabricada) e.cantidadFabricada = 'Requerido';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    if (!form.productoId || !form.cantidadFabricada) return;
+    if (!validar()) return;
     setSaving(true);
     try {
       await api.post('/lotes', {
@@ -69,9 +70,9 @@ export default function Lotes() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [form, refetch]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/lotes/${deleteTarget.id}`);
@@ -80,9 +81,9 @@ export default function Lotes() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, refetch]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'productoNombre', label: 'Producto' },
     { key: 'fecha', label: 'Fecha' },
@@ -100,7 +101,7 @@ export default function Lotes() {
         ]} />
       ),
     },
-  ];
+  ], []);
 
   if (loading && !data) return <Loading />;
   if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -159,9 +160,9 @@ export default function Lotes() {
       {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Registrar Lote">
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Producto">
-            <select value={form.productoId} onChange={(e) => setForm({ ...form, productoId: e.target.value })} required>
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Producto" error={errores.productoId}>
+            <select value={form.productoId} onChange={(e) => { setForm({ ...form, productoId: e.target.value }); setErrores((prev) => ({ ...prev, productoId: undefined })); }}>
               <option value="">Seleccionar...</option>
               {ptList?.map((pt) => (
                 <option key={pt.id} value={pt.id}>{pt.nombre}</option>
@@ -169,10 +170,10 @@ export default function Lotes() {
             </select>
           </FormField>
           <FormField label="Fecha">
-            <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
+            <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
           </FormField>
-          <FormField label="Cantidad Fabricada">
-            <input type="number" step="any" min="0" value={form.cantidadFabricada} onChange={(e) => setForm({ ...form, cantidadFabricada: e.target.value })} required />
+          <FormField label="Cantidad Fabricada" error={errores.cantidadFabricada}>
+            <input type="number" step="any" min="0" value={form.cantidadFabricada} onChange={(e) => { setForm({ ...form, cantidadFabricada: e.target.value }); setErrores((prev) => ({ ...prev, cantidadFabricada: undefined })); }} />
           </FormField>
           <FormField label="Días de vigencia (opcional)">
             <input type="number" min="1" step="1" value={form.diasVigencia} onChange={(e) => setForm({ ...form, diasVigencia: e.target.value })} placeholder="Ej: 365" />

@@ -47,7 +47,7 @@ public class LoteController {
         return service.crear(request);
     }
 
-    @GetMapping("/lotes-por-producto")
+    @GetMapping("/por-producto")
     public List<LoteResponse> listarLotes(@RequestParam Long productoId) {
         return service.listarLotesPorProducto(productoId);
     }

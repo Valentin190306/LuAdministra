@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import Table from '../components/ui/Table';
@@ -47,23 +47,35 @@ export default function MateriasPrimas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  function openCreate() {
+
+  const openCreate = useCallback(() => {
     setEditing(null);
     setForm(emptyForm);
+    setErrores({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function openEdit(mp) {
+  const openEdit = useCallback((mp) => {
     setEditing(mp);
     setForm({ nombre: mp.nombre, unidadMedida: mp.unidadMedida, stockActual: mp.stockActual ?? '', stockMinimo: mp.stockMinimo ?? '', categoriaId: mp.categoriaId ?? '' });
+    setErrores({});
     setModalOpen(true);
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!form.nombre?.trim()) e.nombre = 'Requerido';
+    if (!form.unidadMedida?.trim()) e.unidadMedida = 'Requerido';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.unidadMedida.trim()) return;
+    if (!validar()) return;
     setSaving(true);
     try {
       const body = {
@@ -85,9 +97,9 @@ export default function MateriasPrimas() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [form, editing, fetchData]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/materias-primas/${deleteTarget.id}`);
@@ -96,9 +108,9 @@ export default function MateriasPrimas() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, fetchData]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     { key: 'unidadMedida', label: 'Unidad de Medida' },
@@ -122,7 +134,7 @@ export default function MateriasPrimas() {
         ]} />
       ),
     },
-  ];
+  ], [openEdit]);
 
   if (loading) return <Loading />;
   if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -172,12 +184,12 @@ export default function MateriasPrimas() {
       <Table columns={columns} data={data} />
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Materia Prima' : 'Nueva Materia Prima'}>
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Nombre">
-            <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required autoFocus />
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Nombre" error={errores.nombre}>
+            <input value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); setErrores((prev) => ({ ...prev, nombre: undefined })); }} autoFocus />
           </FormField>
-          <FormField label="Unidad de Medida">
-            <select value={form.unidadMedida} onChange={(e) => setForm({ ...form, unidadMedida: e.target.value })} required>
+          <FormField label="Unidad de Medida" error={errores.unidadMedida}>
+            <select value={form.unidadMedida} onChange={(e) => { setForm({ ...form, unidadMedida: e.target.value }); setErrores((prev) => ({ ...prev, unidadMedida: undefined })); }}>
               <option value="">Seleccionar...</option>
               <option value="gramos">gramos</option>
               <option value="kg">kg</option>

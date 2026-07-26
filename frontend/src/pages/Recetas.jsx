@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import Table from '../components/ui/Table';
@@ -15,38 +15,31 @@ export default function Recetas() {
   const { data: mpList } = useApi('/materias-primas');
   const { data: allRecipes } = useApi('/recetas');
 
-  const [recipeMap, setRecipeMap] = useState({});
+  const recipeLookup = useMemo(() => Object.fromEntries((allRecipes ?? []).map((r) => [r.productoId, r])), [allRecipes]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPt, setSelectedPt] = useState(null);
   const [creatingNew, setCreatingNew] = useState(false);
   const [newPtId, setNewPtId] = useState('');
   const [detalles, setDetalles] = useState([]);
   const [notas, setNotas] = useState('');
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
 
   const loadRecipe = useCallback(async (ptId) => {
     try {
-      const recipe = await api.get(`/recetas/producto/${ptId}`);
-      setRecipeMap((prev) => ({ ...prev, [ptId]: recipe }));
-      return recipe;
+      return await api.get(`/recetas/producto/${ptId}`);
     } catch {
       return null;
     }
   }, []);
 
-  useEffect(() => {
-    if (!allRecipes) return;
-    setRecipeMap((prev) => {
-      const map = Object.fromEntries(allRecipes.map((r) => [r.productoId, r]));
-      return { ...prev, ...map };
-    });
-  }, [allRecipes]);
-
-  function openModal(pt) {
+  const openModal = useCallback((pt) => {
     setCreatingNew(false);
     setNewPtId('');
     setSelectedPt(pt);
+    setErrores({});
     loadRecipe(pt.id).then((recipe) => {
       if (recipe) {
         setDetalles(recipe.detalles.map((d) => ({ materiaPrimaId: d.materiaPrimaId, cantidad: d.cantidad })));
@@ -56,42 +49,58 @@ export default function Recetas() {
         setNotas('');
       }
       setModalOpen(true);
+    }).catch(() => {
+      setDetalles([{ materiaPrimaId: '', cantidad: '' }]);
+      setNotas('');
+      setModalOpen(true);
     });
-  }
+  }, [loadRecipe]);
 
-  function openNewRecipe() {
+  const openNewRecipe = useCallback(() => {
     setCreatingNew(true);
     setSelectedPt(null);
     setNewPtId('');
     setDetalles([{ materiaPrimaId: '', cantidad: '' }]);
     setNotas('');
+    setErrores({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function addDetalle() {
+  const addDetalle = useCallback(() => {
     setDetalles((prev) => [...prev, { materiaPrimaId: '', cantidad: '' }]);
-  }
+    setErrores((prev) => ({ ...prev, detalles: undefined }));
+  }, []);
 
-  function updateDetalle(index, field, value) {
+  const updateDetalle = useCallback((index, field, value) => {
     setDetalles((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
       return next;
     });
-  }
+    setErrores((prev) => ({ ...prev, detalles: undefined }));
+  }, []);
 
-  function removeDetalle(index) {
+  const removeDetalle = useCallback((index) => {
     setDetalles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (creatingNew && !newPtId) e.newPtId = 'Requerido';
+    const valid = detalles.filter((d) => d.materiaPrimaId && d.cantidad);
+    if (valid.length === 0) e.detalles = 'Agregue al menos un ingrediente con cantidad';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    const valid = detalles.filter((d) => d.materiaPrimaId && d.cantidad);
-    if (valid.length === 0) return;
+    if (!validar()) return;
 
     setSaving(true);
     try {
       const ptId = creatingNew ? Number(newPtId) : selectedPt.id;
+      const valid = detalles.filter((d) => d.materiaPrimaId && d.cantidad);
       const body = {
         productoId: ptId,
         detalles: valid.map((d) => ({
@@ -101,7 +110,7 @@ export default function Recetas() {
         notas: notas.trim() || null,
       };
 
-      const existing = !creatingNew && recipeMap[selectedPt.id];
+      const existing = !creatingNew && recipeLookup[selectedPt.id];
       if (existing) {
         await api.put(`/recetas/${existing.id}`, body);
       } else {
@@ -109,44 +118,34 @@ export default function Recetas() {
       }
 
       setModalOpen(false);
-      if (creatingNew) {
-        await loadRecipe(ptId);
-      } else {
-        await loadRecipe(selectedPt.id);
-      }
     } catch (err) {
       alert(err.message);
     } finally {
       setSaving(false);
     }
-  }
+  }, [creatingNew, newPtId, selectedPt, detalles, notas, recipeLookup]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleting) return;
     try {
-      const recipe = recipeMap[deleting.id];
+      const recipe = recipeLookup[deleting.id];
       if (recipe) {
         await api.delete(`/recetas/${recipe.id}`);
-        setRecipeMap((prev) => {
-          const next = { ...prev };
-          delete next[deleting.id];
-          return next;
-        });
       }
       setDeleting(null);
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleting, recipeLookup]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Producto Terminado' },
     {
       key: 'receta',
       label: 'Receta',
       render: (row) => {
-        const recipe = recipeMap[row.id];
+        const recipe = recipeLookup[row.id];
         if (!recipe) return <span className={styles.noRecipe}>Sin receta</span>;
         return <span className={styles.hasRecipe}>{recipe.detalles.length} ingredientes</span>;
       },
@@ -156,12 +155,12 @@ export default function Recetas() {
       label: '',
       render: (row) => {
         const items = [];
-        items.push({ label: recipeMap[row.id] ? 'Editar Receta' : 'Configurar', onClick: () => openModal(row) });
-        if (recipeMap[row.id]) items.push({ label: 'Eliminar', onClick: () => setDeleting(row) });
+          items.push({ label: recipeLookup[row.id] ? 'Editar Receta' : 'Configurar', onClick: () => openModal(row) });
+        if (recipeLookup[row.id]) items.push({ label: 'Eliminar', onClick: () => setDeleting(row) });
         return <ActionMenu actions={items} />;
       },
     },
-  ];
+  ], [recipeLookup, openModal]);
 
   if (ptLoading) return <Loading />;
 
@@ -172,7 +171,7 @@ export default function Recetas() {
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => {
           const flat = (ptList ?? []).map((pt) => {
-            const r = recipeMap[pt.id];
+            const r = recipeLookup[pt.id];
             return {
               producto: pt.nombre,
               ingredientes: r ? r.detalles.map((d) => `${d.materiaPrimaNombre} (${d.cantidad})`).join('; ') : 'Sin receta',
@@ -196,10 +195,10 @@ export default function Recetas() {
       />
 
       <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setCreatingNew(false); }} title={creatingNew ? 'Nueva Receta' : (selectedPt?.nombre ?? 'Receta')}>
-        <form onSubmit={handleSave} className={styles.form}>
+        <form onSubmit={handleSave} className={styles.form} noValidate>
           {creatingNew && (
-            <FormField label="Producto Terminado">
-              <select value={newPtId} onChange={(e) => setNewPtId(e.target.value)} required>
+            <FormField label="Producto Terminado" error={errores.newPtId}>
+              <select value={newPtId} onChange={(e) => { setNewPtId(e.target.value); setErrores((prev) => ({ ...prev, newPtId: undefined })); }}>
                 <option value="">Seleccionar...</option>
                 {ptList?.map((pt) => (
                   <option key={pt.id} value={pt.id}>{pt.nombre}</option>
@@ -211,7 +210,7 @@ export default function Recetas() {
             {detalles.map((d, i) => (
               <div key={i} className={styles.detalleRow}>
                 <FormField label={i === 0 ? 'Materia Prima' : undefined}>
-                  <select value={d.materiaPrimaId} onChange={(e) => updateDetalle(i, 'materiaPrimaId', e.target.value)} required>
+                  <select value={d.materiaPrimaId} onChange={(e) => updateDetalle(i, 'materiaPrimaId', e.target.value)}>
                     <option value="">Seleccionar...</option>
                     {mpList?.map((mp) => (
                       <option key={mp.id} value={mp.id}>{mp.nombre} ({mp.unidadMedida})</option>
@@ -226,7 +225,6 @@ export default function Recetas() {
                       min="0"
                       value={d.cantidad}
                       onChange={(e) => updateDetalle(i, 'cantidad', e.target.value)}
-                      required
                     />
                     {detalles.length > 1 && (
                       <button type="button" className={styles.removeBtn} onClick={() => removeDetalle(i)} aria-label="Eliminar">&times;</button>
@@ -236,6 +234,8 @@ export default function Recetas() {
               </div>
             ))}
           </div>
+
+          {errores.detalles && <p className={styles.errorMsg}>{errores.detalles}</p>}
 
           <Button variant="ghost" type="button" onClick={addDetalle}>+ Agregar ingrediente</Button>
 

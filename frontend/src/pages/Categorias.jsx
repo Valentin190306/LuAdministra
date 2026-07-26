@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
@@ -30,28 +30,38 @@ export default function Categorias() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  function setTipo(newTipo) {
+  const setTipo = useCallback((newTipo) => {
     setSearchParams({ tipo: newTipo });
-  }
+  }, []);
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setEditing(null);
     setForm(emptyForm);
+    setErrores({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function openEdit(cat) {
+  const openEdit = useCallback((cat) => {
     setEditing(cat);
     setForm({ nombre: cat.nombre, categoriaPadreId: cat.categoriaPadreId ?? '' });
+    setErrores({});
     setModalOpen(true);
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!form.nombre?.trim()) e.nombre = 'Requerido';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
   async function handleSave(e) {
     e.preventDefault();
-    if (!form.nombre.trim()) return;
+    if (!validar()) return;
     setSaving(true);
     try {
       const body = {
@@ -73,7 +83,7 @@ export default function Categorias() {
     }
   }
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/categorias/${deleteTarget.id}?tipo=${tipo}`);
@@ -82,9 +92,9 @@ export default function Categorias() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, tipo, refetch]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoriaPadreNombre', label: 'Categoría Padre', render: (r) => r.categoriaPadreNombre ?? '—' },
@@ -98,7 +108,7 @@ export default function Categorias() {
         ]} />
       ),
     },
-  ];
+  ], [openEdit]);
 
   if (loading) return <Loading />;
   if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -131,9 +141,9 @@ export default function Categorias() {
       <Table columns={columns} data={data} />
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Categoría' : 'Nueva Categoría'}>
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Nombre">
-            <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required autoFocus />
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Nombre" error={errores.nombre}>
+            <input value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); setErrores((prev) => ({ ...prev, nombre: undefined })); }} autoFocus />
           </FormField>
           <FormField label="Categoría Padre (opcional)">
             <select value={form.categoriaPadreId} onChange={(e) => setForm({ ...form, categoriaPadreId: e.target.value })}>

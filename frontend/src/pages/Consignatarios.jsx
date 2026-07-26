@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -35,24 +35,34 @@ export default function Consignatarios() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setEditing(null);
     setForm(emptyForm);
+    setErrores({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function openEdit(c) {
+  const openEdit = useCallback((c) => {
     setEditing(c);
     setForm({ nombre: c.nombre, contacto: c.contacto ?? '' });
+    setErrores({});
     setModalOpen(true);
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!form.nombre?.trim()) e.nombre = 'Requerido';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    if (!form.nombre.trim()) return;
+    if (!validar()) return;
     setSaving(true);
     try {
       const body = {
@@ -71,9 +81,9 @@ export default function Consignatarios() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [form, editing, fetchData]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/consignatarios/${deleteTarget.id}`);
@@ -82,9 +92,9 @@ export default function Consignatarios() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, fetchData]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     { key: 'contacto', label: 'Contacto', render: (r) => r.contacto ?? '—' },
@@ -98,7 +108,7 @@ export default function Consignatarios() {
         ]} />
       ),
     },
-  ];
+  ], [openEdit]);
 
   if (loading) return <Loading />;
   if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -119,9 +129,9 @@ export default function Consignatarios() {
       <Table columns={columns} data={data} emptyMessage="No hay consignatarios registrados" />
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Consignatario' : 'Nuevo Consignatario'}>
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Nombre">
-            <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required autoFocus />
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Nombre" error={errores.nombre}>
+            <input value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); setErrores((prev) => ({ ...prev, nombre: undefined })); }} autoFocus />
           </FormField>
           <FormField label="Contacto (opcional)">
             <input value={form.contacto} onChange={(e) => setForm({ ...form, contacto: e.target.value })} placeholder="Teléfono, email, etc." />

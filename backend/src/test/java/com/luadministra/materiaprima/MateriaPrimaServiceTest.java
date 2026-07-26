@@ -9,6 +9,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,16 +33,21 @@ class MateriaPrimaServiceTest {
     @InjectMocks
     private MateriaPrimaService service;
 
+    @SuppressWarnings("unchecked")
+    private <T> Specification<T> anySpec() {
+        return any(Specification.class);
+    }
+
     @Test
     void listar_devuelveTodas() {
-        when(repository.findAll()).thenReturn(List.of(new MateriaPrima()));
+        when(repository.findAll(anySpec(), any(Sort.class))).thenReturn(List.of(new MateriaPrima()));
         List<MateriaPrimaResponse> result = service.listar(null, null, null, null);
         assertEquals(1, result.size());
     }
 
     @Test
     void listar_cuandoVacia_retornaListaVacia() {
-        when(repository.findAll()).thenReturn(List.of());
+        when(repository.findAll(anySpec(), any(Sort.class))).thenReturn(List.of());
         assertTrue(service.listar(null, null, null, null).isEmpty());
     }
 
@@ -48,14 +55,13 @@ class MateriaPrimaServiceTest {
     void listar_filtraPorNombre() {
         MateriaPrima aceite = new MateriaPrima();
         aceite.setNombre("Aceite de Coco");
-        MateriaPrima manteca = new MateriaPrima();
-        manteca.setNombre("Manteca de Karite");
 
-        when(repository.findAll()).thenReturn(List.of(aceite, manteca));
+        when(repository.findAll(anySpec(), any(Sort.class))).thenReturn(List.of(aceite));
 
         List<MateriaPrimaResponse> result = service.listar("Aceite", null, null, null);
         assertEquals(1, result.size());
         assertEquals("Aceite de Coco", result.get(0).nombre());
+        verify(repository).findAll(anySpec(), any(Sort.class));
     }
 
     @Test

@@ -39,8 +39,8 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(mensaje, "VALIDACION", 400));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<@NonNull ErrorResponse> handleGenerico(RuntimeException e) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<@NonNull ErrorResponse> handleGenerico(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Error interno del servidor", "ERROR_INTERNO", 500));
     }

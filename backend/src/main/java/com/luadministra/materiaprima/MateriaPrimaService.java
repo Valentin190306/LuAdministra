@@ -4,7 +4,10 @@ import com.luadministra.categoria.CategoriaRepository;
 import com.luadministra.compra.Compra;
 import com.luadministra.compra.CompraRepository;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -13,6 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class MateriaPrimaService {
 
     private final MateriaPrimaRepository repository;
@@ -29,21 +33,15 @@ public class MateriaPrimaService {
 
     public List<MateriaPrimaResponse> listar(String nombre, Long categoriaId, String sortBy, String sortDir) {
         boolean desc = sortDir != null && sortDir.equalsIgnoreCase("desc");
-        List<MateriaPrima> materiasPrimas = repository.findAll();
 
-        if (nombre != null && !nombre.isBlank()) {
-            String lower = nombre.toLowerCase();
-            materiasPrimas = materiasPrimas.stream()
-                    .filter(mp -> mp.getNombre().toLowerCase().contains(lower))
-                    .toList();
-        }
-        if (categoriaId != null) {
-            materiasPrimas = materiasPrimas.stream()
-                    .filter(mp -> { var c = mp.getCategoria(); return c != null && c.getId().equals(categoriaId); })
-                    .toList();
-        }
+        Specification<MateriaPrima> spec = Specification
+                .where(MateriaPrimaSpecification.nombreContains(nombre))
+                .and(MateriaPrimaSpecification.categoriaIdEquals(categoriaId));
+
+        List<MateriaPrima> materiasPrimas;
 
         if ("ultimaCompraFecha".equals(sortBy) || "ultimaCompraPrecio".equals(sortBy)) {
+            materiasPrimas = repository.findAll(spec);
             List<Compra> latestCompras = compraRepository.findLatestCompraForEachMateriaPrima();
             Map<Long, Compra> latestByMpId = latestCompras.stream()
                     .collect(Collectors.toMap(c -> c.getMateriaPrima().getId(), c -> c));
@@ -68,19 +66,8 @@ public class MateriaPrimaService {
             materiasPrimas = materiasPrimas.stream().sorted(comparator).toList();
         } else {
             String effectiveSortBy = sortBy != null ? sortBy : "nombre";
-            materiasPrimas = materiasPrimas.stream()
-                    .sorted((a, b) -> {
-                        int result = 0;
-                        if ("nombre".equals(effectiveSortBy)) {
-                            result = a.getNombre().compareToIgnoreCase(b.getNombre());
-                        } else if ("stockActual".equals(effectiveSortBy)) {
-                            result = a.getStockActual().compareTo(b.getStockActual());
-                        } else if ("unidadMedida".equals(effectiveSortBy)) {
-                            result = a.getUnidadMedida().compareToIgnoreCase(b.getUnidadMedida());
-                        }
-                        return desc ? -result : result;
-                    })
-                    .toList();
+            Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC, effectiveSortBy);
+            materiasPrimas = repository.findAll(spec, sort);
         }
 
         return materiasPrimas.stream().map(MateriaPrimaResponse::fromEntity).toList();
@@ -92,6 +79,7 @@ public class MateriaPrimaService {
                         .orElseThrow(() -> new RecursoNoEncontradoException("Materia prima no encontrada")));
     }
 
+    @Transactional
     public MateriaPrimaResponse crear(MateriaPrimaRequest request) {
         MateriaPrima mp = new MateriaPrima();
         mp.setNombre(request.nombre());
@@ -105,6 +93,7 @@ public class MateriaPrimaService {
         return MateriaPrimaResponse.fromEntity(repository.save(mp));
     }
 
+    @Transactional
     public MateriaPrimaResponse actualizar(Long id, MateriaPrimaRequest request) {
         MateriaPrima existente = repository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Materia prima no encontrada"));
@@ -123,6 +112,7 @@ public class MateriaPrimaService {
         return MateriaPrimaResponse.fromEntity(repository.save(existente));
     }
 
+    @Transactional
     public void eliminar(Long id) {
         repository.deleteById(id);
     }

@@ -10,11 +10,8 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { todayStr } from '../utils/dates';
 import styles from './Compras.module.css';
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '', precioMLReferencia: '' };
 
@@ -33,6 +30,7 @@ export default function Compras() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -41,14 +39,24 @@ export default function Compras() {
     return [{ id: '', nombre: 'Todas' }, ...materiasPrimas];
   }, [materiasPrimas]);
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setForm(emptyForm);
+    setErrores({});
     setModalOpen(true);
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!form.materiaPrimaId) e.materiaPrimaId = 'Requerido';
+    if (!form.cantidad) e.cantidad = 'Requerido';
+    if (!form.precio) e.precio = 'Requerido';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    if (!form.materiaPrimaId || !form.cantidad || !form.precio) return;
+    if (!validar()) return;
     setSaving(true);
     try {
       const body = {
@@ -68,9 +76,9 @@ export default function Compras() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [form, refetch]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/compras/${deleteTarget.id}`);
@@ -79,9 +87,9 @@ export default function Compras() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, refetch]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'materiaPrimaNombre', label: 'Materia Prima' },
     { key: 'fecha', label: 'Fecha' },
@@ -115,7 +123,7 @@ export default function Compras() {
         ]} />
       ),
     },
-  ];
+  ], []);
 
   if (loading && !data) return <Loading />;
   if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -180,9 +188,9 @@ export default function Compras() {
       )}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nueva Compra">
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Materia Prima">
-            <select value={form.materiaPrimaId} onChange={(e) => setForm({ ...form, materiaPrimaId: e.target.value })} required>
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Materia Prima" error={errores.materiaPrimaId}>
+            <select value={form.materiaPrimaId} onChange={(e) => { setForm({ ...form, materiaPrimaId: e.target.value }); setErrores((prev) => ({ ...prev, materiaPrimaId: undefined })); }}>
               <option value="">Seleccionar...</option>
               {materiasPrimas?.map((mp) => (
                 <option key={mp.id} value={mp.id}>{mp.nombre}</option>
@@ -190,14 +198,14 @@ export default function Compras() {
             </select>
           </FormField>
           <FormField label="Fecha">
-            <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
+            <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
           </FormField>
           <div className={styles.row}>
-            <FormField label="Cantidad">
-              <input type="number" step="any" min="0" value={form.cantidad} onChange={(e) => setForm({ ...form, cantidad: e.target.value })} required />
+            <FormField label="Cantidad" error={errores.cantidad}>
+              <input type="number" step="any" min="0" value={form.cantidad} onChange={(e) => { setForm({ ...form, cantidad: e.target.value }); setErrores((prev) => ({ ...prev, cantidad: undefined })); }} />
             </FormField>
-            <FormField label="Precio ($)">
-              <input type="number" step="any" min="0" value={form.precio} onChange={(e) => setForm({ ...form, precio: e.target.value })} required />
+            <FormField label="Precio ($)" error={errores.precio}>
+              <input type="number" step="any" min="0" value={form.precio} onChange={(e) => { setForm({ ...form, precio: e.target.value }); setErrores((prev) => ({ ...prev, precio: undefined })); }} />
             </FormField>
           </div>
           <FormField label="Lugar / Proveedor (opcional)">

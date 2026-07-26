@@ -15,6 +15,11 @@ public class RendicionController {
         this.service = service;
     }
 
+    @GetMapping
+    public List<RendicionResponse> listarTodas() {
+        return service.listarTodas();
+    }
+
     @GetMapping("/consignacion/{consignacionId}")
     public List<RendicionResponse> listarPorConsignacion(@PathVariable Long consignacionId) {
         return service.listarPorConsignacion(consignacionId);

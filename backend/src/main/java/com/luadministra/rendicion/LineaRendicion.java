@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
+@Table(name = "linea_rendicion")
 public class LineaRendicion {
 
     @Id
@@ -42,4 +43,16 @@ public class LineaRendicion {
 
     public Double getCantidadDevuelta() { return cantidadDevuelta; }
     public void setCantidadDevuelta(Double cantidadDevuelta) { this.cantidadDevuelta = cantidadDevuelta; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LineaRendicion other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

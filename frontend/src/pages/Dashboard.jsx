@@ -8,6 +8,7 @@ import styles from './Dashboard.module.css';
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     api.get('/dashboard/stock')
@@ -18,26 +19,45 @@ export default function Dashboard() {
   if (error) return <p className={styles.errorMsg}>Error: {error.message}</p>;
   if (!data) return <Loading />;
 
-  const { materiasPrimas, productosTerminados, alertasMP, alertasPT, alertasVencimiento } = data;
+  const { materiasPrimas, productos, alertasMP, alertasProductos, alertasVencimiento } = data;
+  const productosTerminados = productos ?? [];
+
+  const handleExportMP = async () => {
+    setExporting(true);
+    try {
+      await downloadCSV(materiasPrimas, [
+        { key: 'nombre', label: 'Nombre' },
+        { key: 'unidadMedida', label: 'Unidad' },
+        { key: 'stockActual', label: 'Stock Actual' },
+        { key: 'stockMinimo', label: 'Stock Mínimo' },
+      ], 'materias-primas.csv');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPT = async () => {
+    setExporting(true);
+    try {
+      await downloadCSV(productos, [
+        { key: 'nombre', label: 'Nombre' },
+        { key: 'precioVenta', label: 'Precio Venta' },
+        { key: 'stockActual', label: 'En Depósito' },
+        { key: 'stockConsignado', label: 'Consignado' },
+        { key: 'stockMinimo', label: 'Stock Mínimo' },
+      ], 'productos.csv');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Resumen</h1>
         <div className={styles.exportBtns}>
-          <Button variant="ghost" onClick={() => downloadCSV(materiasPrimas, [
-            { key: 'nombre', label: 'Nombre' },
-            { key: 'unidadMedida', label: 'Unidad' },
-            { key: 'stockActual', label: 'Stock Actual' },
-            { key: 'stockMinimo', label: 'Stock Mínimo' },
-          ], 'materias-primas.csv')}>Exportar MP</Button>
-          <Button variant="ghost" onClick={() => downloadCSV(productosTerminados, [
-            { key: 'nombre', label: 'Nombre' },
-            { key: 'precioVenta', label: 'Precio Venta' },
-            { key: 'stockActual', label: 'En Depósito' },
-            { key: 'stockDespachado', label: 'Despachado' },
-            { key: 'stockMinimo', label: 'Stock Mínimo' },
-          ], 'productos.csv')}>Exportar PT</Button>
+          <Button variant="ghost" disabled={exporting} onClick={handleExportMP}>Exportar MP</Button>
+          <Button variant="ghost" disabled={exporting} onClick={handleExportPT}>Exportar PT</Button>
         </div>
       </div>
 
@@ -47,16 +67,16 @@ export default function Dashboard() {
           <span className={styles.cardLabel}>Materias Primas</span>
         </div>
         <div className={styles.card}>
-          <span className={styles.cardValue}>{productosTerminados.length}</span>
-          <span className={styles.cardLabel}>Productos Terminados</span>
+          <span className={styles.cardValue}>{productos.length}</span>
+          <span className={styles.cardLabel}>Productos</span>
         </div>
-        <div className={`${styles.card} ${(alertasMP.length > 0 || alertasPT.length > 0 || (alertasVencimiento?.length ?? 0) > 0) ? styles.cardAlert : ''}`}>
-          <span className={styles.cardValue}>{alertasMP.length + alertasPT.length + (alertasVencimiento?.length ?? 0)}</span>
+        <div className={`${styles.card} ${(alertasMP.length > 0 || alertasProductos.length > 0 || (alertasVencimiento?.length ?? 0) > 0) ? styles.cardAlert : ''}`}>
+          <span className={styles.cardValue}>{alertasMP.length + alertasProductos.length + (alertasVencimiento?.length ?? 0)}</span>
           <span className={styles.cardLabel}>Alertas</span>
         </div>
       </div>
 
-      {(alertasMP.length > 0 || alertasPT.length > 0) && (
+      {(alertasMP.length > 0 || alertasProductos.length > 0) && (
         <section className={styles.alerts}>
           <h2 className={styles.sectionTitle}>Alertas de stock mínimo</h2>
           {alertasMP.map((mp) => (
@@ -67,11 +87,11 @@ export default function Dashboard() {
               <span className={styles.alertMin}>(mín: {mp.stockMinimo})</span>
             </div>
           ))}
-          {alertasPT.map((pt) => (
+          {alertasProductos.map((pt) => (
             <div key={pt.id} className={styles.alert}>
               <span className={styles.alertType}>PT</span>
               <span>{pt.nombre}</span>
-              <span className={styles.alertStock}>{pt.stockActual - (pt.stockDespachado ?? 0)} u (depósito)</span>
+              <span className={styles.alertStock}>{pt.stockActual - (pt.stockConsignado ?? 0)} u (depósito)</span>
               <span className={styles.alertMin}>(mín: {pt.stockMinimo})</span>
             </div>
           ))}
@@ -107,7 +127,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {materiasPrimas.map((mp) => (
-                <tr key={mp.id} className={mp.stockMinimo != null && mp.stockActual < mp.stockMinimo ? styles.lowStockRow : undefined}>
+                <tr key={mp.id} className={mp.stockMinimo !== null && mp.stockMinimo !== undefined && mp.stockActual < mp.stockMinimo ? styles.lowStockRow : undefined}>
                   <td>{mp.nombre}</td>
                   <td>{mp.stockActual}</td>
                   <td>{mp.unidadMedida}</td>
@@ -120,26 +140,26 @@ export default function Dashboard() {
         </section>
 
         <section>
-          <h2 className={styles.sectionTitle}>Productos Terminados</h2>
+          <h2 className={styles.sectionTitle}>Productos</h2>
           <div className={styles.miniTableWrapper}>
           <table className={styles.miniTable}>
             <thead>
               <tr>
                 <th>Nombre</th>
                 <th>En Depósito</th>
-                <th>Despachado</th>
+                <th>Consignado</th>
                 <th>Precio</th>
                 <th>Mínimo</th>
               </tr>
             </thead>
             <tbody>
-              {productosTerminados.map((pt) => {
-                const enDeposito = pt.stockActual - (pt.stockDespachado ?? 0);
+              {productos.map((pt) => {
+                const enDeposito = pt.stockActual - (pt.stockConsignado ?? 0);
                 return (
-                <tr key={pt.id} className={pt.stockMinimo != null && enDeposito < pt.stockMinimo ? styles.lowStockRow : undefined}>
+                <tr key={pt.id} className={pt.stockMinimo !== null && pt.stockMinimo !== undefined && enDeposito < pt.stockMinimo ? styles.lowStockRow : undefined}>
                   <td>{pt.nombre}</td>
                   <td>{enDeposito}</td>
-                  <td>{pt.stockDespachado ?? 0}</td>
+                  <td>{pt.stockConsignado ?? 0}</td>
                   <td>${pt.precioVenta.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                   <td>{pt.stockMinimo ?? '—'}</td>
                 </tr>

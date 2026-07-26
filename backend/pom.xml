@@ -65,6 +65,11 @@
             <version>2.2.700</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jmdns</groupId>
+            <artifactId>jmdns</artifactId>
+            <version>3.5.9</version>
+        </dependency>
     </dependencies>
 
     <build>

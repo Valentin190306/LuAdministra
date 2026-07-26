@@ -63,10 +63,10 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/stock"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.materiasPrimas[0].nombre").value("Aceite"))
-                .andExpect(jsonPath("$.productosTerminados[0].nombre").value("Jabón"))
-                .andExpect(jsonPath("$.productosTerminados[0].stockDespachado").value(5.0))
+                .andExpect(jsonPath("$.productos[0].nombre").value("Jabón"))
+                .andExpect(jsonPath("$.productos[0].stockConsignado").value(5.0))
                 .andExpect(jsonPath("$.alertasMP").isArray())
-                .andExpect(jsonPath("$.alertasPT").isArray());
+                .andExpect(jsonPath("$.alertasProductos").isArray());
     }
 
     @Test

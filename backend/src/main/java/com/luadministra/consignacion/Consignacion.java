@@ -46,4 +46,16 @@ public class Consignacion {
 
     public List<LineaConsignacion> getLineas() { return lineas; }
     public void setLineas(List<LineaConsignacion> lineas) { this.lineas = lineas; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Consignacion other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

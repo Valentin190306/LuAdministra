@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "receta")
 public class Receta {
 
     @Id
@@ -36,4 +37,16 @@ public class Receta {
 
     public @Nullable String getNotas() { return notas; }
     public void setNotas(@Nullable String notas) { this.notas = notas; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Receta other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

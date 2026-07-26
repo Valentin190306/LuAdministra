@@ -50,13 +50,16 @@ public class DashboardController {
                 .filter(mp -> { Double min = mp.stockMinimo(); return min != null && mp.stockActual() < min; })
                 .toList();
 
-        List<ProductoResponse> alertasPT = productosResponse.stream()
+        List<ProductoResponse> alertasProductos = productosResponse.stream()
                 .filter(p -> { Double min = p.stockMinimo(); return min != null && p.stockActual() < min; })
                 .toList();
 
         List<LoteResponse> lotesVencidos = loteRepository
                 .findByDiasVigenciaIsNotNull().stream()
-                .filter(l -> l.getFecha().plusDays(l.getDiasVigencia()).isBefore(LocalDate.now()))
+                .filter(l -> {
+                    Integer dv = l.getDiasVigencia();
+                    return l.getFecha() != null && dv != null && l.getFecha().plusDays(dv).isBefore(LocalDate.now());
+                })
                 .map(LoteResponse::fromEntity)
                 .toList();
 
@@ -65,21 +68,24 @@ public class DashboardController {
                     var p = productos.stream().filter(prod -> prod.getId().equals(lv.productoId())).findFirst();
                     return p.isPresent() && p.get().getStockActual() > 0;
                 })
-                .map(lv -> Map.<String, Object>of(
-                        "loteId", lv.id(),
-                        "productoId", lv.productoId(),
-                        "productoNombre", lv.productoNombre(),
-                        "fechaProduccion", lv.fecha().toString(),
-                        "fechaVencimiento", lv.fechaVencimiento() != null ? lv.fechaVencimiento().toString() : null,
-                        "cantidadFabricada", lv.cantidadFabricada()
-                ))
+                .map(lv -> {
+                    var fv = lv.fechaVencimiento();
+                    return Map.<String, Object>of(
+                            "loteId", lv.id(),
+                            "productoId", lv.productoId(),
+                            "productoNombre", lv.productoNombre(),
+                            "fechaProduccion", lv.fecha().toString(),
+                            "fechaVencimiento", fv != null ? fv.toString() : null,
+                            "cantidadFabricada", lv.cantidadFabricada()
+                    );
+                })
                 .toList();
 
         return Map.of(
                 "materiasPrimas", materiasPrimas,
-                "productosTerminados", productosResponse,
+                "productos", productosResponse,
                 "alertasMP", alertasMP,
-                "alertasPT", alertasPT,
+                "alertasProductos", alertasProductos,
                 "alertasVencimiento", alertasVencimiento
         );
     }

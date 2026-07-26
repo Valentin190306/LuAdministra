@@ -45,9 +45,9 @@ export default function ActionMenu({ actions }) {
       </button>
       {open && (
         <div className={styles.menu} ref={menuRef} style={{ top: pos.top, right: pos.right }}>
-          {actions.map((a, i) => (
+          {actions.map((a) => (
             <button
-              key={i}
+              key={a.label}
               className={styles.menuItem}
               onClick={() => { a.onClick(); setOpen(false); }}
             >

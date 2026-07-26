@@ -2,6 +2,7 @@ package com.luadministra.venta;
 
 import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.exception.StockInsuficienteException;
 import com.luadministra.producto.Producto;
 import com.luadministra.producto.ProductoRepository;
@@ -62,6 +63,10 @@ public class VentaService {
             Producto producto = productoRepository
                     .findById(lineaReq.productoId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
+
+            if (lineaReq.cantidad() <= 0) {
+                throw new SolicitudInvalidaException("La cantidad debe ser positiva");
+            }
 
             if (producto.getStockActual() < lineaReq.cantidad()) {
                 throw new StockInsuficienteException("Stock insuficiente de " + producto.getNombre());

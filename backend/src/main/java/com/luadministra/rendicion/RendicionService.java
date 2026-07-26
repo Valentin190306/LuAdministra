@@ -8,7 +8,9 @@ import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.producto.Producto;
 import com.luadministra.producto.ProductoRepository;
-import com.luadministra.venta.*;
+import com.luadministra.venta.LineaVentaRequest;
+import com.luadministra.venta.VentaRequest;
+import com.luadministra.venta.VentaService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,14 @@ public class RendicionService {
         this.ventaService = ventaService;
     }
 
+    @Transactional(readOnly = true)
+    public List<RendicionResponse> listarTodas() {
+        return rendicionRepository.findAll().stream()
+                .map(RendicionResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<RendicionResponse> listarPorConsignacion(Long consignacionId) {
         return rendicionRepository.findByConsignacionId(consignacionId).stream()
                 .map(RendicionResponse::fromEntity)
@@ -135,6 +145,7 @@ public class RendicionService {
     }
 
     private static double devueltaOrDefault(LineaRendicionRequest r) {
-        return r.cantidadDevuelta() != null ? r.cantidadDevuelta() : 0.0;
+        var cd = r.cantidadDevuelta();
+        return cd != null ? cd : 0.0;
     }
 }

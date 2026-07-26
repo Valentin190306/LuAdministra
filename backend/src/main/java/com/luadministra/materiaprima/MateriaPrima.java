@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import org.eclipse.jdt.annotation.Nullable;
 
 @Entity
+@Table(name = "materia_prima")
 public class MateriaPrima {
 
     @Id
@@ -48,4 +49,16 @@ public class MateriaPrima {
 
     public @Nullable Categoria getCategoria() { return categoria; }
     public void setCategoria(@Nullable Categoria categoria) { this.categoria = categoria; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MateriaPrima other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

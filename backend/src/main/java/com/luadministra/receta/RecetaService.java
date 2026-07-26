@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
 @Service
+@Transactional(readOnly = true)
 public class RecetaService {
 
     private final RecetaRepository repository;
@@ -42,7 +42,7 @@ public class RecetaService {
         receta.setProducto(producto);
         receta.setNotas(request.notas());
 
-        receta.getDetalles().clear();
+        if (receta.getDetalles() != null) receta.getDetalles().clear();
         request.detalles().forEach(d -> {
             MateriaPrima mp = materiaPrimaRepository.findById(d.materiaPrimaId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Materia prima no encontrada"));

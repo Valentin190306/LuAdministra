@@ -24,6 +24,7 @@ public class CompraService {
         this.materiaPrimaRepository = materiaPrimaRepository;
     }
 
+    @Transactional(readOnly = true)
     public PaginatedResponse<CompraResponse> listar(int page, int size, String sortBy, String sortDir) {
         Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "fecha");
@@ -33,6 +34,7 @@ public class CompraService {
         return PaginatedResponse.from(compraPage, content);
     }
 
+    @Transactional(readOnly = true)
     public PaginatedResponse<CompraResponse> listarPorMateriaPrima(Long materiaPrimaId, int page, int size, String sortBy, String sortDir) {
         Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "fecha");
@@ -42,6 +44,7 @@ public class CompraService {
         return PaginatedResponse.from(compraPage, content);
     }
 
+    @Transactional(readOnly = true)
     public CompraResponse obtener(Long id) {
         return CompraResponse.fromEntity(
                 compraRepository.findById(id)

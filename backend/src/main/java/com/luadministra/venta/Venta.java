@@ -1,14 +1,13 @@
 package com.luadministra.venta;
 
-import com.luadministra.consignacion.Consignacion;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import org.eclipse.jdt.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "venta")
 public class Venta {
 
     @Id
@@ -22,10 +21,6 @@ public class Venta {
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LineaVenta> lineas = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "consignacion_id")
-    private @Nullable Consignacion consignacion;
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -35,6 +30,15 @@ public class Venta {
     public List<LineaVenta> getLineas() { return lineas; }
     public void setLineas(List<LineaVenta> lineas) { this.lineas = lineas; }
 
-    public @Nullable Consignacion getConsignacion() { return consignacion; }
-    public void setConsignacion(@Nullable Consignacion consignacion) { this.consignacion = consignacion; }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Venta other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

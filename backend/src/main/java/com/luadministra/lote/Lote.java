@@ -44,4 +44,16 @@ public class Lote {
 
     public @Nullable Integer getDiasVigencia() { return diasVigencia; }
     public void setDiasVigencia(@Nullable Integer diasVigencia) { this.diasVigencia = diasVigencia; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Lote other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

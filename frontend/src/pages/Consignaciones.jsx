@@ -2,19 +2,19 @@ import { useState, useMemo, useCallback } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useNotify } from '../context/NotificationContext';
 import { downloadCSV } from '../utils/csv';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ActionMenu from '../components/ui/ActionMenu';
-import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
+import ConsignacionForm from './ConsignacionForm';
+import RendicionForm from './RendicionForm';
+import DevolverForm from './DevolverForm';
+import VerRendiciones from './VerRendiciones';
+import StockConsignadoModal from './StockConsignadoModal';
 import styles from './Consignaciones.module.css';
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const estadoLabels = {
   PENDIENTE: 'Pendiente',
@@ -29,24 +29,21 @@ const estadoOptions = [
   { value: 'RENDIDO_TOTAL', label: 'Rendido Total' },
 ];
 
-const emptyForm = { consignatarioId: '', fecha: todayStr(), productos: [{ productoId: '', cantidad: '' }] };
-
-function emptyRendicionProductos(productos) {
-  return productos.map((p) => ({
-    productoId: p.productoId,
-    productoNombre: p.productoNombre,
-    cantidadDespachada: p.cantidad,
-    cantidadVendida: '',
-  }));
-}
-
 export default function Consignaciones() {
+  const { notify, notifySuccess } = useNotify();
   const { data: consignatarios } = useApi('/consignatarios');
   const { data: productos } = useApi('/productos');
   const [filterConsignatarioId, setFilterConsignatarioId] = useState('');
   const [filterEstado, setFilterEstado] = useState('');
   const [sortBy, setSortBy] = useState('fecha');
   const [sortDir, setSortDir] = useState('desc');
+
+  const [consignacionFormOpen, setConsignacionFormOpen] = useState(false);
+  const [rendicionTarget, setRendicionTarget] = useState(null);
+  const [devolverTarget, setDevolverTarget] = useState(null);
+  const [verRendicionesTarget, setVerRendicionesTarget] = useState(null);
+  const [stockTarget, setStockTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const buildUrl = useCallback((page, size) => {
     const params = new URLSearchParams({ page, size, sortBy, sortDir });
@@ -57,225 +54,20 @@ export default function Consignaciones() {
 
   const { data, loading, hasMore, error, sentinelRef, refetch } = useInfiniteScroll(buildUrl);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-
-  const [rendicionModal, setRendicionModal] = useState(null);
-  const [rendicionProductos, setRendicionProductos] = useState([]);
-  const [rendicionMonto, setRendicionMonto] = useState('');
-  const [rendicionFecha, setRendicionFecha] = useState(todayStr());
-  const [savingRendicion, setSavingRendicion] = useState(false);
-
-  const [verRendiciones, setVerRendiciones] = useState(null);
-  const [rendicionesData, setRendicionesData] = useState(null);
-  const [loadingRendiciones, setLoadingRendiciones] = useState(false);
-
-  const [stockModalConsignatario, setStockModalConsignatario] = useState(null);
-  const [stockData, setStockData] = useState(null);
-  const [loadingStock, setLoadingStock] = useState(false);
-
-  const [devolverModal, setDevolverModal] = useState(null);
-  const [devolverProductos, setDevolverProductos] = useState([]);
-  const [savingDevolver, setSavingDevolver] = useState(false);
-
   const consignatarioOptions = useMemo(() => {
     if (!consignatarios) return [];
     return [{ id: '', nombre: 'Todas' }, ...consignatarios];
   }, [consignatarios]);
-
-  function addProducto() {
-    setForm((prev) => ({
-      ...prev,
-      productos: [...prev.productos, { productoId: '', cantidad: '' }],
-    }));
-  }
-
-  function updateProducto(index, field, value) {
-    setForm((prev) => {
-      const next = { ...prev, productos: [...prev.productos] };
-      next.productos[index] = { ...next.productos[index], [field]: value };
-      return next;
-    });
-  }
-
-  function removeProducto(index) {
-    setForm((prev) => ({
-      ...prev,
-      productos: prev.productos.filter((_, i) => i !== index),
-    }));
-  }
-
-  function openCreate() {
-    setForm(emptyForm);
-    setModalOpen(true);
-  }
-
-  async function handleSave(e) {
-    e.preventDefault();
-    const valid = form.productos.filter((p) => p.productoId && p.cantidad);
-    if (!form.consignatarioId || valid.length === 0) return;
-    setSaving(true);
-    try {
-      await api.post('/consignaciones', {
-        consignatarioId: Number(form.consignatarioId),
-        fecha: form.fecha,
-        productos: valid.map((p) => ({
-          productoId: Number(p.productoId),
-          cantidad: Number(p.cantidad),
-        })),
-      });
-      setModalOpen(false);
-      refetch();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
       await api.delete(`/consignaciones/${deleteTarget.id}`);
       setDeleteTarget(null);
+      notifySuccess('Consignación eliminada correctamente');
       refetch();
     } catch (err) {
-      alert(err.message);
-    }
-  }
-
-  async function openRendicion(d) {
-    setRendicionModal(d);
-    setRendicionMonto('');
-    setRendicionFecha(todayStr());
-    try {
-      const rendiciones = await api.get(`/rendiciones/consignacion/${d.id}`);
-      const yaRendido = {};
-      rendiciones.forEach((r) => {
-        r.productos.forEach((p) => {
-          yaRendido[p.productoId] = (yaRendido[p.productoId] || 0)
-            + p.cantidadVendida + p.cantidadDevuelta;
-        });
-      });
-      setRendicionProductos(
-        d.productos.map((p) => ({
-          productoId: p.productoId,
-          productoNombre: p.productoNombre,
-          cantidadDespachada: p.cantidad - (yaRendido[p.productoId] || 0),
-          cantidadVendida: '',
-        }))
-      );
-    } catch {
-      setRendicionProductos(emptyRendicionProductos(d.productos));
-    }
-  }
-
-  function updateRendicionProducto(index, field, value) {
-    setRendicionProductos((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
-  }
-
-  async function handleRendicionSave(e) {
-    e.preventDefault();
-    const valid = rendicionProductos.filter(
-      (p) => Number(p.cantidadVendida) > 0
-    );
-    if (valid.length === 0) return;
-    setSavingRendicion(true);
-    try {
-      await api.post('/rendiciones', {
-        consignacionId: rendicionModal.id,
-        montoEntregado: Number(rendicionMonto) || 0,
-        fecha: rendicionFecha,
-        productos: valid.map((p) => ({
-          productoId: p.productoId,
-          cantidadVendida: Number(p.cantidadVendida) || 0,
-        })),
-      });
-      setRendicionModal(null);
-      refetch();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSavingRendicion(false);
-    }
-  }
-
-  async function openVerRendiciones(d) {
-    setVerRendiciones(d);
-    setLoadingRendiciones(true);
-    setRendicionesData(null);
-    try {
-      const result = await api.get(`/rendiciones/consignacion/${d.id}`);
-      setRendicionesData(result);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoadingRendiciones(false);
-    }
-  }
-
-  async function openStockConsignado(d) {
-    setStockModalConsignatario(d);
-    setStockData(null);
-    setLoadingStock(true);
-    try {
-      const result = await api.get(`/consignaciones/stock-consignado?consignatarioId=${d.consignatarioId}`);
-      setStockData(result);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoadingStock(false);
-    }
-  }
-
-  function openDevolver(d) {
-    setDevolverModal(d);
-    setDevolverProductos(
-      d.productos.map((p) => ({
-        productoId: p.productoId,
-        productoNombre: p.productoNombre,
-        cantidadDespachada: p.cantidad,
-        cantidadDevuelta: '',
-      }))
-    );
-  }
-
-  function updateDevolverProducto(index, value) {
-    setDevolverProductos((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], cantidadDevuelta: value };
-      return next;
-    });
-  }
-
-  async function handleDevolverSave(e) {
-    e.preventDefault();
-    const valid = devolverProductos.filter((p) => Number(p.cantidadDevuelta) > 0);
-    if (valid.length === 0) return;
-    setSavingDevolver(true);
-    try {
-      await api.post('/rendiciones', {
-        consignacionId: devolverModal.id,
-        montoEntregado: 0,
-        fecha: todayStr(),
-        productos: valid.map((p) => ({
-          productoId: p.productoId,
-          cantidadVendida: 0,
-          cantidadDevuelta: Number(p.cantidadDevuelta),
-        })),
-      });
-      setDevolverModal(null);
-      refetch();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSavingDevolver(false);
+      notify(err, 'error');
     }
   }
 
@@ -303,12 +95,12 @@ export default function Consignaciones() {
       label: '',
       render: (row) => {
         const items = [
-          { label: 'Rendiciones', onClick: () => openVerRendiciones(row) },
-          { label: 'Stock en consignación', onClick: () => openStockConsignado(row) },
+          { label: 'Rendiciones', onClick: () => setVerRendicionesTarget(row) },
+          { label: 'Stock en consignación', onClick: () => setStockTarget(row) },
         ];
         if (row.estado !== 'RENDIDO_TOTAL') {
-          items.push({ label: 'Rendir', onClick: () => openRendicion(row) });
-          items.push({ label: 'Devolver', onClick: () => openDevolver(row) });
+          items.push({ label: 'Rendir', onClick: () => setRendicionTarget(row) });
+          items.push({ label: 'Devolver', onClick: () => setDevolverTarget(row) });
         }
         items.push({ label: 'Eliminar', onClick: () => setDeleteTarget(row) });
         return <ActionMenu actions={items} />;
@@ -332,7 +124,7 @@ export default function Consignaciones() {
         <h1 className={styles.pageTitle}>Consignaciones</h1>
         <div className={styles.headerActions}>
           <Button variant="ghost" onClick={() => downloadCSV(data, csvColumns, 'consignaciones.csv')}>Exportar CSV</Button>
-          <Button onClick={openCreate}>Nueva Consignación</Button>
+          <Button onClick={() => setConsignacionFormOpen(true)}>Nueva Consignación</Button>
         </div>
       </div>
 
@@ -367,186 +159,35 @@ export default function Consignaciones() {
 
       {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nueva Consignación">
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Consignataria">
-            <select value={form.consignatarioId} onChange={(e) => setForm({ ...form, consignatarioId: e.target.value })} required>
-              <option value="">Seleccionar...</option>
-              {consignatarios?.map((c) => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Fecha">
-            <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
-          </FormField>
-          <div className={styles.productosSection}>
-            <label className={styles.sectionLabel}>Productos</label>
-            {form.productos.map((p, i) => (
-              <div key={i} className={styles.productoRow}>
-                <select
-                  value={p.productoId}
-                  onChange={(e) => updateProducto(i, 'productoId', e.target.value)}
-                  required
-                >
-                  <option value="">Seleccionar...</option>
-                  {productos?.map((pt) => (
-                    <option key={pt.id} value={pt.id}>{pt.nombre}</option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  placeholder="Cantidad"
-                  value={p.cantidad}
-                  onChange={(e) => updateProducto(i, 'cantidad', e.target.value)}
-                  required
-                />
-                {form.productos.length > 1 && (
-                  <button type="button" className={styles.removeBtn} onClick={() => removeProducto(i)} aria-label="Eliminar">&times;</button>
-                )}
-              </div>
-            ))}
-            <Button variant="ghost" type="button" onClick={addProducto}>+ Agregar producto</Button>
-          </div>
-          <div className={styles.formActions}>
-            <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
-          </div>
-        </form>
-      </Modal>
+      <ConsignacionForm
+        isOpen={consignacionFormOpen}
+        onClose={() => setConsignacionFormOpen(false)}
+        consignatarios={consignatarios}
+        productos={productos}
+        onSaved={refetch}
+      />
 
-      <Modal isOpen={!!rendicionModal} onClose={() => setRendicionModal(null)} title={`Rendición de Consignación #${rendicionModal?.id}`}>
-        {rendicionModal && (
-          <div>
-            <p className={styles.despachoInfo}>
-              <strong>{rendicionModal.consignatarioNombre}</strong> — {rendicionModal.productos.length} producto(s)
-              {' | '}Estado: {estadoLabels[rendicionModal.estado]}
-            </p>
-            <form onSubmit={handleRendicionSave} className={styles.form}>
-              <div className={styles.productosSection}>
-                <label className={styles.sectionLabel}>Productos rendidos</label>
-                {rendicionProductos.map((p, i) => (
-                  <div key={i} className={styles.rendicionProducto}>
-                    <span className={styles.rendicionProductoNombre}>{p.productoNombre}</span>
-                    <span className={styles.rendicionProductoDisponible}>Disp: {p.cantidadDespachada}</span>
-                    <input
-                      type="number"
-                      step="any"
-                      min="0"
-                      placeholder="Vendido"
-                      value={p.cantidadVendida}
-                      onChange={(e) => updateRendicionProducto(i, 'cantidadVendida', e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className={styles.row}>
-                <FormField label="Monto Entregado ($)">
-                  <input type="number" step="any" min="0" value={rendicionMonto} onChange={(e) => setRendicionMonto(e.target.value)} />
-                </FormField>
-                <FormField label="Fecha">
-                  <input type="date" value={rendicionFecha} onChange={(e) => setRendicionFecha(e.target.value)} required />
-                </FormField>
-              </div>
-              <div className={styles.formActions}>
-                <Button variant="ghost" type="button" onClick={() => setRendicionModal(null)}>Cancelar</Button>
-                <Button type="submit" disabled={savingRendicion}>{savingRendicion ? 'Guardando...' : 'Registrar Rendición'}</Button>
-              </div>
-            </form>
-          </div>
-        )}
-      </Modal>
+      <RendicionForm
+        consignacion={rendicionTarget}
+        onClose={() => setRendicionTarget(null)}
+        onSaved={refetch}
+      />
 
-      <Modal isOpen={!!verRendiciones} onClose={() => { setVerRendiciones(null); setRendicionesData(null); }} title={`Rendiciones - Consignación #${verRendiciones?.id}`}>
-        {loadingRendiciones ? <Loading /> : (
-          rendicionesData && rendicionesData.length > 0 ? (
-            <div className={styles.rendicionesList}>
-              {rendicionesData.map((r) => (
-                <div key={r.id} className={styles.rendicionItem}>
-                  <div className={styles.rendicionHeader}>
-                    <span className={styles.rendicionFecha}>{r.fecha}</span>
-                    <span>Monto: <strong>${r.montoEntregado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></span>
-                  </div>
-                  <div className={styles.rendicionDetalles}>
-                    {r.productos.map((p, i) => (
-                      <div key={i} className={styles.rendicionDetalle}>
-                        {p.productoNombre}: vendido <strong>{p.cantidadVendida}</strong>, devuelto <strong>{p.cantidadDevuelta}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p>No hay rendiciones registradas para esta consignación.</p>
-          )
-        )}
-      </Modal>
+      <DevolverForm
+        consignacion={devolverTarget}
+        onClose={() => setDevolverTarget(null)}
+        onSaved={refetch}
+      />
 
-      <Modal isOpen={!!stockModalConsignatario} onClose={() => { setStockModalConsignatario(null); setStockData(null); }} title="Stock en consignación">
-        {loadingStock ? <Loading /> : (
-          stockData && stockData.length > 0 ? (
-            <table className={styles.stockTable}>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Despachado</th>
-                  <th>Rendido</th>
-                  <th>Pendiente</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockData.map((s, i) => (
-                  <tr key={i}>
-                    <td>{s.productoNombre}</td>
-                    <td>{s.cantidadDespachada}</td>
-                    <td>{s.cantidadRendida}</td>
-                    <td className={styles.stockPendiente}>{s.cantidadPendiente}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No hay productos en consignación con esta consignataria.</p>
-          )
-        )}
-      </Modal>
+      <VerRendiciones
+        consignacion={verRendicionesTarget}
+        onClose={() => setVerRendicionesTarget(null)}
+      />
 
-      <Modal isOpen={!!devolverModal} onClose={() => setDevolverModal(null)} title={`Devolver Productos - Consignación #${devolverModal?.id}`}>
-        {devolverModal && (
-          <div>
-            <p className={styles.despachoInfo}>
-              <strong>{devolverModal.consignatarioNombre}</strong> — {devolverModal.productos.length} producto(s)
-              {' | '}Estado: {estadoLabels[devolverModal.estado]}
-            </p>
-            <form onSubmit={handleDevolverSave} className={styles.form}>
-              <div className={styles.productosSection}>
-                <label className={styles.sectionLabel}>Productos a devolver</label>
-                {devolverProductos.map((p, i) => (
-                  <div key={i} className={styles.rendicionProducto}>
-                    <span className={styles.rendicionProductoNombre}>{p.productoNombre}</span>
-                    <span className={styles.rendicionProductoDisponible}>Disp: {p.cantidadDespachada}</span>
-                    <input
-                      type="number"
-                      step="any"
-                      min="0"
-                      placeholder="Devuelto"
-                      value={p.cantidadDevuelta}
-                      onChange={(e) => updateDevolverProducto(i, e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className={styles.formActions}>
-                <Button variant="ghost" type="button" onClick={() => setDevolverModal(null)}>Cancelar</Button>
-                <Button type="submit" disabled={savingDevolver}>{savingDevolver ? 'Guardando...' : 'Registrar Devolución'}</Button>
-              </div>
-            </form>
-          </div>
-        )}
-      </Modal>
+      <StockConsignadoModal
+        consignacion={stockTarget}
+        onClose={() => setStockTarget(null)}
+      />
 
       <ConfirmDialog
         isOpen={!!deleteTarget}

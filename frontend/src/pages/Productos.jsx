@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useNotify } from '../context/NotificationContext';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ActionMenu from '../components/ui/ActionMenu';
@@ -14,6 +15,7 @@ import styles from './Productos.module.css';
 const emptyForm = { nombre: '', precioVenta: '', stockActual: '', stockMinimo: '', categoriaId: '' };
 
 export default function Productos() {
+  const { notify } = useNotify();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,6 +49,7 @@ export default function Productos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -54,21 +57,31 @@ export default function Productos() {
   const [lotesData, setLotesData] = useState(null);
   const [loadingLotes, setLoadingLotes] = useState(false);
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setEditing(null);
     setForm(emptyForm);
+    setErrores({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function openEdit(pt) {
+  const openEdit = useCallback((pt) => {
     setEditing(pt);
     setForm({ nombre: pt.nombre, precioVenta: String(pt.precioVenta), stockActual: pt.stockActual ?? '', stockMinimo: pt.stockMinimo ?? '', categoriaId: pt.categoriaId ?? '' });
+    setErrores({});
     setModalOpen(true);
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!form.nombre?.trim()) e.nombre = 'Requerido';
+    if (!form.precioVenta) e.precioVenta = 'Requerido';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.precioVenta) return;
+    if (!validar()) return;
     setSaving(true);
     try {
       const body = {
@@ -90,9 +103,9 @@ export default function Productos() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [form, editing, fetchData]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/productos/${deleteTarget.id}`);
@@ -101,22 +114,22 @@ export default function Productos() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, fetchData]);
 
-  async function openLotes(pt) {
+  const openLotes = useCallback(async (pt) => {
     setLotesModal(pt);
     setLoadingLotes(true);
     try {
-      const result = await api.get(`/lotes/lotes-por-producto?productoId=${pt.id}`);
+      const result = await api.get(`/lotes/por-producto?productoId=${pt.id}`);
       setLotesData(result);
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setLoadingLotes(false);
     }
-  }
+  }, []);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre' },
     {
@@ -153,7 +166,7 @@ export default function Productos() {
         ]} />
       ),
     },
-  ];
+  ], [openEdit, openLotes]);
 
   if (loading) return <Loading />;
   if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -202,12 +215,12 @@ export default function Productos() {
       <Table columns={columns} data={data} />
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Producto' : 'Nuevo Producto'}>
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Nombre / Variante">
-            <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required autoFocus />
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Nombre / Variante" error={errores.nombre}>
+            <input value={form.nombre} onChange={(e) => { setForm({ ...form, nombre: e.target.value }); setErrores((prev) => ({ ...prev, nombre: undefined })); }} autoFocus />
           </FormField>
-          <FormField label="Precio de Venta ($)">
-            <input type="number" step="any" min="0" value={form.precioVenta} onChange={(e) => setForm({ ...form, precioVenta: e.target.value })} required />
+          <FormField label="Precio de Venta ($)" error={errores.precioVenta}>
+            <input type="number" step="any" min="0" value={form.precioVenta} onChange={(e) => { setForm({ ...form, precioVenta: e.target.value }); setErrores((prev) => ({ ...prev, precioVenta: undefined })); }} />
           </FormField>
           <FormField label="Categoría (opcional)">
             <select value={form.categoriaId} onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}>

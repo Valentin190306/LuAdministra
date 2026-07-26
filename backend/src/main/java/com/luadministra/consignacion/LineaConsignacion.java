@@ -44,4 +44,16 @@ public class LineaConsignacion {
 
     public Double getPrecioUnitario() { return precioUnitario; }
     public void setPrecioUnitario(Double precioUnitario) { this.precioUnitario = precioUnitario; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LineaConsignacion other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

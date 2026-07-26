@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -10,17 +10,8 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { todayStr, monthAgo } from '../utils/dates';
 import styles from './Ventas.module.css';
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function monthAgo() {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return d.toISOString().slice(0, 10);
-}
 
 export default function Ventas() {
   const [sortBy, setSortBy] = useState('fecha');
@@ -42,38 +33,50 @@ export default function Ventas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [fecha, setFecha] = useState(todayStr());
   const [lineas, setLineas] = useState([{ productoId: '', cantidad: '' }]);
+  const [errores, setErrores] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [detailVenta, setDetailVenta] = useState(null);
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setFecha(todayStr());
     setLineas([{ productoId: '', cantidad: '' }]);
+    setErrores({});
     setModalOpen(true);
-  }
+  }, []);
 
-  function addLinea() {
+  const addLinea = useCallback(() => {
     setLineas((prev) => [...prev, { productoId: '', cantidad: '' }]);
-  }
+  }, []);
 
-  function updateLinea(index, field, value) {
+  const updateLinea = useCallback((index, field, value) => {
     setLineas((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
       return next;
     });
-  }
+    setErrores((prev) => ({ ...prev, lineas: undefined }));
+  }, []);
 
-  function removeLinea(index) {
+  const removeLinea = useCallback((index) => {
     setLineas((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  function validar() {
+    const e = {};
+    if (!fecha) e.fecha = 'Requerido';
+    const valid = lineas.filter((l) => l.productoId && l.cantidad);
+    if (valid.length === 0) e.lineas = 'Agregue al menos un producto con cantidad';
+    setErrores(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleSave(e) {
+  const handleSave = useCallback(async (e) => {
     e.preventDefault();
-    const valid = lineas.filter((l) => l.productoId && l.cantidad);
-    if (valid.length === 0) return;
+    if (!validar()) return;
     setSaving(true);
     try {
+      const valid = lineas.filter((l) => l.productoId && l.cantidad);
       await api.post('/ventas', {
         fecha,
         lineas: valid.map((l) => ({
@@ -88,9 +91,9 @@ export default function Ventas() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [fecha, lineas, refetch]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/ventas/${deleteTarget.id}`);
@@ -99,9 +102,9 @@ export default function Ventas() {
     } catch (err) {
       alert(err.message);
     }
-  }
+  }, [deleteTarget, refetch]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
     { key: 'fecha', label: 'Fecha' },
     {
@@ -124,7 +127,7 @@ export default function Ventas() {
         ]} />
       ),
     },
-  ];
+  ], []);
 
   if (loading && !data) return <Loading />;
   if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
@@ -192,16 +195,16 @@ export default function Ventas() {
       {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Registrar Venta">
-        <form onSubmit={handleSave} className={styles.form}>
-          <FormField label="Fecha">
-            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required />
+        <form onSubmit={handleSave} className={styles.form} noValidate>
+          <FormField label="Fecha" error={errores.fecha}>
+            <input type="date" value={fecha} onChange={(e) => { setFecha(e.target.value); setErrores((prev) => ({ ...prev, fecha: undefined })); }} />
           </FormField>
 
           <div className={styles.lineasContainer}>
             {lineas.map((l, i) => (
               <div key={i} className={styles.lineaRow}>
                 <FormField label={i === 0 ? 'Producto Terminado' : undefined}>
-                  <select value={l.productoId} onChange={(e) => updateLinea(i, 'productoId', e.target.value)} required>
+                  <select value={l.productoId} onChange={(e) => updateLinea(i, 'productoId', e.target.value)}>
                     <option value="">Seleccionar...</option>
                     {ptList?.map((pt) => (
                       <option key={pt.id} value={pt.id}>{pt.nombre} (stock: {pt.stockActual} u)</option>
@@ -216,7 +219,6 @@ export default function Ventas() {
                       min="0"
                       value={l.cantidad}
                       onChange={(e) => updateLinea(i, 'cantidad', e.target.value)}
-                      required
                     />
                     {lineas.length > 1 && (
                       <button type="button" className={styles.removeBtn} onClick={() => removeLinea(i)} aria-label="Eliminar">&times;</button>
@@ -226,6 +228,8 @@ export default function Ventas() {
               </div>
             ))}
           </div>
+
+          {errores.lineas && <p className={styles.errorMsg}>{errores.lineas}</p>}
 
           <Button variant="ghost" type="button" onClick={addLinea}>+ Agregar producto</Button>
 

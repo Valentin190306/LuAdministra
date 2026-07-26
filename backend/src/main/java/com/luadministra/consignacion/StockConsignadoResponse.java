@@ -3,7 +3,7 @@ package com.luadministra.consignacion;
 public record StockConsignadoResponse(
         Long productoId,
         String productoNombre,
-        Double cantidadDespachada,
+        Double cantidadConsignada,
         Double cantidadRendida,
         Double cantidadPendiente
 ) {}

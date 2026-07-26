@@ -7,6 +7,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "compra")
 public class Compra {
 
     @Id
@@ -57,4 +58,16 @@ public class Compra {
 
     public @Nullable Double getPrecioMLReferencia() { return precioMLReferencia; }
     public void setPrecioMLReferencia(@Nullable Double precioMLReferencia) { this.precioMLReferencia = precioMLReferencia; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Compra other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
