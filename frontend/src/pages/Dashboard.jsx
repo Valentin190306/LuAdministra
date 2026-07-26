@@ -102,7 +102,7 @@ export default function Dashboard() {
         <section className={styles.alerts}>
           <h2 className={styles.sectionTitle}>Alertas de vencimiento</h2>
           {alertasVencimiento.map((av, i) => (
-            <div key={i} className={`${styles.alert} ${styles.alertVencido}`}>
+            <div key={i} className={styles.alert}>
               <span className={styles.alertType}>PT</span>
               <span>{av.productoNombre}</span>
               <span className={styles.alertStock}>Vencido: {av.fechaVencimiento}</span>

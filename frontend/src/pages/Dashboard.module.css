@@ -94,9 +94,7 @@
   font-size: 1.3rem;
 }
 
-.alertVencido {
-  border-left: 3px solid #e67e22;
-}
+
 
 .lists {
   display: grid;

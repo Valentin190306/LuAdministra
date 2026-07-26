@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@Profile("dev")
+@Profile("default")
 public class DataSeeder {
 
     private final MateriaPrimaRepository materiaPrimaRepo;
@@ -156,20 +156,20 @@ public class DataSeeder {
         comprar(mantecaCacao, LocalDate.of(2026, 3, 5), 500.0, 1900.0, "El Herbolario", null, null);
         comprar(lavanda, LocalDate.of(2026, 4, 1), 100.0, 3400.0, "Aromas Naturales", "https://aromas-naturales.example.com/lavanda", null);
 
-        producir(shampooNormal, LocalDate.of(2025, 3, 1), 10.0);
-        producir(shampooGraso, LocalDate.of(2025, 3, 1), 5.0);
-        producir(pastaDental, LocalDate.of(2025, 3, 5), 8.0);
-        producir(desodorante, LocalDate.of(2025, 3, 5), 5.0);
-        producir(jabonFacial, LocalDate.of(2025, 3, 10), 12.0);
-        producir(shampooNormal, LocalDate.of(2025, 6, 1), 8.0);
-        producir(desodorante, LocalDate.of(2025, 7, 1), 6.0);
-        producir(shampooGraso, LocalDate.of(2025, 9, 15), 5.0);
-        producir(pastaDental, LocalDate.of(2025, 11, 1), 10.0);
-        producir(shampooSeco, LocalDate.of(2025, 8, 1), 6.0);
-        producir(balsamoLabial, LocalDate.of(2025, 8, 15), 10.0);
-        producir(shampooNormal, LocalDate.of(2026, 1, 10), 12.0);
-        producir(jabonFacial, LocalDate.of(2026, 2, 15), 10.0);
-        producir(desodorante, LocalDate.of(2026, 3, 20), 8.0);
+        producir(shampooNormal, LocalDate.of(2025, 3, 1), 10.0, 30);
+        producir(shampooGraso, LocalDate.of(2025, 3, 1), 5.0, 30);
+        producir(pastaDental, LocalDate.of(2025, 3, 5), 8.0, 30);
+        producir(desodorante, LocalDate.of(2025, 3, 5), 5.0, 30);
+        producir(jabonFacial, LocalDate.of(2025, 3, 10), 12.0, 30);
+        producir(shampooNormal, LocalDate.of(2025, 6, 1), 8.0, 90);
+        producir(desodorante, LocalDate.of(2025, 7, 1), 6.0, 90);
+        producir(shampooGraso, LocalDate.of(2025, 9, 15), 5.0, 120);
+        producir(pastaDental, LocalDate.of(2025, 11, 1), 10.0, 120);
+        producir(shampooSeco, LocalDate.of(2025, 8, 1), 6.0, 90);
+        producir(balsamoLabial, LocalDate.of(2025, 8, 15), 10.0, 90);
+        producir(shampooNormal, LocalDate.of(2026, 1, 10), 12.0, null);
+        producir(jabonFacial, LocalDate.of(2026, 2, 15), 10.0, null);
+        producir(desodorante, LocalDate.of(2026, 3, 20), 8.0, null);
 
         vender(LocalDate.of(2025, 3, 15), item(shampooNormal, 2.0), item(desodorante, 3.0));
         vender(LocalDate.of(2025, 3, 20), item(shampooGraso, 2.0));
@@ -283,11 +283,12 @@ public class DataSeeder {
         compraRepo.save(c);
     }
 
-    private void producir(Producto p, LocalDate fecha, double cantidad) {
+    private void producir(Producto p, LocalDate fecha, double cantidad, Integer diasVigencia) {
         var l = new Lote();
         l.setProducto(p);
         l.setFecha(fecha);
         l.setCantidadFabricada(cantidad);
+        l.setDiasVigencia(diasVigencia);
         loteRepo.save(l);
     }
 
