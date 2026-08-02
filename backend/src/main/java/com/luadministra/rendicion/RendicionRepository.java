@@ -11,4 +11,6 @@ public interface RendicionRepository extends JpaRepository<Rendicion, Long> {
     List<Rendicion> findByConsignacionId(Long consignacionId);
     Page<Rendicion> findByConsignacionId(Long consignacionId, Pageable pageable);
     List<Rendicion> findByConsignacionIdIn(List<Long> ids);
+
+    long countByConsignacionId(Long consignacionId);
 }

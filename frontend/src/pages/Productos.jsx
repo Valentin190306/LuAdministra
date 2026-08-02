@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useNotify } from '../context/NotificationContext';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -16,36 +17,24 @@ const emptyForm = { nombre: '', precioVenta: '', stockActual: '', stockMinimo: '
 
 export default function Productos() {
   const { notify } = useNotify();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [sortBy, setSortBy] = useState('nombre');
   const [sortDir, setSortDir] = useState('asc');
   const { data: categorias } = useApi('/categorias?tipo=PRODUCTO');
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (busqueda) params.set('nombre', busqueda);
-      if (filtroCategoria) params.set('categoriaId', filtroCategoria);
-      params.set('sortBy', sortBy);
-      params.set('sortDir', sortDir);
-      const result = await api.get(`/productos?${params}`);
-      setData(result);
-      setError(null);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
+  const buildUrl = useCallback((page, size) => {
+    const params = new URLSearchParams();
+    if (busqueda) params.set('nombre', busqueda);
+    if (filtroCategoria) params.set('categoriaId', filtroCategoria);
+    params.set('sortBy', sortBy);
+    params.set('sortDir', sortDir);
+    params.set('page', page);
+    params.set('size', size);
+    return `/productos?${params}`;
   }, [busqueda, filtroCategoria, sortBy, sortDir]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data, loading, hasMore, error, sentinelRef, refetch } = useInfiniteScroll(buildUrl);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -75,6 +64,9 @@ export default function Productos() {
     const e = {};
     if (!form.nombre?.trim()) e.nombre = 'Requerido';
     if (!form.precioVenta) e.precioVenta = 'Requerido';
+    else if (Number(form.precioVenta) <= 0) e.precioVenta = 'Debe ser mayor a 0';
+    if (form.stockActual !== '' && Number(form.stockActual) < 0) e.stockActual = 'No puede ser negativo';
+    if (form.stockMinimo !== '' && Number(form.stockMinimo) < 0) e.stockMinimo = 'No puede ser negativo';
     setErrores(e);
     return Object.keys(e).length === 0;
   }
@@ -97,24 +89,24 @@ export default function Productos() {
         await api.post('/productos', body);
       }
       setModalOpen(false);
-      fetchData();
+      refetch();
     } catch (err) {
       alert(err.message);
     } finally {
       setSaving(false);
     }
-  }, [form, editing, fetchData]);
+  }, [form, editing, refetch]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/productos/${deleteTarget.id}`);
       setDeleteTarget(null);
-      fetchData();
+      refetch();
     } catch (err) {
       alert(err.message);
     }
-  }, [deleteTarget, fetchData]);
+  }, [deleteTarget, refetch]);
 
   const openLotes = useCallback(async (pt) => {
     setLotesModal(pt);
@@ -141,7 +133,7 @@ export default function Productos() {
       key: 'stockActual',
       label: 'En Depósito',
       render: (row) => {
-        const enDeposito = row.stockActual - (row.stockDespachado ?? 0);
+        const enDeposito = row.stockActual - (row.stockConsignado ?? 0);
         return (
           <span className={row.stockMinimo != null && enDeposito < row.stockMinimo ? styles.lowStock : undefined}>
             {enDeposito}
@@ -150,9 +142,9 @@ export default function Productos() {
       },
     },
     {
-      key: 'stockDespachado',
-      label: 'Despachado',
-      render: (r) => r.stockDespachado ?? 0,
+      key: 'stockConsignado',
+      label: 'Consignado',
+      render: (r) => r.stockConsignado ?? 0,
     },
     { key: 'stockMinimo', label: 'Stock Mínimo', render: (r) => r.stockMinimo ?? '—' },
     {
@@ -168,22 +160,40 @@ export default function Productos() {
     },
   ], [openEdit, openLotes]);
 
-  if (loading) return <Loading />;
-  if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+  if (loading && !data) return <Loading />;
+  if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+
+  const handleExport = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (busqueda) params.set('nombre', busqueda);
+      if (filtroCategoria) params.set('categoriaId', filtroCategoria);
+      params.set('sortBy', sortBy);
+      params.set('sortDir', sortDir);
+      const full = await api.get(`/productos?${params}`);
+      downloadCSV(full, [
+        { key: 'nombre', label: 'Nombre' },
+        { key: 'categoriaNombre', label: 'Categoría' },
+        { key: 'precioVenta', label: 'Precio de Venta' },
+        {
+          key: 'enDeposito',
+          label: 'En Depósito',
+          value: (r) => r.stockActual - (r.stockConsignado ?? 0),
+        },
+        { key: 'stockConsignado', label: 'Consignado' },
+        { key: 'stockMinimo', label: 'Stock Mínimo' },
+      ], 'productos.csv');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Productos</h1>
         <div className={styles.headerActions}>
-          <Button variant="ghost" onClick={() => downloadCSV(data, [
-            { key: 'nombre', label: 'Nombre' },
-            { key: 'categoriaNombre', label: 'Categoría' },
-            { key: 'precioVenta', label: 'Precio de Venta' },
-            { key: 'stockActual', label: 'En Depósito' },
-            { key: 'stockDespachado', label: 'Despachado' },
-            { key: 'stockMinimo', label: 'Stock Mínimo' },
-          ], 'productos.csv')}>Exportar CSV</Button>
+          <Button variant="ghost" onClick={handleExport}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nuevo Producto</Button>
         </div>
       </div>
@@ -212,7 +222,11 @@ export default function Productos() {
         </Button>
       </div>
 
-      <Table columns={columns} data={data} />
+      {error && <p className={styles.errorMsg}>Error: {error.message}</p>}
+
+      <Table columns={columns} data={data ?? []} sentinelRef={sentinelRef} emptyMessage="No hay productos. Creá uno primero." />
+
+      {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Producto' : 'Nuevo Producto'}>
         <form onSubmit={handleSave} className={styles.form} noValidate>
@@ -230,13 +244,11 @@ export default function Productos() {
               ))}
             </select>
           </FormField>
-          {editing && (
-            <FormField label="Stock Actual (override manual)">
-              <input type="number" step="any" min="0" value={form.stockActual} onChange={(e) => setForm({ ...form, stockActual: e.target.value })} placeholder="Dejar vacío para mantener el actual" />
-            </FormField>
-          )}
-          <FormField label="Stock Mínimo (opcional)">
-            <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => setForm({ ...form, stockMinimo: e.target.value })} />
+          <FormField label={editing ? 'Stock Actual (override manual)' : 'Stock Inicial'} error={errores.stockActual}>
+            <input type="number" step="any" min="0" value={form.stockActual} onChange={(e) => { setForm({ ...form, stockActual: e.target.value }); setErrores((prev) => ({ ...prev, stockActual: undefined })); }} placeholder={editing ? 'Dejar vacío para mantener el actual' : 'Dejar vacío para iniciar en 0'} />
+          </FormField>
+          <FormField label="Stock Mínimo (opcional)" error={errores.stockMinimo}>
+            <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => { setForm({ ...form, stockMinimo: e.target.value }); setErrores((prev) => ({ ...prev, stockMinimo: undefined })); }} />
           </FormField>
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>
@@ -264,12 +276,12 @@ export default function Productos() {
                   const vencido = l.fechaVencimiento && new Date(l.fechaVencimiento) < new Date();
                   return (
                     <tr key={l.id} className={vencido ? styles.vencidoRow : undefined}>
-                      <td>{l.id}</td>
-                      <td>{l.fecha}</td>
-                      <td>{l.cantidadFabricada} u</td>
-                      <td>{l.diasVigencia ?? '—'}</td>
-                      <td>{l.fechaVencimiento ?? 'Imperecedero'}</td>
-                      <td>{vencido ? '⚠ Vencido' : '✓ Vigente'}</td>
+                      <td data-label="ID">{l.id}</td>
+                      <td data-label="Fecha Producción">{l.fecha}</td>
+                      <td data-label="Cantidad">{l.cantidadFabricada} u</td>
+                      <td data-label="Días Vigencia">{l.diasVigencia ?? '—'}</td>
+                      <td data-label="Fecha Vencimiento">{l.fechaVencimiento ?? 'Imperecedero'}</td>
+                      <td data-label="Estado">{vencido ? '⚠ Vencido' : '✓ Vigente'}</td>
                     </tr>
                   );
                 })}

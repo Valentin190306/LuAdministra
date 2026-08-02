@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import styles from './ActionMenu.module.css';
 
 export default function ActionMenu({ actions }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const [pos, setPos] = useState({ top: 0, left: 0 });
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -25,26 +25,43 @@ export default function ActionMenu({ actions }) {
     };
   }, [open]);
 
-  if (!actions || actions.length === 0) return null;
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current || !menuRef.current) return;
+    const trigger = triggerRef.current.getBoundingClientRect();
+    const menu = menuRef.current.getBoundingClientRect();
+    const margin = 8;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
 
-  const handleOpen = () => {
-    const rect = triggerRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom, right: window.innerWidth - rect.right });
-    setOpen(true);
-  };
+    let top = trigger.bottom;
+    let left = trigger.left;
+
+    if (top + menu.height > viewportH - margin) {
+      top = trigger.top - menu.height;
+    }
+    if (left + menu.width > viewportW - margin) {
+      left = viewportW - menu.width - margin;
+    }
+    setPos({
+      top: Math.max(margin, top),
+      left: Math.max(margin, left),
+    });
+  }, [open]);
+
+  if (!actions || actions.length === 0) return null;
 
   return (
     <div className={styles.wrapper}>
       <button
         ref={triggerRef}
         className={styles.trigger}
-        onClick={handleOpen}
+        onClick={() => setOpen((o) => !o)}
         aria-label="Acciones"
       >
         ⋮
       </button>
       {open && (
-        <div className={styles.menu} ref={menuRef} style={{ top: pos.top, right: pos.right }}>
+        <div className={styles.menu} ref={menuRef} style={{ top: pos.top, left: pos.left }}>
           {actions.map((a) => (
             <button
               key={a.label}

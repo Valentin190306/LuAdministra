@@ -102,6 +102,11 @@ public class ConsignacionService {
     public void eliminar(Long id) {
         Consignacion consignacion = repository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Consignacion no encontrada"));
+        long rendiciones = rendicionRepository.countByConsignacionId(id);
+        if (rendiciones > 0) {
+            throw new SolicitudInvalidaException("No se puede eliminar: la consignación tiene " + rendiciones
+                    + " rendicion(es)");
+        }
         repository.delete(consignacion);
     }
 

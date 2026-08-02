@@ -63,3 +63,10 @@
   min-width: 180px;
 }
 
+
+.loadingMore {
+  text-align: center;
+  font-size: 1.3rem;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-md);
+}

@@ -16,6 +16,7 @@ export default function Recetas() {
   const { data: allRecipes } = useApi('/recetas');
 
   const recipeLookup = useMemo(() => Object.fromEntries((allRecipes ?? []).map((r) => [r.productoId, r])), [allRecipes]);
+  const mpLookup = useMemo(() => Object.fromEntries((mpList ?? []).map((mp) => [mp.id, mp.unidadMedida])), [mpList]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPt, setSelectedPt] = useState(null);
@@ -174,12 +175,14 @@ export default function Recetas() {
             const r = recipeLookup[pt.id];
             return {
               producto: pt.nombre,
-              ingredientes: r ? r.detalles.map((d) => `${d.materiaPrimaNombre} (${d.cantidad})`).join('; ') : 'Sin receta',
+              ingredientes: r ? r.detalles.map((d) => `${d.materiaPrimaNombre} (${d.cantidad} ${mpLookup[d.materiaPrimaId] ?? ''})`).join('; ') : 'Sin receta',
+              notas: r?.notas ?? '',
             };
           });
           downloadCSV(flat, [
             { key: 'producto', label: 'Producto Terminado' },
             { key: 'ingredientes', label: 'Ingredientes' },
+            { key: 'notas', label: 'Notas' },
           ], 'recetas.csv');
           }}>Exportar CSV</Button>
           <Button onClick={openNewRecipe}>Nueva Receta</Button>

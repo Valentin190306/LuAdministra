@@ -13,4 +13,6 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
     List<Lote> findByProductoIdOrderByFechaDesc(Long productoId);
 
     List<Lote> findByDiasVigenciaIsNotNull();
+
+    long countByProductoId(Long productoId);
 }

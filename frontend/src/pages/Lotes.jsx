@@ -93,6 +93,11 @@ export default function Lotes() {
       render: (r) => `${r.cantidadFabricada} u`,
     },
     {
+      key: 'fechaVencimiento',
+      label: 'Vencimiento',
+      render: (r) => r.fechaVencimiento ?? 'Imperecedero',
+    },
+    {
       key: 'acciones',
       label: '',
       render: (row) => (
@@ -116,6 +121,7 @@ export default function Lotes() {
             { key: 'productoNombre', label: 'Producto' },
             { key: 'fecha', label: 'Fecha' },
             { key: 'cantidadFabricada', label: 'Cantidad Fabricada' },
+            { key: 'fechaVencimiento', label: 'Fecha Vencimiento' },
           ], 'lotes.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Registrar Lote</Button>
         </div>
@@ -145,6 +151,7 @@ export default function Lotes() {
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="fecha">Ordenar por fecha</option>
               <option value="cantidadFabricada">Ordenar por cantidad</option>
+              <option value="fechaVencimiento">Ordenar por vencimiento</option>
             </select>
             <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
               {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}
@@ -155,7 +162,13 @@ export default function Lotes() {
 
       {error && <p className={styles.errorMsg}>Error: {error.message}</p>}
 
-      <Table columns={columns} data={data ?? []} sentinelRef={sentinelRef} emptyMessage="No hay lotes registrados." />
+      <Table
+        columns={columns}
+        data={data ?? []}
+        sentinelRef={sentinelRef}
+        rowClassName={(r) => r.fechaVencimiento && new Date(r.fechaVencimiento) < new Date() ? styles.vencidoRow : undefined}
+        emptyMessage="No hay lotes registrados."
+      />
 
       {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 

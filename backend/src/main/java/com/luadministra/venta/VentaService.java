@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -30,12 +31,36 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public PaginatedResponse<VentaResponse> listar(int page, int size, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+        boolean desc = sortDir != null && sortDir.equalsIgnoreCase("desc");
+
+        if ("cantidadDeProductos".equals(sortBy) || "total".equals(sortBy)) {
+            List<VentaResponse> ordenados = ventaRepository.findAll().stream()
+                    .map(VentaResponse::fromEntity)
+                    .sorted(comparadorCalculado(sortBy, desc))
+                    .toList();
+            int from = Math.min(page * size, ordenados.size());
+            int to = Math.min(from + size, ordenados.size());
+            List<VentaResponse> content = ordenados.subList(from, to);
+            int totalPages = (int) Math.ceil((double) ordenados.size() / size);
+            return new PaginatedResponse<>(content, page, size, ordenados.size(), totalPages);
+        }
+
+        Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "fecha");
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Venta> ventaPage = ventaRepository.findAll(pageable);
         List<VentaResponse> content = ventaPage.stream().map(VentaResponse::fromEntity).toList();
         return PaginatedResponse.from(ventaPage, content);
+    }
+
+    private Comparator<VentaResponse> comparadorCalculado(String sortBy, boolean desc) {
+        Comparator<VentaResponse> comparator;
+        if ("cantidadDeProductos".equals(sortBy)) {
+            comparator = Comparator.comparingInt((VentaResponse r) -> r.lineas().size());
+        } else {
+            comparator = Comparator.comparingDouble((VentaResponse r) -> r.total());
+        }
+        return desc ? comparator.reversed() : comparator;
     }
 
     @Transactional(readOnly = true)

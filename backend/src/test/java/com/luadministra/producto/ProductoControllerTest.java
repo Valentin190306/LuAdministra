@@ -1,4 +1,4 @@
-package com.luadministra.materiaprima;
+package com.luadministra.producto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luadministra.dto.PaginatedResponse;
@@ -20,21 +20,21 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(MateriaPrimaController.class)
+@WebMvcTest(ProductoController.class)
 @Import(GlobalExceptionHandler.class)
-class MateriaPrimaControllerTest {
+class ProductoControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private MateriaPrimaService service;
+    private ProductoService service;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     void listar_retorna200() throws Exception {
-        mockMvc.perform(get("/api/materias-primas"))
+        mockMvc.perform(get("/api/productos"))
                 .andExpect(status().isOk());
     }
 
@@ -42,41 +42,41 @@ class MateriaPrimaControllerTest {
     void listarPaginado_retornaPagina() throws Exception {
         when(service.listarPaginado(anyInt(), anyInt(), any(), any(), any(), any()))
                 .thenReturn(new PaginatedResponse<>(
-                        List.of(new MateriaPrimaResponse(1L, "Aceite", "ml", 10.0, 5.0, null, null)),
+                        List.of(new ProductoResponse(1L, "Jabon", 50.0, 10.0, 0.0, 5.0, null, null)),
                         0, 50, 1, 1));
 
-        mockMvc.perform(get("/api/materias-primas")
+        mockMvc.perform(get("/api/productos")
                         .param("page", "0")
                         .param("size", "50"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].nombre").value("Aceite"))
+                .andExpect(jsonPath("$.content[0].nombre").value("Jabon"))
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
     void obtener_retorna200() throws Exception {
-        when(service.obtener(1L)).thenReturn(new MateriaPrimaResponse(1L, "Test", "gramos", 10.0, 5.0, null, null));
+        when(service.obtener(1L)).thenReturn(new ProductoResponse(1L, "Jabon", 50.0, 10.0, 0.0, 5.0, null, null));
 
-        mockMvc.perform(get("/api/materias-primas/1"))
+        mockMvc.perform(get("/api/productos/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Test"));
+                .andExpect(jsonPath("$.nombre").value("Jabon"));
     }
 
     @Test
     void obtener_cuandoNoExiste_retorna404() throws Exception {
-        when(service.obtener(99L)).thenThrow(new RecursoNoEncontradoException("no encontrada"));
+        when(service.obtener(99L)).thenThrow(new RecursoNoEncontradoException("no encontrado"));
 
-        mockMvc.perform(get("/api/materias-primas/99"))
+        mockMvc.perform(get("/api/productos/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.tipo").value("NO_ENCONTRADO"));
     }
 
     @Test
     void crear_conDatosInvalidos_retorna400() throws Exception {
-        String body = mapper.writeValueAsString(new MateriaPrimaRequest("", "", null, null, null));
+        String body = mapper.writeValueAsString(new ProductoRequest("", null, null, null, null));
 
-        mockMvc.perform(post("/api/materias-primas")
+        mockMvc.perform(post("/api/productos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -85,9 +85,9 @@ class MateriaPrimaControllerTest {
 
     @Test
     void crear_conStockNegativo_retorna400() throws Exception {
-        String body = mapper.writeValueAsString(new MateriaPrimaRequest("Aceite", "ml", -5.0, null, null));
+        String body = mapper.writeValueAsString(new ProductoRequest("Jabon", 50.0, -5.0, null, null));
 
-        mockMvc.perform(post("/api/materias-primas")
+        mockMvc.perform(post("/api/productos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -96,9 +96,20 @@ class MateriaPrimaControllerTest {
 
     @Test
     void crear_conStockMinimoNegativo_retorna400() throws Exception {
-        String body = mapper.writeValueAsString(new MateriaPrimaRequest("Aceite", "ml", 10.0, -5.0, null));
+        String body = mapper.writeValueAsString(new ProductoRequest("Jabon", 50.0, 10.0, -5.0, null));
 
-        mockMvc.perform(post("/api/materias-primas")
+        mockMvc.perform(post("/api/productos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.tipo").value("VALIDACION"));
+    }
+
+    @Test
+    void crear_conPrecioCero_retorna400() throws Exception {
+        String body = mapper.writeValueAsString(new ProductoRequest("Jabon", 0.0, null, null, null));
+
+        mockMvc.perform(post("/api/productos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -107,14 +118,14 @@ class MateriaPrimaControllerTest {
 
     @Test
     void crear_retorna200() throws Exception {
-        when(service.crear(any())).thenReturn(new MateriaPrimaResponse(1L, "Aceite de Coco", "ml", 0.0, 5.0, null, null));
+        when(service.crear(any())).thenReturn(new ProductoResponse(1L, "Jabon", 50.0, 0.0, 0.0, 5.0, null, null));
 
-        String body = mapper.writeValueAsString(new MateriaPrimaRequest("Aceite de Coco", "ml", 5.0, null, null));
+        String body = mapper.writeValueAsString(new ProductoRequest("Jabon", 50.0, null, 5.0, null));
 
-        mockMvc.perform(post("/api/materias-primas")
+        mockMvc.perform(post("/api/productos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Aceite de Coco"));
+                .andExpect(jsonPath("$.nombre").value("Jabon"));
     }
 }

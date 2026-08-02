@@ -67,6 +67,12 @@
   background: var(--color-surface);
 }
 
+.vencidoRow {
+  background: #fff0f0 !important;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
 .errorMsg {
   color: var(--color-danger);
   font-size: 1.4rem;

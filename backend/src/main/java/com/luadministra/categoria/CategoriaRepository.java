@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     List<Categoria> findByTipoOrderByNombreAsc(TipoCategoria tipo);
+    List<Categoria> findByCategoriaPadreId(Long categoriaPadreId);
 }

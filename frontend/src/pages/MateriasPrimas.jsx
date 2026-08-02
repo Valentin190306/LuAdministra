@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ActionMenu from '../components/ui/ActionMenu';
@@ -14,36 +15,24 @@ import styles from './MateriasPrimas.module.css';
 const emptyForm = { nombre: '', unidadMedida: '', stockActual: '', stockMinimo: '', categoriaId: '' };
 
 export default function MateriasPrimas() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [sortBy, setSortBy] = useState('nombre');
   const [sortDir, setSortDir] = useState('asc');
-  const { data: categorias } = useApi('/categorias-materias-primas');
+  const { data: categorias } = useApi('/categorias?tipo=MATERIA_PRIMA');
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (busqueda) params.set('nombre', busqueda);
-      if (filtroCategoria) params.set('categoriaId', filtroCategoria);
-      params.set('sortBy', sortBy);
-      params.set('sortDir', sortDir);
-      const result = await api.get(`/materias-primas?${params}`);
-      setData(result);
-      setError(null);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
+  const buildUrl = useCallback((page, size) => {
+    const params = new URLSearchParams();
+    if (busqueda) params.set('nombre', busqueda);
+    if (filtroCategoria) params.set('categoriaId', filtroCategoria);
+    params.set('sortBy', sortBy);
+    params.set('sortDir', sortDir);
+    params.set('page', page);
+    params.set('size', size);
+    return `/materias-primas?${params}`;
   }, [busqueda, filtroCategoria, sortBy, sortDir]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data, loading, hasMore, error, sentinelRef, refetch } = useInfiniteScroll(buildUrl);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -69,6 +58,8 @@ export default function MateriasPrimas() {
     const e = {};
     if (!form.nombre?.trim()) e.nombre = 'Requerido';
     if (!form.unidadMedida?.trim()) e.unidadMedida = 'Requerido';
+    if (form.stockActual !== '' && Number(form.stockActual) < 0) e.stockActual = 'No puede ser negativo';
+    if (form.stockMinimo !== '' && Number(form.stockMinimo) < 0) e.stockMinimo = 'No puede ser negativo';
     setErrores(e);
     return Object.keys(e).length === 0;
   }
@@ -91,24 +82,24 @@ export default function MateriasPrimas() {
         await api.post('/materias-primas', body);
       }
       setModalOpen(false);
-      fetchData();
+      refetch();
     } catch (err) {
       alert(err.message);
     } finally {
       setSaving(false);
     }
-  }, [form, editing, fetchData]);
+  }, [form, editing, refetch]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/materias-primas/${deleteTarget.id}`);
       setDeleteTarget(null);
-      fetchData();
+      refetch();
     } catch (err) {
       alert(err.message);
     }
-  }, [deleteTarget, fetchData]);
+  }, [deleteTarget, refetch]);
 
   const columns = useMemo(() => [
     { key: 'id', label: 'ID' },
@@ -136,21 +127,35 @@ export default function MateriasPrimas() {
     },
   ], [openEdit]);
 
-  if (loading) return <Loading />;
-  if (error) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+  if (loading && !data) return <Loading />;
+  if (error && !data) return <p className={styles.errorMsg}>Error al cargar: {error.message}</p>;
+
+  const handleExport = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (busqueda) params.set('nombre', busqueda);
+      if (filtroCategoria) params.set('categoriaId', filtroCategoria);
+      params.set('sortBy', sortBy);
+      params.set('sortDir', sortDir);
+      const full = await api.get(`/materias-primas?${params}`);
+      downloadCSV(full, [
+        { key: 'nombre', label: 'Nombre' },
+        { key: 'categoriaNombre', label: 'Categoría' },
+        { key: 'unidadMedida', label: 'Unidad de Medida' },
+        { key: 'stockActual', label: 'Stock Actual' },
+        { key: 'stockMinimo', label: 'Stock Mínimo' },
+      ], 'materias-primas.csv');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div>
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Materias Primas</h1>
         <div className={styles.headerActions}>
-          <Button variant="ghost" onClick={() => downloadCSV(data, [
-            { key: 'nombre', label: 'Nombre' },
-            { key: 'categoriaNombre', label: 'Categoría' },
-            { key: 'unidadMedida', label: 'Unidad de Medida' },
-            { key: 'stockActual', label: 'Stock Actual' },
-            { key: 'stockMinimo', label: 'Stock Mínimo' },
-          ], 'materias-primas.csv')}>Exportar CSV</Button>
+          <Button variant="ghost" onClick={handleExport}>Exportar CSV</Button>
           <Button onClick={openCreate}>Nueva Materia Prima</Button>
         </div>
       </div>
@@ -181,7 +186,11 @@ export default function MateriasPrimas() {
         </Button>
       </div>
 
-      <Table columns={columns} data={data} />
+      {error && <p className={styles.errorMsg}>Error: {error.message}</p>}
+
+      <Table columns={columns} data={data ?? []} sentinelRef={sentinelRef} emptyMessage="No hay materias primas. Creá una primero." />
+
+      {loading && hasMore && <p className={styles.loadingMore}>Cargando más...</p>}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Materia Prima' : 'Nueva Materia Prima'}>
         <form onSubmit={handleSave} className={styles.form} noValidate>
@@ -210,13 +219,11 @@ export default function MateriasPrimas() {
               ))}
             </select>
           </FormField>
-          {editing && (
-            <FormField label="Stock Actual (override manual)">
-              <input type="number" step="any" min="0" value={form.stockActual} onChange={(e) => setForm({ ...form, stockActual: e.target.value })} placeholder="Dejar vacío para mantener el actual" />
-            </FormField>
-          )}
-          <FormField label="Stock Mínimo (opcional)">
-            <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => setForm({ ...form, stockMinimo: e.target.value })} />
+          <FormField label={editing ? 'Stock Actual (override manual)' : 'Stock Inicial'} error={errores.stockActual}>
+            <input type="number" step="any" min="0" value={form.stockActual} onChange={(e) => { setForm({ ...form, stockActual: e.target.value }); setErrores((prev) => ({ ...prev, stockActual: undefined })); }} placeholder={editing ? 'Dejar vacío para mantener el actual' : 'Dejar vacío para iniciar en 0'} />
+          </FormField>
+          <FormField label="Stock Mínimo (opcional)" error={errores.stockMinimo}>
+            <input type="number" step="any" min="0" value={form.stockMinimo} onChange={(e) => { setForm({ ...form, stockMinimo: e.target.value }); setErrores((prev) => ({ ...prev, stockMinimo: undefined })); }} />
           </FormField>
           <div className={styles.formActions}>
             <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>Cancelar</Button>

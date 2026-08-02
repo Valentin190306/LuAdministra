@@ -35,7 +35,6 @@ export function useInfiniteScroll(buildUrl, { pageSize = 50 } = {}) {
   }, [buildUrl, pageSize]);
 
   useEffect(() => {
-    setData(null);
     setPage(0);
     setHasMore(true);
     setError(null);

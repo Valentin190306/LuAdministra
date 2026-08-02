@@ -1,6 +1,8 @@
 package com.luadministra.consignatario;
 
+import com.luadministra.consignacion.ConsignacionRepository;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,9 +13,11 @@ import java.util.List;
 public class ConsignatarioService {
 
     private final ConsignatarioRepository repository;
+    private final ConsignacionRepository consignacionRepository;
 
-    public ConsignatarioService(ConsignatarioRepository repository) {
+    public ConsignatarioService(ConsignatarioRepository repository, ConsignacionRepository consignacionRepository) {
         this.repository = repository;
+        this.consignacionRepository = consignacionRepository;
     }
 
     public List<ConsignatarioResponse> listar() {
@@ -47,6 +51,11 @@ public class ConsignatarioService {
 
     @Transactional
     public void eliminar(Long id) {
+        long consignaciones = consignacionRepository.countByConsignatarioId(id);
+        if (consignaciones > 0) {
+            throw new SolicitudInvalidaException("No se puede eliminar: el consignatario tiene " + consignaciones
+                    + " consignacion(es)");
+        }
         repository.deleteById(id);
     }
 }

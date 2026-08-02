@@ -2,13 +2,18 @@ package com.luadministra.materiaprima;
 
 import com.luadministra.categoria.CategoriaRepository;
 import com.luadministra.compra.CompraRepository;
+import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
+import com.luadministra.receta.RecetaDetalleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -29,6 +34,9 @@ class MateriaPrimaServiceTest {
 
     @Mock
     private CompraRepository compraRepository;
+
+    @Mock
+    private RecetaDetalleRepository recetaDetalleRepository;
 
     @InjectMocks
     private MateriaPrimaService service;
@@ -52,6 +60,23 @@ class MateriaPrimaServiceTest {
     }
 
     @Test
+    void listarPaginado_devuelvePagina() {
+        MateriaPrima mp = new MateriaPrima();
+        mp.setId(1L);
+        mp.setNombre("Aceite");
+        mp.setUnidadMedida("ml");
+        when(repository.findAll(anySpec(), any(Pageable.class))).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(List.of(mp), PageRequest.of(0, 50), 1));
+
+        PaginatedResponse<MateriaPrimaResponse> result = service.listarPaginado(0, 50, null, null, "nombre", "asc");
+
+        assertEquals(1, result.content().size());
+        assertEquals("Aceite", result.content().get(0).nombre());
+        assertEquals(1, result.totalElements());
+        assertEquals(1, result.totalPages());
+    }
+
+    @Test
     void listar_filtraPorNombre() {
         MateriaPrima aceite = new MateriaPrima();
         aceite.setNombre("Aceite de Coco");
@@ -65,14 +90,14 @@ class MateriaPrimaServiceTest {
     }
 
     @Test
-    void crear_asignaStockCero() {
-        MateriaPrimaRequest request = new MateriaPrimaRequest("Manteca de Karite", "gramos", 100.0, null, null);
+    void crear_conStockNull_asignaCero() {
+        MateriaPrimaRequest request = new MateriaPrimaRequest("Manteca de Karite", "gramos", null, null, null);
         MateriaPrima saved = new MateriaPrima();
         saved.setId(1L);
         saved.setNombre("Manteca de Karite");
         saved.setUnidadMedida("gramos");
         saved.setStockActual(0.0);
-        saved.setStockMinimo(100.0);
+        saved.setStockMinimo(null);
 
         when(repository.save(any())).thenReturn(saved);
 
@@ -84,6 +109,26 @@ class MateriaPrimaServiceTest {
         ArgumentCaptor<MateriaPrima> captor = ArgumentCaptor.forClass(MateriaPrima.class);
         verify(repository).save(captor.capture());
         assertEquals(0.0, captor.getValue().getStockActual());
+    }
+
+    @Test
+    void crear_conStock_asignaStockInicial() {
+        MateriaPrimaRequest request = new MateriaPrimaRequest("Aceite de Coco", "ml", 100.0, 50.0, null);
+        MateriaPrima saved = new MateriaPrima();
+        saved.setId(2L);
+        saved.setNombre("Aceite de Coco");
+        saved.setUnidadMedida("ml");
+        saved.setStockActual(100.0);
+        saved.setStockMinimo(50.0);
+
+        when(repository.save(any())).thenReturn(saved);
+
+        MateriaPrimaResponse result = service.crear(request);
+
+        assertEquals(100.0, result.stockActual());
+        ArgumentCaptor<MateriaPrima> captor = ArgumentCaptor.forClass(MateriaPrima.class);
+        verify(repository).save(captor.capture());
+        assertEquals(100.0, captor.getValue().getStockActual());
     }
 
     @Test
@@ -134,5 +179,23 @@ class MateriaPrimaServiceTest {
     void eliminar_borraPorId() {
         service.eliminar(1L);
         verify(repository).deleteById(1L);
+    }
+
+    @Test
+    void eliminar_cuandoEstaEnReceta_lanzaExcepcion() {
+        when(recetaDetalleRepository.countRecetasByMateriaPrimaId(1L)).thenReturn(2L);
+        when(compraRepository.countByMateriaPrimaId(1L)).thenReturn(0L);
+
+        assertThrows(SolicitudInvalidaException.class, () -> service.eliminar(1L));
+        verify(repository, never()).deleteById(any());
+    }
+
+    @Test
+    void eliminar_cuandoTieneCompras_lanzaExcepcion() {
+        when(recetaDetalleRepository.countRecetasByMateriaPrimaId(1L)).thenReturn(0L);
+        when(compraRepository.countByMateriaPrimaId(1L)).thenReturn(3L);
+
+        assertThrows(SolicitudInvalidaException.class, () -> service.eliminar(1L));
+        verify(repository, never()).deleteById(any());
     }
 }

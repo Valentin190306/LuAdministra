@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +47,92 @@ class VentaServiceTest {
         var result = service.listar(0, 50, null, null);
         assertEquals(1, result.content().size());
         assertEquals(1, result.totalPages());
+    }
+
+    private Venta ventaConLineas(Long id, Double... cantidades) {
+        Venta venta = new Venta();
+        venta.setId(id);
+        venta.setFecha(LocalDate.now());
+        List<LineaVenta> lineas = new ArrayList<>();
+        for (int i = 0; i < cantidades.length; i++) {
+            Producto pt = new Producto();
+            pt.setId((long) i + 1);
+            pt.setNombre("Producto " + i);
+            pt.setPrecioVenta(100.0);
+            LineaVenta linea = new LineaVenta();
+            linea.setId(id * 100 + i);
+            linea.setVenta(venta);
+            linea.setProducto(pt);
+            linea.setCantidad(cantidades[i]);
+            linea.setPrecioUnitario(100.0);
+            lineas.add(linea);
+        }
+        venta.setLineas(lineas);
+        return venta;
+    }
+
+    @Test
+    void listar_porCantidadDeProductos_asc() {
+        when(ventaRepository.findAll())
+                .thenReturn(List.of(ventaConLineas(1L, 10.0, 10.0, 10.0),
+                        ventaConLineas(2L, 10.0),
+                        ventaConLineas(3L, 10.0, 10.0)));
+
+        var result = service.listar(0, 50, "cantidadDeProductos", "asc");
+
+        assertEquals(List.of(2L, 3L, 1L), result.content().stream().map(VentaResponse::id).toList());
+    }
+
+    @Test
+    void listar_porCantidadDeProductos_desc() {
+        when(ventaRepository.findAll())
+                .thenReturn(List.of(ventaConLineas(1L, 10.0, 10.0, 10.0),
+                        ventaConLineas(2L, 10.0),
+                        ventaConLineas(3L, 10.0, 10.0)));
+
+        var result = service.listar(0, 50, "cantidadDeProductos", "desc");
+
+        assertEquals(List.of(1L, 3L, 2L), result.content().stream().map(VentaResponse::id).toList());
+    }
+
+    @Test
+    void listar_porTotal_asc() {
+        when(ventaRepository.findAll())
+                .thenReturn(List.of(ventaConLineas(1L, 10.0, 10.0),
+                        ventaConLineas(2L, 50.0),
+                        ventaConLineas(3L, 30.0)));
+
+        var result = service.listar(0, 50, "total", "asc");
+
+        assertEquals(List.of(1L, 3L, 2L), result.content().stream().map(VentaResponse::id).toList());
+    }
+
+    @Test
+    void listar_porTotal_desc() {
+        when(ventaRepository.findAll())
+                .thenReturn(List.of(ventaConLineas(1L, 10.0, 10.0),
+                        ventaConLineas(2L, 50.0),
+                        ventaConLineas(3L, 30.0)));
+
+        var result = service.listar(0, 50, "total", "desc");
+
+        assertEquals(List.of(2L, 3L, 1L), result.content().stream().map(VentaResponse::id).toList());
+    }
+
+    @Test
+    void listar_porTotal_respetaPaginacion() {
+        when(ventaRepository.findAll())
+                .thenReturn(List.of(ventaConLineas(1L, 10.0),
+                        ventaConLineas(2L, 20.0),
+                        ventaConLineas(3L, 30.0),
+                        ventaConLineas(4L, 40.0)));
+
+        var result = service.listar(1, 2, "total", "asc");
+
+        assertEquals(2, result.content().size());
+        assertEquals(List.of(3L, 4L), result.content().stream().map(VentaResponse::id).toList());
+        assertEquals(4, result.totalElements());
+        assertEquals(2, result.totalPages());
     }
 
     @Test

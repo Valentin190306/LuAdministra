@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -39,12 +40,37 @@ public class LoteService {
     }
 
     public PaginatedResponse<LoteResponse> listar(int page, int size, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortDir != null && sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+        boolean desc = sortDir != null && sortDir.equalsIgnoreCase("desc");
+
+        if ("fechaVencimiento".equals(sortBy)) {
+            List<LoteResponse> ordenados = loteRepository.findAll().stream()
+                    .map(LoteResponse::fromEntity)
+                    .sorted(comparadorPorVencimiento(desc))
+                    .toList();
+            int from = Math.min(page * size, ordenados.size());
+            int to = Math.min(from + size, ordenados.size());
+            List<LoteResponse> content = ordenados.subList(from, to);
+            int totalPages = (int) Math.ceil((double) ordenados.size() / size);
+            return new PaginatedResponse<>(content, page, size, ordenados.size(), totalPages);
+        }
+
+        Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "fecha");
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Lote> lotePage = loteRepository.findAll(pageable);
         List<LoteResponse> content = lotePage.stream().map(LoteResponse::fromEntity).toList();
         return PaginatedResponse.from(lotePage, content);
+    }
+
+    private Comparator<LoteResponse> comparadorPorVencimiento(boolean desc) {
+        Comparator<LocalDate> fechas = desc
+                ? Comparator.nullsLast(Comparator.reverseOrder())
+                : Comparator.nullsLast(Comparator.naturalOrder());
+        return (lote1, lote2) -> {
+            LocalDate fecha1 = lote1 != null ? lote1.fechaVencimiento() : null;
+            LocalDate fecha2 = lote2 != null ? lote2.fechaVencimiento() : null;
+            return fechas.compare(fecha1, fecha2);
+        };
     }
 
     public PaginatedResponse<LoteResponse> listarPorPeriodo(LocalDate desde, LocalDate hasta, int page, int size) {

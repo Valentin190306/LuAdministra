@@ -142,11 +142,15 @@ export default function Ventas() {
             fecha: v.fecha,
             cantidadDeProductos: v.lineas.length,
             total: v.total,
+            lineasIds: v.lineas.map((l) => l.id).join('; '),
+            productos: v.lineas.map((l) => `${l.productoNombre} (${l.cantidad})`).join('; '),
           })) ?? [], [
             { key: 'id', label: 'ID' },
             { key: 'fecha', label: 'Fecha' },
             { key: 'cantidadDeProductos', label: 'Cant. Productos' },
             { key: 'total', label: 'Total' },
+            { key: 'lineasIds', label: 'IDs Líneas' },
+            { key: 'productos', label: 'Productos' },
           ], 'ventas.csv')}>Exportar CSV</Button>
           <Button onClick={openCreate}>Registrar Venta</Button>
         </div>
@@ -175,6 +179,8 @@ export default function Ventas() {
           <>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="fecha">Ordenar por fecha</option>
+              <option value="cantidadDeProductos">Ordenar por cant. productos</option>
+              <option value="total">Ordenar por total</option>
             </select>
             <Button variant="ghost" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}>
               {sortDir === 'asc' ? '↑ Asc' : '↓ Desc'}

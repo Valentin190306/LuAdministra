@@ -6,8 +6,13 @@ async function request(path, options = {}) {
     ...options,
   });
   if (!res.ok) {
-    const msg = await res.text().catch(() => 'Error');
-    throw new Error(msg);
+    const raw = await res.text().catch(() => '');
+    let mensaje = raw;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.mensaje) mensaje = parsed.mensaje;
+    } catch { /* no es JSON, usamos texto crudo */ }
+    throw new Error(mensaje);
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;

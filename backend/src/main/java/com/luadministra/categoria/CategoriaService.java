@@ -1,6 +1,8 @@
 package com.luadministra.categoria;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.materiaprima.MateriaPrimaRepository;
+import com.luadministra.producto.ProductoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,9 +13,15 @@ import java.util.List;
 public class CategoriaService {
 
     private final CategoriaRepository repository;
+    private final MateriaPrimaRepository materiaPrimaRepository;
+    private final ProductoRepository productoRepository;
 
-    public CategoriaService(CategoriaRepository repository) {
+    public CategoriaService(CategoriaRepository repository,
+                            MateriaPrimaRepository materiaPrimaRepository,
+                            ProductoRepository productoRepository) {
         this.repository = repository;
+        this.materiaPrimaRepository = materiaPrimaRepository;
+        this.productoRepository = productoRepository;
     }
 
     public List<CategoriaResponse> listar(TipoCategoria tipo) {
@@ -62,6 +70,9 @@ public class CategoriaService {
 
     @Transactional
     public void eliminar(Long id) {
+        materiaPrimaRepository.findByCategoriaId(id).forEach(mp -> mp.setCategoria(null));
+        productoRepository.findByCategoriaId(id).forEach(p -> p.setCategoria(null));
+        repository.findByCategoriaPadreId(id).forEach(hija -> hija.setCategoriaPadre(null));
         repository.deleteById(id);
     }
 }

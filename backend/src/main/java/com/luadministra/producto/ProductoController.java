@@ -1,5 +1,6 @@
 package com.luadministra.producto;
 
+import com.luadministra.dto.PaginatedResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,17 @@ public class ProductoController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDir) {
         return service.listar(nombre, categoriaId, sortBy, sortDir);
+    }
+
+    @GetMapping(params = "page")
+    public PaginatedResponse<ProductoResponse> listarPaginado(
+            @RequestParam int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir) {
+        return service.listarPaginado(page, size, nombre, categoriaId, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")

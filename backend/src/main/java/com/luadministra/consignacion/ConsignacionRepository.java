@@ -21,4 +21,9 @@ public interface ConsignacionRepository extends JpaRepository<Consignacion, Long
 
     @Query("SELECT c FROM Consignacion c WHERE c.estado <> 'RENDIDO_TOTAL'")
     List<Consignacion> findAllActivos();
+
+    @Query("SELECT COUNT(lc) FROM LineaConsignacion lc WHERE lc.producto.id = :productoId")
+    long countLineasByProductoId(Long productoId);
+
+    long countByConsignatarioId(Long consignatarioId);
 }
