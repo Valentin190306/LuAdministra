@@ -7,7 +7,8 @@ public record VentaResponse(
         Long id,
         LocalDate fecha,
         List<LineaVentaResponse> lineas,
-        Double total
+        Double total,
+        Boolean deRendicion
 ) {
     public static VentaResponse fromEntity(Venta v) {
         List<LineaVentaResponse> lineasResp = v.getLineas().stream()
@@ -16,6 +17,6 @@ public record VentaResponse(
         double total = lineasResp.stream()
                 .mapToDouble(l -> l.cantidad() * l.precioUnitario())
                 .sum();
-        return new VentaResponse(v.getId(), v.getFecha(), lineasResp, total);
+        return new VentaResponse(v.getId(), v.getFecha(), lineasResp, total, v.getDeRendicion());
     }
 }

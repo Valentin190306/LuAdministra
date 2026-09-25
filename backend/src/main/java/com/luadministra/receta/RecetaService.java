@@ -2,6 +2,7 @@ package com.luadministra.receta;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
+import com.luadministra.lote.LoteRepository;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
 import com.luadministra.producto.Producto;
@@ -18,13 +19,16 @@ public class RecetaService {
     private final RecetaRepository repository;
     private final ProductoRepository productoRepository;
     private final MateriaPrimaRepository materiaPrimaRepository;
+    private final LoteRepository loteRepository;
 
     public RecetaService(RecetaRepository repository,
                          ProductoRepository productoRepository,
-                         MateriaPrimaRepository materiaPrimaRepository) {
+                         MateriaPrimaRepository materiaPrimaRepository,
+                         LoteRepository loteRepository) {
         this.repository = repository;
         this.productoRepository = productoRepository;
         this.materiaPrimaRepository = materiaPrimaRepository;
+        this.loteRepository = loteRepository;
     }
 
     public RecetaResponse obtenerPorProducto(Long productoId) {
@@ -88,8 +92,12 @@ public class RecetaService {
 
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new RecursoNoEncontradoException("Receta no encontrada");
+        Receta receta = repository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Receta no encontrada"));
+        long lotes = loteRepository.countByProductoId(receta.getProducto().getId());
+        if (lotes > 0) {
+            throw new SolicitudInvalidaException("No se puede eliminar: el producto tiene " + lotes
+                    + " lote(s) fabricado(s)");
         }
         repository.deleteById(id);
     }

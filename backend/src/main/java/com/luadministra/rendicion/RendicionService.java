@@ -106,7 +106,7 @@ public class RendicionService {
 
         if (!lineasVenta.isEmpty()) {
             VentaRequest ventaRequest = new VentaRequest(request.fecha(), lineasVenta);
-            ventaService.crear(ventaRequest);
+            ventaService.crearDesdeRendicion(ventaRequest);
         }
 
         double totalRendidoAnterior = anteriores.stream()

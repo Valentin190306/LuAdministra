@@ -2,6 +2,7 @@ package com.luadministra.compra;
 
 import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
 import org.springframework.data.domain.Page;
@@ -76,6 +77,11 @@ public class CompraService {
         Compra compra = compraRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Compra no encontrada"));
         MateriaPrima mp = compra.getMateriaPrima();
+        if (mp.getStockActual() < compra.getCantidad()) {
+            throw new SolicitudInvalidaException("No se puede eliminar: la materia prima '" + mp.getNombre()
+                    + "' ya fue consumida (stock actual " + mp.getStockActual() + " < "
+                    + compra.getCantidad() + ")");
+        }
         mp.setStockActual(mp.getStockActual() - compra.getCantidad());
         materiaPrimaRepository.save(mp);
         compraRepository.delete(compra);

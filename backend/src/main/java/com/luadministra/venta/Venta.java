@@ -18,6 +18,9 @@ public class Venta {
     @Column(nullable = false)
     private LocalDate fecha;
 
+    @Column(name = "de_rendicion")
+    private Boolean deRendicion;
+
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LineaVenta> lineas = new ArrayList<>();
 
@@ -26,6 +29,9 @@ public class Venta {
 
     public LocalDate getFecha() { return fecha; }
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+
+    public Boolean getDeRendicion() { return Boolean.TRUE.equals(deRendicion); }
+    public void setDeRendicion(Boolean deRendicion) { this.deRendicion = deRendicion; }
 
     public List<LineaVenta> getLineas() { return lineas; }
     public void setLineas(List<LineaVenta> lineas) { this.lineas = lineas; }

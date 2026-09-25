@@ -125,7 +125,7 @@ export default function Ventas() {
       render: (row) => (
         <ActionMenu actions={[
           { label: 'Ver detalle', onClick: () => setDetailVenta(row) },
-          { label: 'Eliminar', onClick: () => setDeleteTarget(row) },
+          ...(row.deRendicion ? [] : [{ label: 'Eliminar', onClick: () => setDeleteTarget(row) }]),
         ]} />
       ),
     },
@@ -271,11 +271,16 @@ export default function Ventas() {
             </tbody>
           </table>
           <p className={styles.detailTotal}>Total: ${Number(detailVenta?.total ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+          {detailVenta?.deRendicion && (
+            <p className={styles.errorMsg}>Esta venta se originó en una rendición de consignación y no puede eliminarse.</p>
+          )}
           <div className={styles.formActions}>
-            <Button variant="danger" onClick={() => {
-              setDeleteTarget(detailVenta);
-              setDetailVenta(null);
-            }}>Eliminar venta</Button>
+            {!detailVenta?.deRendicion && (
+              <Button variant="danger" onClick={() => {
+                setDeleteTarget(detailVenta);
+                setDetailVenta(null);
+              }}>Eliminar venta</Button>
+            )}
             <Button variant="ghost" onClick={() => setDetailVenta(null)}>Cerrar</Button>
           </div>
         </div>

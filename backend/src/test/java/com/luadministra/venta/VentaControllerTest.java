@@ -37,7 +37,8 @@ class VentaControllerTest {
     private VentaResponse makeResponse() {
         return new VentaResponse(1L, LocalDate.of(2025, 6, 1),
                 List.of(new LineaVentaResponse(1L, 1L, "Jabón de Lavanda", 5.0, 2000.0)),
-                10000.0);
+                10000.0,
+                false);
     }
 
     @Test

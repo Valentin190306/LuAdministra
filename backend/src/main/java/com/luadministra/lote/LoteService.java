@@ -130,15 +130,11 @@ public class LoteService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Lote no encontrado"));
 
         Producto producto = lote.getProducto();
-        var receta = recetaRepository.findByProductoId(producto.getId())
-                .orElseThrow(() -> new SolicitudInvalidaException("La receta del producto ya no existe"));
-
-        receta.getDetalles().forEach(d -> {
-            MateriaPrima mp = d.getMateriaPrima();
-            double cantidadADevolver = d.getCantidad() * lote.getCantidadFabricada();
-            mp.setStockActual(mp.getStockActual() + cantidadADevolver);
-            materiaPrimaRepository.save(mp);
-        });
+        if (producto.getStockActual() < lote.getCantidadFabricada()) {
+            throw new SolicitudInvalidaException("No se puede eliminar: el producto '" + producto.getNombre()
+                    + "' ya no tiene en stock las " + lote.getCantidadFabricada()
+                    + " unidades fabricadas (fueron vendidas o consignadas)");
+        }
 
         producto.setStockActual(producto.getStockActual() - lote.getCantidadFabricada());
         productoRepository.save(producto);

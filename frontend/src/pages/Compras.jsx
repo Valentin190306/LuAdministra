@@ -231,7 +231,7 @@ export default function Compras() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Eliminar Compra"
-        message={`¿Eliminar la compra de "${deleteTarget?.materiaPrimaNombre}" del ${deleteTarget?.fecha}? Se revertirá el stock.`}
+        message={`¿Eliminar la compra de "${deleteTarget?.materiaPrimaNombre}" del ${deleteTarget?.fecha}? Se revertirá el stock de la materia prima.`}
       />
     </div>
   );

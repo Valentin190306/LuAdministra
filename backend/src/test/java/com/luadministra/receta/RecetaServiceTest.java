@@ -1,6 +1,8 @@
 package com.luadministra.receta;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
+import com.luadministra.lote.LoteRepository;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
 import com.luadministra.producto.Producto;
@@ -29,6 +31,9 @@ class RecetaServiceTest {
 
     @Mock
     private MateriaPrimaRepository materiaPrimaRepository;
+
+    @Mock
+    private LoteRepository loteRepository;
 
     @InjectMocks
     private RecetaService service;
@@ -134,9 +139,31 @@ class RecetaServiceTest {
     }
 
     @Test
-    void eliminar_borraPorId() {
-        when(repository.existsById(1L)).thenReturn(true);
+    void eliminar_sinLotes_borraPorId() {
+        Producto pt = new Producto();
+        pt.setId(1L);
+        Receta receta = new Receta();
+        receta.setProducto(pt);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(receta));
+        when(loteRepository.countByProductoId(1L)).thenReturn(0L);
+
         service.eliminar(1L);
+
         verify(repository).deleteById(1L);
+    }
+
+    @Test
+    void eliminar_cuandoProductoTieneLotes_lanzaExcepcion() {
+        Producto pt = new Producto();
+        pt.setId(1L);
+        Receta receta = new Receta();
+        receta.setProducto(pt);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(receta));
+        when(loteRepository.countByProductoId(1L)).thenReturn(3L);
+
+        assertThrows(SolicitudInvalidaException.class, () -> service.eliminar(1L));
+        verify(repository, never()).deleteById(any());
     }
 }

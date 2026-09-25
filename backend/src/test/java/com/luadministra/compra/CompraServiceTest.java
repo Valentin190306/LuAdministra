@@ -2,6 +2,7 @@ package com.luadministra.compra;
 
 import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.materiaprima.MateriaPrima;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,25 @@ class CompraServiceTest {
         assertEquals(15.0, mp.getStockActual());
         verify(materiaPrimaRepository).save(mp);
         verify(compraRepository).delete(compra);
+    }
+
+    @Test
+    void eliminar_cuandoMPConsumida_lanzaExcepcion() {
+        MateriaPrima mp = new MateriaPrima();
+        mp.setId(1L);
+        mp.setNombre("Aceite");
+        mp.setStockActual(2.0);
+
+        Compra compra = new Compra();
+        compra.setId(1L);
+        compra.setMateriaPrima(mp);
+        compra.setCantidad(5.0);
+
+        when(compraRepository.findById(1L)).thenReturn(Optional.of(compra));
+
+        assertThrows(SolicitudInvalidaException.class, () -> service.eliminar(1L));
+        verify(materiaPrimaRepository, never()).save(any());
+        verify(compraRepository, never()).delete(any());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.luadministra.venta;
 
 import com.luadministra.exception.RecursoNoEncontradoException;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.exception.StockInsuficienteException;
 import com.luadministra.producto.Producto;
 import com.luadministra.producto.ProductoRepository;
@@ -280,5 +281,29 @@ class VentaServiceTest {
         assertEquals(10.0, pt.getStockActual());
         verify(productoRepository).save(pt);
         verify(ventaRepository).delete(venta);
+    }
+
+    @Test
+    void eliminar_cuandoEsDeRendicion_lanzaExcepcion() {
+        Producto pt = new Producto();
+        pt.setId(1L);
+        pt.setStockActual(7.0);
+
+        Venta venta = new Venta();
+        venta.setId(1L);
+        venta.setDeRendicion(true);
+        LineaVenta linea = new LineaVenta();
+        linea.setId(1L);
+        linea.setVenta(venta);
+        linea.setProducto(pt);
+        linea.setCantidad(3.0);
+        venta.setLineas(List.of(linea));
+
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
+
+        assertThrows(SolicitudInvalidaException.class, () -> service.eliminar(1L));
+
+        verify(productoRepository, never()).save(any());
+        verify(ventaRepository, never()).delete(any());
     }
 }

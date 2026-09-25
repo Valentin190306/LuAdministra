@@ -80,8 +80,18 @@ public class VentaService {
 
     @Transactional
     public VentaResponse crear(VentaRequest request) {
+        return crear(request, false);
+    }
+
+    @Transactional
+    public VentaResponse crearDesdeRendicion(VentaRequest request) {
+        return crear(request, true);
+    }
+
+    private VentaResponse crear(VentaRequest request, boolean deRendicion) {
         Venta venta = new Venta();
         venta.setFecha(request.fecha());
+        venta.setDeRendicion(deRendicion);
 
         List<LineaVenta> lineas = new ArrayList<>();
         for (LineaVentaRequest lineaReq : request.lineas()) {
@@ -117,6 +127,10 @@ public class VentaService {
     public void eliminar(Long id) {
         Venta venta = ventaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
+
+        if (venta.getDeRendicion()) {
+            throw new SolicitudInvalidaException("Esta venta se originó en una rendición de consignación y no puede eliminarse");
+        }
 
         for (LineaVenta linea : venta.getLineas()) {
             Producto producto = linea.getProducto();

@@ -164,7 +164,7 @@ class RendicionServiceTest {
 
         assertEquals(13.0, pt.getStockActual(), 0.001);
         verify(productoRepository).save(pt);
-        verify(ventaService, never()).crear(any());
+        verify(ventaService, never()).crearDesdeRendicion(any());
         verify(consignacionRepository).save(d);
         assertEquals(EstadoConsignacion.RENDIDO_PARCIAL, d.getEstado());
     }
@@ -188,7 +188,7 @@ class RendicionServiceTest {
         service.crear(request);
 
         ArgumentCaptor<VentaRequest> captor = ArgumentCaptor.forClass(VentaRequest.class);
-        verify(ventaService).crear(captor.capture());
+        verify(ventaService).crearDesdeRendicion(captor.capture());
         assertEquals(1, captor.getValue().lineas().size());
         assertEquals(5.0, captor.getValue().lineas().get(0).cantidad());
 

@@ -1,6 +1,7 @@
 package com.luadministra.lote;
 
 import com.luadministra.dto.PaginatedResponse;
+import com.luadministra.exception.SolicitudInvalidaException;
 import com.luadministra.materiaprima.MateriaPrimaRepository;
 import com.luadministra.producto.Producto;
 import com.luadministra.producto.ProductoRepository;
@@ -16,8 +17,10 @@ import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -113,5 +116,32 @@ class LoteServiceTest {
 
         assertEquals(1, result.content().size());
         assertEquals(LocalDate.of(2026, 1, 1), result.content().get(0).fecha());
+    }
+
+    @Test
+    void eliminar_quitaSoloStockProducto() {
+        Lote l = lote(1L, LocalDate.of(2026, 1, 1), null);
+        l.getProducto().setStockActual(15.0);
+        when(loteRepository.findById(1L)).thenReturn(Optional.of(l));
+
+        service.eliminar(1L);
+
+        assertEquals(5.0, l.getProducto().getStockActual());
+        verify(productoRepository).save(l.getProducto());
+        verify(materiaPrimaRepository, never()).save(any());
+        verify(loteRepository).delete(l);
+    }
+
+    @Test
+    void eliminar_cuandoProductoNoCubreCantidad_lanzaExcepcion() {
+        Lote l = lote(1L, LocalDate.of(2026, 1, 1), null);
+        l.getProducto().setStockActual(5.0);
+        when(loteRepository.findById(1L)).thenReturn(Optional.of(l));
+
+        assertThrows(SolicitudInvalidaException.class, () -> service.eliminar(1L));
+
+        verify(productoRepository, never()).save(any());
+        verify(materiaPrimaRepository, never()).save(any());
+        verify(loteRepository, never()).delete(any());
     }
 }

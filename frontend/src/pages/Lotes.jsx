@@ -205,7 +205,7 @@ export default function Lotes() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Eliminar Lote"
-        message={`¿Eliminar la producción de "${deleteTarget?.productoNombre}" del ${deleteTarget?.fecha}? Se revertirá el stock de materias primas y productos.`}
+        message={`¿Eliminar la producción de "${deleteTarget?.productoNombre}" del ${deleteTarget?.fecha}? Se quitarán las ${deleteTarget?.cantidadFabricada} unidades del stock del producto.`}
       />
     </div>
   );
