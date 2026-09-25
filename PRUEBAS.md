@@ -85,7 +85,7 @@ Checklist de funciones para probar la app a mano. Cada caso indica qué hacer y 
 
 - [x] Venta de 1 producto → stock se descuenta.
 - [x] Venta con 3+ productos → todos los stocks bajan.
-- [ ] Precio unitario personalizado.
+- [x] Precio unitario personalizado.
 - [x] Sin líneas / stock insuficiente / cantidad negativa → error.
 - [x] Filtrar por período.
 - [x] Ver detalle en modal.
@@ -100,37 +100,37 @@ Checklist de funciones para probar la app a mano. Cada caso indica qué hacer y 
 - [x] Sin nombre → error.
 - [x] Editar.
 - [x] Eliminar sin consignaciones → ok.
-- [ ] Eliminar con consignaciones activas → error.
-- [ ] Exportar CSV.
+- [x] Eliminar con consignaciones activas → error.
+- [x] Exportar CSV.
 
 ## 10. Consignaciones (`/consignaciones`)
 
-- [ ] Crear consignación → stock consignado del producto aumenta.
-- [ ] Con múltiples productos.
-- [ ] Sin productos / sin stock suficiente → error.
-- [ ] Filtrar por consignatario.
-- [ ] Filtrar por estado (PENDIENTE / RENDIDO_PARCIAL / RENDIDO_TOTAL).
-- [ ] Eliminar PENDIENTE → stock se restaura.
-- [ ] Eliminar RENDIDO_PARCIAL → bloqueado o restauración consistente.
-- [ ] Modal "Rendiciones" lista las rendiciones de la consignación.
-- [ ] Modal "Stock en consignación" muestra Consignado / Rendido / Pendiente.
-- [ ] Exportar CSV.
+- [x] Crear consignación → stock consignado del producto aumenta.
+- [x] Con múltiples productos.
+- [x] Sin productos / sin stock suficiente → error.
+- [x] Filtrar por consignatario.
+- [x] Filtrar por estado (PENDIENTE / RENDIDO_PARCIAL / RENDIDO_TOTAL).
+- [x] Eliminar PENDIENTE → stock se restaura.
+- [x] Eliminar RENDIDO_PARCIAL → bloqueado o restauración consistente.
+- [x] Modal "Rendiciones" lista las rendiciones de la consignación.
+- [x] Modal "Stock en consignación" muestra Consignado / Rendido / Pendiente.
+- [x] Exportar CSV.
 
 ## 11. Rendiciones / Devoluciones
 
-- [ ] Rendir parcial (6 de 10) → estado RENDIDO_PARCIAL + montoEntregado.
-- [ ] Rendir total (10 de 10) → RENDIDO_TOTAL.
-- [ ] Devolver (4 unidades) → stock restaurado.
-- [ ] Mixto: 6 vendidas + 2 devueltas de 10.
-- [ ] Rendir más de lo consignado → error.
-- [ ] Sin líneas → error.
-- [ ] Rendir una consignación RENDIDO_TOTAL → bloqueado.
+- [x] Rendir parcial (6 de 10) → estado RENDIDO_PARCIAL + montoEntregado.
+- [x] Rendir total (10 de 10) → RENDIDO_TOTAL.
+- [x] Devolver (4 unidades) → stock restaurado.
+- [x] Mixto: 6 vendidas + 2 devueltas de 10.
+- [x] Rendir más de lo consignado → error.
+- [x] Sin líneas → error.
+- [x] Rendir una consignación RENDIDO_TOTAL → bloqueado.
 
 ## 12. General
 
-- [ ] Recargar (F5) en `/lotes`, `/ventas`, etc. → la página carga sin 404.
-- [ ] Acceso desde otro dispositivo por `http://LuAdministra.local:8080`.
-- [ ] Modo mobile en DevTools → layout se adapta.
-- [ ] Toasts de éxito/error aparecen y desaparecen.
+- [x] Recargar (F5) en `/lotes`, `/ventas`, etc. → la página carga sin 404.
+- [x] Acceso desde otro dispositivo por `http://LuAdministra.local:8080`.
+- [x] Modo mobile en DevTools → layout se adapta.
+- [x] Toasts de éxito/error aparecen y desaparecen.
 - [ ] Con `--spring.profiles.active=prod` el seeder NO corre.
 - [ ] Eliminar compra/lote/venta/consignación y verificar que el stock queda consistente.

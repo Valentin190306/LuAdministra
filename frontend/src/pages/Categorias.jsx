@@ -10,6 +10,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { useNotify } from '../context/NotificationContext';
 import styles from './Categorias.module.css';
 
 const TIPOS = {
@@ -20,6 +21,7 @@ const TIPOS = {
 const emptyForm = { nombre: '', categoriaPadreId: '' };
 
 export default function Categorias() {
+  const { notify } = useNotify();
   const [searchParams, setSearchParams] = useSearchParams();
   const tipo = searchParams.get('tipo') || 'MATERIA_PRIMA';
   const tipoInfo = TIPOS[tipo] || TIPOS.MATERIA_PRIMA;
@@ -77,7 +79,7 @@ export default function Categorias() {
       setModalOpen(false);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -90,7 +92,7 @@ export default function Categorias() {
       setDeleteTarget(null);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleteTarget, tipo, refetch]);
 

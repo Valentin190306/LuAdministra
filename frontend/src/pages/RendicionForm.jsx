@@ -5,12 +5,13 @@ import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
 import { useNotify } from '../context/NotificationContext';
 import { todayStr } from '../utils/dates';
+import { rendidoPorLinea } from '../utils/rendiciones';
 import styles from './Consignaciones.module.css';
 
 const estadoLabels = {
   PENDIENTE: 'Pendiente',
   RENDIDO_PARCIAL: 'Rendido Parcial',
-  RENDIDO_TOTAL: 'Rendido Total',
+  RENDIDO_TOTAL: 'Finalizada',
 };
 
 function emptyRendicionProductos(productos) {
@@ -36,21 +37,14 @@ export default function RendicionForm({ consignacion, onClose, onSaved }) {
     let cancelled = false;
     async function load() {
       try {
-        const rendiciones = await api.get(`/rendiciones/consignacion/${consignacion.id}`);
-        const yaRendido = {};
-        rendiciones.forEach((r) => {
-          r.productos.forEach((p) => {
-            yaRendido[p.productoId] = (yaRendido[p.productoId] || 0)
-              + p.cantidadVendida + p.cantidadDevuelta;
-          });
-        });
+        const rendido = await rendidoPorLinea(consignacion.id);
         if (!cancelled) {
           setProductos(
             consignacion.productos.map((p) => ({
               lineaConsignacionId: p.id,
               productoId: p.productoId,
               productoNombre: p.productoNombre,
-              cantidadDespachada: p.cantidad - (yaRendido[p.productoId] || 0),
+              cantidadDespachada: p.cantidad - (rendido.get(p.id) ?? 0),
               cantidadVendida: '',
             }))
           );
@@ -115,11 +109,12 @@ export default function RendicionForm({ consignacion, onClose, onSaved }) {
                 productos.map((p, i) => (
                   <div key={i} className={styles.rendicionProducto}>
                     <span className={styles.rendicionProductoNombre}>{p.productoNombre}</span>
-                    <span className={styles.rendicionProductoDisponible}>Disp: {p.cantidadDespachada}</span>
+                    <span className={styles.rendicionProductoDisponible}>Disp: {Math.max(p.cantidadDespachada - (Number(p.cantidadVendida) || 0), 0)}</span>
                     <input
                       type="number"
                       step="any"
                       min="0"
+                      max={p.cantidadDespachada}
                       placeholder="Vendido"
                       value={p.cantidadVendida}
                       onChange={(e) => updateProducto(i, e.target.value)}

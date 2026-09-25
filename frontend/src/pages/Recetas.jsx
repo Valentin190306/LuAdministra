@@ -8,9 +8,11 @@ import Modal from '../components/ui/Modal';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { useNotify } from '../context/NotificationContext';
 import styles from './Recetas.module.css';
 
 export default function Recetas() {
+  const { notify } = useNotify();
   const { data: ptList, loading: ptLoading } = useApi('/productos');
   const { data: mpList } = useApi('/materias-primas');
   const { data: allRecipes } = useApi('/recetas');
@@ -120,7 +122,7 @@ export default function Recetas() {
 
       setModalOpen(false);
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -135,7 +137,7 @@ export default function Recetas() {
       }
       setDeleting(null);
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleting, recipeLookup]);
 

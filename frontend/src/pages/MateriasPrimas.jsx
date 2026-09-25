@@ -10,11 +10,13 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { useNotify } from '../context/NotificationContext';
 import styles from './MateriasPrimas.module.css';
 
 const emptyForm = { nombre: '', unidadMedida: '', stockActual: '', stockMinimo: '', categoriaId: '' };
 
 export default function MateriasPrimas() {
+  const { notify } = useNotify();
   const [busqueda, setBusqueda] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [sortBy, setSortBy] = useState('nombre');
@@ -84,7 +86,7 @@ export default function MateriasPrimas() {
       setModalOpen(false);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -97,7 +99,7 @@ export default function MateriasPrimas() {
       setDeleteTarget(null);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleteTarget, refetch]);
 
@@ -146,7 +148,7 @@ export default function MateriasPrimas() {
         { key: 'stockMinimo', label: 'Stock Mínimo' },
       ], 'materias-primas.csv');
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   };
 

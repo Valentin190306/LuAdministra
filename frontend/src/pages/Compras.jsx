@@ -11,11 +11,13 @@ import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
 import { todayStr } from '../utils/dates';
+import { useNotify } from '../context/NotificationContext';
 import styles from './Compras.module.css';
 
 const emptyForm = { materiaPrimaId: '', fecha: todayStr(), cantidad: '', precio: '', lugar: '', url: '', precioMLReferencia: '' };
 
 export default function Compras() {
+  const { notify } = useNotify();
   const { data: materiasPrimas } = useApi('/materias-primas');
   const [filterMpId, setFilterMpId] = useState('');
   const [sortBy, setSortBy] = useState('fecha');
@@ -72,7 +74,7 @@ export default function Compras() {
       setModalOpen(false);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -85,7 +87,7 @@ export default function Compras() {
       setDeleteTarget(null);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleteTarget, refetch]);
 

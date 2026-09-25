@@ -91,7 +91,7 @@ export default function ConsignacionForm({ isOpen, onClose, consignatarios, prod
               >
                 <option value="">Seleccionar...</option>
                 {productos?.map((pt) => (
-                  <option key={pt.id} value={pt.id}>{pt.nombre}</option>
+                  <option key={pt.id} value={pt.id}>{pt.nombre} (disponible: {pt.stockActual - (pt.stockConsignado ?? 0)} u)</option>
                 ))}
               </select>
               <input

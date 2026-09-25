@@ -91,7 +91,7 @@ export default function Productos() {
       setModalOpen(false);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -104,7 +104,7 @@ export default function Productos() {
       setDeleteTarget(null);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleteTarget, refetch]);
 
@@ -184,7 +184,7 @@ export default function Productos() {
         { key: 'stockMinimo', label: 'Stock Mínimo' },
       ], 'productos.csv');
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   };
 

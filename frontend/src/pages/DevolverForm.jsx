@@ -4,30 +4,56 @@ import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import { useNotify } from '../context/NotificationContext';
 import { todayStr } from '../utils/dates';
+import { rendidoPorLinea } from '../utils/rendiciones';
 import styles from './Consignaciones.module.css';
 
 const estadoLabels = {
   PENDIENTE: 'Pendiente',
   RENDIDO_PARCIAL: 'Rendido Parcial',
-  RENDIDO_TOTAL: 'Rendido Total',
+  RENDIDO_TOTAL: 'Finalizada',
 };
 
 export default function DevolverForm({ consignacion, onClose, onSaved }) {
   const { notify, notifySuccess } = useNotify();
   const [productos, setProductos] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!consignacion) return;
-    setProductos(
-      consignacion.productos.map((p) => ({
-        lineaConsignacionId: p.id,
-        productoId: p.productoId,
-        productoNombre: p.productoNombre,
-        cantidadDespachada: p.cantidad,
-        cantidadDevuelta: '',
-      }))
-    );
+    let cancelled = false;
+    async function load() {
+      try {
+        const rendido = await rendidoPorLinea(consignacion.id);
+        if (!cancelled) {
+          setProductos(
+            consignacion.productos.map((p) => ({
+              lineaConsignacionId: p.id,
+              productoId: p.productoId,
+              productoNombre: p.productoNombre,
+              cantidadDespachada: p.cantidad - (rendido.get(p.id) ?? 0),
+              cantidadDevuelta: '',
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setProductos(
+            consignacion.productos.map((p) => ({
+              lineaConsignacionId: p.id,
+              productoId: p.productoId,
+              productoNombre: p.productoNombre,
+              cantidadDespachada: p.cantidad,
+              cantidadDevuelta: '',
+            }))
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [consignacion]);
 
   function updateProducto(index, value) {
@@ -75,14 +101,15 @@ export default function DevolverForm({ consignacion, onClose, onSaved }) {
           <form onSubmit={handleSave} className={styles.form}>
             <div className={styles.productosSection}>
               <label className={styles.sectionLabel}>Productos a devolver</label>
-              {productos.map((p, i) => (
+              {loading ? <p>Cargando productos...</p> : productos.map((p, i) => (
                 <div key={i} className={styles.rendicionProducto}>
                   <span className={styles.rendicionProductoNombre}>{p.productoNombre}</span>
-                  <span className={styles.rendicionProductoDisponible}>Disp: {p.cantidadDespachada}</span>
+                  <span className={styles.rendicionProductoDisponible}>Disp: {Math.max(p.cantidadDespachada - (Number(p.cantidadDevuelta) || 0), 0)}</span>
                   <input
                     type="number"
                     step="any"
                     min="0"
+                    max={p.cantidadDespachada}
                     placeholder="Devuelto"
                     value={p.cantidadDevuelta}
                     onChange={(e) => updateProducto(i, e.target.value)}

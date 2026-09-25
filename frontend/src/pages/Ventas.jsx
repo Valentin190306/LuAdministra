@@ -11,9 +11,11 @@ import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
 import { todayStr, monthAgo } from '../utils/dates';
+import { useNotify } from '../context/NotificationContext';
 import styles from './Ventas.module.css';
 
 export default function Ventas() {
+  const { notify } = useNotify();
   const [sortBy, setSortBy] = useState('fecha');
   const [sortDir, setSortDir] = useState('desc');
   const [desde, setDesde] = useState(monthAgo());
@@ -87,7 +89,7 @@ export default function Ventas() {
       setModalOpen(false);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -100,7 +102,7 @@ export default function Ventas() {
       setDeleteTarget(null);
       refetch();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleteTarget, refetch]);
 

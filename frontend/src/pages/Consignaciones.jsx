@@ -19,14 +19,14 @@ import styles from './Consignaciones.module.css';
 const estadoLabels = {
   PENDIENTE: 'Pendiente',
   RENDIDO_PARCIAL: 'Rendido Parcial',
-  RENDIDO_TOTAL: 'Rendido Total',
+  RENDIDO_TOTAL: 'Finalizada',
 };
 
 const estadoOptions = [
   { value: '', label: 'Todos los estados' },
   { value: 'PENDIENTE', label: 'Pendiente' },
   { value: 'RENDIDO_PARCIAL', label: 'Rendido Parcial' },
-  { value: 'RENDIDO_TOTAL', label: 'Rendido Total' },
+  { value: 'RENDIDO_TOTAL', label: 'Finalizada' },
 ];
 
 export default function Consignaciones() {

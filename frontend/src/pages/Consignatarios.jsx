@@ -8,11 +8,13 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormField from '../components/ui/FormField';
 import Loading from '../components/ui/Loading';
 import { downloadCSV } from '../utils/csv';
+import { useNotify } from '../context/NotificationContext';
 import styles from './Consignatarios.module.css';
 
 const emptyForm = { nombre: '', contacto: '' };
 
 export default function Consignatarios() {
+  const { notify } = useNotify();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,7 +79,7 @@ export default function Consignatarios() {
       setModalOpen(false);
       fetchData();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     } finally {
       setSaving(false);
     }
@@ -90,7 +92,7 @@ export default function Consignatarios() {
       setDeleteTarget(null);
       fetchData();
     } catch (err) {
-      alert(err.message);
+      notify(err, 'error');
     }
   }, [deleteTarget, fetchData]);
 

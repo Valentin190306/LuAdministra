@@ -5,6 +5,7 @@ import com.luadministra.consignatario.ConsignatarioRepository;
 import com.luadministra.dto.PaginatedResponse;
 import com.luadministra.exception.RecursoNoEncontradoException;
 import com.luadministra.exception.SolicitudInvalidaException;
+import com.luadministra.exception.StockInsuficienteException;
 import com.luadministra.producto.Producto;
 import com.luadministra.producto.ProductoRepository;
 import com.luadministra.rendicion.Rendicion;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,18 +86,45 @@ public class ConsignacionService {
         consignacion.setConsignatario(consignatario);
         consignacion.setFecha(request.fecha());
 
+        Map<Long, Producto> productosPorId = new HashMap<>();
+        Map<Long, Double> cantidadPorProducto = new LinkedHashMap<>();
+        List<LineaConsignacion> lineas = new ArrayList<>();
+
         for (var prodReq : request.productos()) {
-            Producto producto = productoRepository.findById(prodReq.productoId())
-                    .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
+            if (prodReq.cantidad() <= 0) {
+                throw new SolicitudInvalidaException("La cantidad debe ser positiva");
+            }
+            Producto producto = productosPorId.computeIfAbsent(prodReq.productoId(),
+                    id -> productoRepository.findById(id)
+                            .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado")));
+            cantidadPorProducto.merge(prodReq.productoId(), prodReq.cantidad(),
+                    (cantidadActual, cantidadNueva) -> Double.sum(
+                            cantidadActual != null ? cantidadActual : 0.0,
+                            cantidadNueva != null ? cantidadNueva : 0.0
+                    ));
 
             LineaConsignacion linea = new LineaConsignacion();
             linea.setConsignacion(consignacion);
             linea.setProducto(producto);
             linea.setCantidad(prodReq.cantidad());
             linea.setPrecioUnitario(producto.getPrecioVenta());
-            consignacion.getLineas().add(linea);
+            lineas.add(linea);
         }
 
+        for (var entry : cantidadPorProducto.entrySet()) {
+            Producto producto = productosPorId.get(entry.getKey());
+            double yaConsignado = repository.findLineasByProductoIdAndEstadoNot(entry.getKey(), EstadoConsignacion.RENDIDO_TOTAL)
+                    .stream()
+                    .mapToDouble(lc -> lc != null && lc.getCantidad() != null ? lc.getCantidad() : 0.0)
+                    .sum();
+            double disponible = producto.getStockActual() - yaConsignado;
+            if (entry.getValue() > disponible) {
+                throw new StockInsuficienteException("Stock insuficiente de " + producto.getNombre()
+                        + " (disponible: " + Math.max(disponible, 0) + ")");
+            }
+        }
+
+        consignacion.setLineas(lineas);
         return ConsignacionResponse.fromEntity(repository.save(consignacion));
     }
 

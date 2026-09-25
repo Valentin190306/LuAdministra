@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { useNotify } from '../context/NotificationContext';
 import Loading from '../components/ui/Loading';
 import Button from '../components/ui/Button';
-import { downloadCSV } from '../utils/csv';
+import { exportLibroCompleto } from '../utils/exportLibroCompleto';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
+  const { notify } = useNotify();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState(false);
@@ -22,30 +24,12 @@ export default function Dashboard() {
   const { materiasPrimas, productos, alertasMP, alertasProductos, alertasVencimiento } = data;
   const productosTerminados = productos ?? [];
 
-  const handleExportMP = async () => {
+  const handleExportAll = async () => {
     setExporting(true);
     try {
-      await downloadCSV(materiasPrimas, [
-        { key: 'nombre', label: 'Nombre' },
-        { key: 'unidadMedida', label: 'Unidad' },
-        { key: 'stockActual', label: 'Stock Actual' },
-        { key: 'stockMinimo', label: 'Stock Mínimo' },
-      ], 'materias-primas.csv');
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleExportPT = async () => {
-    setExporting(true);
-    try {
-      await downloadCSV(productos, [
-        { key: 'nombre', label: 'Nombre' },
-        { key: 'precioVenta', label: 'Precio Venta' },
-        { key: 'stockActual', label: 'En Depósito' },
-        { key: 'stockConsignado', label: 'Consignado' },
-        { key: 'stockMinimo', label: 'Stock Mínimo' },
-      ], 'productos.csv');
+      await exportLibroCompleto();
+    } catch (err) {
+      notify(err, 'error');
     } finally {
       setExporting(false);
     }
@@ -56,8 +40,7 @@ export default function Dashboard() {
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Resumen</h1>
         <div className={styles.exportBtns}>
-          <Button variant="ghost" disabled={exporting} onClick={handleExportMP}>Exportar MP</Button>
-          <Button variant="ghost" disabled={exporting} onClick={handleExportPT}>Exportar PT</Button>
+          <Button variant="ghost" disabled={exporting} onClick={handleExportAll}>Exportar todo (Excel)</Button>
         </div>
       </div>
 
