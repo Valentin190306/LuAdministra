@@ -51,6 +51,12 @@ Plantilla para registrar pendientes: cosas por implementar, revisar o decisiones
   - Decisión tomada: _opción X | pendiente_
   - Impacto: _archivos/entidades afectadas_
 
+- [ ] **`Almacenamiento de cambios de stock en el celular`**
+  - Contexto: _Permitir que el usuario haga gestión de stock y consginaciones fuera de la red local privada_
+  - Opciones consideradas: _Backend hosteado, Mover el servidor (notebook) a otra red privada, Service Agent con lógica de reconciliación_
+  - Decisión tomada: _Service Agent | pendiente_
+  - Impacto: _Implementar logíca de sincronización y reconciliación en el backend_
+
 ## Deuda técnica / Refactor
 
 - [ ] **`_Titulo_`**
